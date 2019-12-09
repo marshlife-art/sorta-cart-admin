@@ -1,12 +1,20 @@
 import React from 'react'
 import { RouteProps, Redirect, Route } from 'react-router-dom'
-import { fakeAuth } from '../services/auth'
 
-const ProtectedRoute = ({ component: Component, ...rest }: RouteProps) => (
+import { UserServiceProps } from '../redux/session/reducers'
+
+const ProtectedRoute = ({
+  component: Component,
+  userService,
+  ...rest
+}: RouteProps & UserServiceProps) => (
   <Route
     {...rest}
     render={props =>
-      fakeAuth.isAuthenticated === true && Component ? (
+      userService.user &&
+      userService.user.roles &&
+      userService.user.roles.includes('admin') &&
+      Component ? (
         <Component {...props} />
       ) : (
         <Redirect

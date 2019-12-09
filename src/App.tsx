@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom'
-
+import { connect } from 'react-redux'
+import { ThunkDispatch } from 'redux-thunk'
 import clsx from 'clsx'
 import { makeStyles } from '@material-ui/core/styles'
 import CssBaseline from '@material-ui/core/CssBaseline'
@@ -12,18 +13,22 @@ import List from '@material-ui/core/List'
 import Typography from '@material-ui/core/Typography'
 import Divider from '@material-ui/core/Divider'
 import IconButton from '@material-ui/core/IconButton'
-import Badge from '@material-ui/core/Badge'
 import Container from '@material-ui/core/Container'
 import MenuIcon from '@material-ui/icons/Menu'
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
-import NotificationsIcon from '@material-ui/icons/Notifications'
+
 import { mainListItems } from './listItems' // secondaryListItems
 
-import Dashboard from './dashboard/Dashboard'
+import { RootState } from './redux'
+import { UserServiceProps } from './redux/session/reducers'
+import { checkSession } from './redux/session/actions'
+import { PreferencesServiceProps } from './redux/preferences/reducers'
+import { getPreferences } from './redux/preferences/actions'
 
+import Dashboard from './dashboard/Dashboard'
 import Login from './auth/Login'
 import ProtectedRoute from './auth/ProtectedRoute'
-import Signout from './auth/Signout'
+import UserMenu from './auth/UserMenu'
 
 const drawerWidth = 240
 
@@ -108,7 +113,44 @@ const useStyles = makeStyles(theme => ({
 
 const Protected = () => <h3>Protected</h3>
 
-export default function App() {
+interface DispatchProps {
+  checkSession: () => void
+  getPreferences: () => void
+}
+
+type Props = UserServiceProps & PreferencesServiceProps & DispatchProps
+
+const App: React.FC<Props> = (props: Props) => {
+  const [loading, setLoading] = useState(true)
+
+  // checkSession is destructured from props and passed into useEffect
+  // which is a bit confusing since checkSession is also imported. ah scope.
+  const {
+    checkSession,
+    userService,
+    getPreferences,
+    preferencesService
+  } = props
+
+  useEffect(() => {
+    getPreferences()
+  }, [getPreferences])
+
+  useEffect(() => {
+    checkSession()
+  }, [checkSession])
+
+  useEffect(() => {
+    console.log(
+      'userService fx.. userService.isFetching:',
+      !userService.isFetching && !!userService.user,
+      'userService:',
+      userService
+    )
+    !userService.isFetching && userService.user && setLoading(false)
+    setOpen(userService.isFetching && !!userService.user)
+  }, [userService])
+
   const classes = useStyles()
   const [open, setOpen] = React.useState(true)
   const handleDrawerOpen = () => {
@@ -117,6 +159,9 @@ export default function App() {
   const handleDrawerClose = () => {
     setOpen(false)
   }
+
+  // #TODO: move this. i guess.
+  console.log(preferencesService)
 
   return (
     <Router>
@@ -127,18 +172,20 @@ export default function App() {
           className={clsx(classes.appBar, open && classes.appBarShift)}
         >
           <Toolbar className={classes.toolbar}>
-            <IconButton
-              edge="start"
-              color="inherit"
-              aria-label="open drawer"
-              onClick={handleDrawerOpen}
-              className={clsx(
-                classes.menuButton,
-                open && classes.menuButtonHidden
-              )}
-            >
-              <MenuIcon />
-            </IconButton>
+            {userService.user && (
+              <IconButton
+                edge="start"
+                color="inherit"
+                aria-label="open drawer"
+                onClick={handleDrawerOpen}
+                className={clsx(
+                  classes.menuButton,
+                  open && classes.menuButtonHidden
+                )}
+              >
+                <MenuIcon />
+              </IconButton>
+            )}
             <Typography
               component="h1"
               variant="h6"
@@ -148,48 +195,100 @@ export default function App() {
             >
               MARSH
             </Typography>
-            <IconButton color="inherit">
-              <Badge badgeContent={4} color="secondary">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-            <Signout />
+            <UserMenu />
           </Toolbar>
         </AppBar>
-        <Drawer
-          variant="permanent"
-          classes={{
-            paper: clsx(classes.drawerPaper, !open && classes.drawerPaperClose)
-          }}
-          open={open}
-        >
-          <div className={classes.toolbarIcon}>
-            <IconButton onClick={handleDrawerClose}>
-              <ChevronLeftIcon />
-            </IconButton>
-          </div>
-          <Divider />
-          <List>{mainListItems}</List>
-          {/* <Divider />
-          <List>{secondaryListItems}</List> */}
-        </Drawer>
+
+        {userService && userService.user && userService.user.email && (
+          <Drawer
+            variant="permanent"
+            classes={{
+              paper: clsx(
+                classes.drawerPaper,
+                !open && classes.drawerPaperClose
+              )
+            }}
+            open={open}
+          >
+            <div className={classes.toolbarIcon}>
+              <IconButton onClick={handleDrawerClose}>
+                <ChevronLeftIcon />
+              </IconButton>
+            </div>
+            <Divider />
+
+            <>
+              <List>{mainListItems}</List>
+              {/* 
+              <Divider />
+              <List>{secondaryListItems}</List> 
+              */}
+            </>
+          </Drawer>
+        )}
+
         <main className={classes.content}>
           <div className={classes.appBarSpacer} />
           <Container maxWidth="lg" className={classes.container}>
             {/* ROUTER */}
-            <Switch>
-              <Route path="/login" component={Login} />
-              <ProtectedRoute path="/products" component={Protected} />
-              <ProtectedRoute path="/orders" component={Protected} />
-              <ProtectedRoute path="/users" component={Protected} />
-              <ProtectedRoute path="/pages" component={Protected} />
-              <ProtectedRoute path="/" component={Dashboard} />
-            </Switch>
 
-            <Box pt={4}>FOOT'r</Box>
+            {loading ? (
+              <Box pt={4}>L O A D I N G . . .</Box>
+            ) : (
+              <Switch>
+                <Route path="/login" component={Login} />
+                <ProtectedRoute
+                  userService={userService}
+                  path="/products"
+                  component={Protected}
+                />
+                <ProtectedRoute
+                  userService={userService}
+                  path="/orders"
+                  component={Protected}
+                />
+                <ProtectedRoute
+                  userService={userService}
+                  path="/users"
+                  component={Protected}
+                />
+                <ProtectedRoute
+                  userService={userService}
+                  path="/pages"
+                  component={Protected}
+                />
+                <ProtectedRoute
+                  userService={userService}
+                  path="/"
+                  component={Dashboard}
+                />
+              </Switch>
+            )}
+
+            {/* <Box pt={4}>FOOT'r</Box> */}
           </Container>
         </main>
       </div>
     </Router>
   )
 }
+
+const mapStateToProps = (
+  states: RootState
+): UserServiceProps & PreferencesServiceProps => {
+  return {
+    userService: states.session.userService,
+    preferencesService: states.preferences.preferencesService
+  }
+}
+
+const mapDispatchToProps = (
+  dispatch: ThunkDispatch<{}, {}, any>
+): DispatchProps => {
+  return {
+    checkSession: () => dispatch(checkSession()),
+    getPreferences: () => dispatch(getPreferences())
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(App)
