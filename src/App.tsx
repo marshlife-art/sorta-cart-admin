@@ -21,6 +21,10 @@ import { mainListItems } from './listItems' // secondaryListItems
 
 import Dashboard from './dashboard/Dashboard'
 
+import Login from './auth/Login'
+import ProtectedRoute from './auth/ProtectedRoute'
+import Signout from './auth/Signout'
+
 const drawerWidth = 240
 
 const useStyles = makeStyles(theme => ({
@@ -102,6 +106,8 @@ const useStyles = makeStyles(theme => ({
   }
 }))
 
+const Protected = () => <h3>Protected</h3>
+
 export default function App() {
   const classes = useStyles()
   const [open, setOpen] = React.useState(true)
@@ -147,6 +153,7 @@ export default function App() {
                 <NotificationsIcon />
               </Badge>
             </IconButton>
+            <Signout />
           </Toolbar>
         </AppBar>
         <Drawer
@@ -170,15 +177,13 @@ export default function App() {
           <div className={classes.appBarSpacer} />
           <Container maxWidth="lg" className={classes.container}>
             {/* ROUTER */}
-
             <Switch>
-              <Route path="/products">PRODUCTS</Route>
-              <Route path="/orders">ORDERZ</Route>
-              <Route path="/users">USERZ</Route>
-              <Route path="/pages">PAGEZ</Route>
-              <Route path="/">
-                <Dashboard />
-              </Route>
+              <Route path="/login" component={Login} />
+              <ProtectedRoute path="/products" component={Protected} />
+              <ProtectedRoute path="/orders" component={Protected} />
+              <ProtectedRoute path="/users" component={Protected} />
+              <ProtectedRoute path="/pages" component={Protected} />
+              <ProtectedRoute path="/" component={Dashboard} />
             </Switch>
 
             <Box pt={4}>FOOT'r</Box>
