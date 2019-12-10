@@ -7,6 +7,9 @@ import Paper from '@material-ui/core/Paper'
 import Orders from './Orders'
 
 const useStyles = makeStyles(theme => ({
+  root: {
+    padding: theme.spacing(2)
+  },
   paper: {
     padding: theme.spacing(2),
     display: 'flex',
@@ -23,7 +26,7 @@ export default function Dashboard() {
   const fixedHeightPaper = clsx(classes.paper, classes.fixedHeight)
 
   return (
-    <Grid container spacing={3}>
+    <Grid container spacing={3} className={classes.root}>
       {/* Chart */}
       <Grid item xs={12} md={8} lg={9}>
         <Paper className={fixedHeightPaper}>CHART</Paper>
