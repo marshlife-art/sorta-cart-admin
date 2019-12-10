@@ -6,7 +6,6 @@ import clsx from 'clsx'
 import { createStyles, Theme, makeStyles } from '@material-ui/core/styles'
 import CssBaseline from '@material-ui/core/CssBaseline'
 import Drawer from '@material-ui/core/Drawer'
-import Box from '@material-ui/core/Box'
 import AppBar from '@material-ui/core/AppBar'
 import Toolbar from '@material-ui/core/Toolbar'
 import List from '@material-ui/core/List'
@@ -22,11 +21,13 @@ import { checkSession } from './redux/session/actions'
 import { PreferencesServiceProps } from './redux/preferences/reducers'
 import { getPreferences } from './redux/preferences/actions'
 
+import Loading from './Loading'
 import Dashboard from './dashboard/Dashboard'
 import Login from './auth/Login'
 import ProtectedRoute from './auth/ProtectedRoute'
 import UserMenu from './auth/UserMenu'
 import Pages from './pages/Pages'
+import Orders from './dashboard/Orders'
 
 const drawerWidth = 240
 
@@ -151,7 +152,7 @@ const App: React.FC<Props> = (props: Props) => {
           {/* ROUTER */}
 
           {loading ? (
-            <Box pt={4}>L O A D I N G . . .</Box>
+            <Loading />
           ) : (
             <Switch>
               <Route path="/login" component={Login} />
@@ -163,7 +164,7 @@ const App: React.FC<Props> = (props: Props) => {
               <ProtectedRoute
                 userService={userService}
                 path="/orders"
-                component={Protected}
+                component={Orders}
               />
               <ProtectedRoute
                 userService={userService}

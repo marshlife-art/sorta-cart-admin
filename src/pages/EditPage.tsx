@@ -1,10 +1,12 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import TextField from '@material-ui/core/TextField'
 import Snackbar from '@material-ui/core/Snackbar'
 import IconButton from '@material-ui/core/IconButton'
 import CloseIcon from '@material-ui/icons/Close'
 
+import Loading from '../Loading'
+import { usePageService } from './usePageService'
 import EditPageMenu from './EditPageMenu'
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -21,8 +23,20 @@ const useStyles = makeStyles((theme: Theme) =>
 
 export default function EditPage() {
   const classes = useStyles()
-  const [pageName, setPageName] = useState('')
+
+  const [pageName, setPageName] = useState('test')
   const [pageContent, setPageContent] = useState('')
+  const [loading, setLoading] = useState(true)
+
+  const pageService = usePageService(pageName, setLoading)
+
+  useEffect(() => {
+    if (pageService.status === 'loaded') {
+      setPageName(pageService.payload.slug)
+      setPageContent(pageService.payload.content)
+    }
+  }, [pageService])
+
   const [snackOpen, setSnackOpen] = React.useState(false)
 
   const handlePageContentChange = (
@@ -59,15 +73,19 @@ export default function EditPage() {
         <EditPageMenu />
       </div>
 
-      <TextField
-        label="content"
-        multiline
-        fullWidth
-        rows={4}
-        rowsMax={28}
-        value={pageContent}
-        onChange={handlePageContentChange}
-      />
+      {loading ? (
+        <Loading />
+      ) : (
+        <TextField
+          label="content"
+          multiline
+          fullWidth
+          rows={4}
+          rowsMax={28}
+          value={pageContent}
+          onChange={handlePageContentChange}
+        />
+      )}
 
       <Snackbar
         anchorOrigin={{
