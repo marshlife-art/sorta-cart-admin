@@ -1,11 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import Paper from '@material-ui/core/Paper'
 import Grid from '@material-ui/core/Grid'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
-import ListItemIcon from '@material-ui/core/ListItemIcon'
 import Add from '@material-ui/icons/Add'
 import ListItemText from '@material-ui/core/ListItemText'
 import Divider from '@material-ui/core/Divider'
@@ -18,6 +17,8 @@ import ProtectedRoute from '../auth/ProtectedRoute'
 import { RootState } from '../redux'
 import { UserService, UserServiceProps } from '../redux/session/reducers'
 import EditPage from './EditPage'
+import { useAllPagesService } from './usePageService'
+import { Page } from '../types/Page'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -47,6 +48,13 @@ const Default = () => <h3>pages!</h3>
 function Pages(props: { userService?: UserService }) {
   const classes = useStyles()
   const { userService } = props
+
+  const [pages, setPages] = useState<Page[]>([])
+  const allPages = useAllPagesService()
+
+  useEffect(() => {
+    allPages.status === 'loaded' && setPages(allPages.payload)
+  }, [allPages])
 
   const [snackOpen, setSnackOpen] = useState(false)
   const handleSnackClose = (
@@ -88,20 +96,16 @@ function Pages(props: { userService?: UserService }) {
                 </ListItemText>
               </ListItem>
               <Divider />
-              {/* <ListItem button onClick={() => setSnackOpen(true)}>
-                <ListItemIcon>
-                  <Add />
-                </ListItemIcon>
-                <ListItemText primary="New Page" />
-              </ListItem>
-
-              <Divider /> */}
-              <ListItem button component={Link} to="/pages/edit/foo">
-                <ListItemText primary="foo" />
-              </ListItem>
-              <ListItem button component={Link} to="/pages/edit/bar">
-                <ListItemText primary="bar" />
-              </ListItem>
+              {pages.map((page: Page, idx: number) => (
+                <ListItem
+                  button
+                  component={Link}
+                  to={`/pages/edit/${page.slug}`}
+                  key={`page${idx}`}
+                >
+                  <ListItemText primary={page.slug} />
+                </ListItem>
+              ))}
             </List>
           </Paper>
         </Grid>
