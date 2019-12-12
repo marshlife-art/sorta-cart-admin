@@ -98,7 +98,7 @@ const usePageSaveService = (
       .finally(() => {
         setDoSave(false)
       })
-  }, [page, doSave, setDoSave])
+  }, [page, doSave, setDoSave, setSnackMsg, setSnackOpen])
 
   return result
 }
