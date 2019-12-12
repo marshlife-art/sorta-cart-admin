@@ -1,7 +1,7 @@
 export interface Page {
-  id: string
+  id?: string
   slug: string
   content: string
-  createdAt: string
-  updatedAt: string
+  createdAt?: string
+  updatedAt?: string
 }

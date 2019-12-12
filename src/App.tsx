@@ -73,8 +73,8 @@ const App: React.FC<Props> = (props: Props) => {
   const {
     checkSession,
     userService,
-    getPreferences,
-    preferencesService
+    getPreferences
+    // ,preferencesService
   } = props
 
   useEffect(() => {
@@ -86,12 +86,12 @@ const App: React.FC<Props> = (props: Props) => {
   }, [checkSession])
 
   useEffect(() => {
-    console.log(
-      'userService fx.. userService.isFetching:',
-      !userService.isFetching && !!userService.user,
-      'userService:',
-      userService
-    )
+    // console.log(
+    //   'userService fx.. userService.isFetching:',
+    //   !userService.isFetching && !!userService.user,
+    //   'userService:',
+    //   userService
+    // )
     !userService.isFetching && userService.user && setLoading(false)
     setOpen(userService.isFetching && !!userService.user)
   }, [userService])
@@ -100,7 +100,7 @@ const App: React.FC<Props> = (props: Props) => {
   const [open, setOpen] = React.useState(true)
 
   // #TODO: move this. i guess.
-  console.log(preferencesService)
+  // console.log(preferencesService)
 
   return (
     <Router>

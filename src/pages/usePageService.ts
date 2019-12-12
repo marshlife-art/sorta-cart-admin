@@ -22,7 +22,7 @@ const usePageService = (
     fetch(`${API_HOST}/page?slug=${slug}`)
       .then(response => response.json())
       .then(response => {
-        console.log('page', response)
+        // console.log('page', response)
         setResult({ status: 'loaded', payload: response as Page })
       })
       .catch(error => {
@@ -46,7 +46,7 @@ const useAllPagesService = () => {
     fetch(`${API_HOST}/pages`)
       .then(response => response.json())
       .then(response => {
-        console.log('page', response)
+        // console.log('page', response)
         setResult({ status: 'loaded', payload: response.rows as Page[] })
       })
       .catch(error => {
@@ -58,4 +58,49 @@ const useAllPagesService = () => {
   return result
 }
 
-export { usePageService, useAllPagesService }
+const usePageSaveService = (
+  page: Page | undefined,
+  doSave: boolean,
+  setDoSave: (value: boolean) => void,
+  setSnackMsg: (msg: string) => void,
+  setSnackOpen: (value: boolean) => void
+) => {
+  const [result, setResult] = useState<Service<Page>>({
+    status: 'loading'
+  })
+
+  useEffect(() => {
+    if (!doSave || !page || page.slug.length === 0) {
+      setDoSave(false)
+      return
+    }
+
+    fetch(`${API_HOST}/page`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(page)
+    })
+      .then(response => response.json())
+      .then(response => {
+        // console.log('usePageSaveService response:', response)
+        setResult({ status: 'loaded', payload: response as Page })
+        setSnackMsg(response.msg)
+        setSnackOpen(true)
+      })
+      .catch(error => {
+        console.warn('usePageSaveService fetch caught err:', error)
+        setResult({ ...error })
+        setSnackMsg(`o noz! ${error}`)
+        setSnackOpen(true)
+      })
+      .finally(() => {
+        setDoSave(false)
+      })
+  }, [page, doSave, setDoSave])
+
+  return result
+}
+
+export { usePageService, useAllPagesService, usePageSaveService }

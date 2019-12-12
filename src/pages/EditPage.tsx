@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react'
+import { withRouter, RouteComponentProps } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import TextField from '@material-ui/core/TextField'
 import Snackbar from '@material-ui/core/Snackbar'
 import IconButton from '@material-ui/core/IconButton'
 import CloseIcon from '@material-ui/icons/Close'
 
+import { PageRouterProps } from '../types/PageRouterProps'
 import Loading from '../Loading'
-import { usePageService } from './usePageService'
+import { usePageService, usePageSaveService } from './usePageService'
 import EditPageMenu from './EditPageMenu'
+import { Page } from '../types/Page'
+
+const API_HOST = 'http://localhost:3000'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -21,32 +26,39 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 )
 
-export default function EditPage() {
+function EditPage(props: RouteComponentProps<PageRouterProps>) {
   const classes = useStyles()
 
-  const [pageName, setPageName] = useState('test')
-  const [pageContent, setPageContent] = useState('')
+  const [pageSlug, setPageSlug] = useState('')
+  const [page, setPage] = useState<Page>({ slug: '', content: '' })
   const [loading, setLoading] = useState(true)
+  const [doSave, setDoSave] = useState(false)
 
-  const pageService = usePageService(pageName, setLoading)
+  const pageService = usePageService(pageSlug, setLoading)
 
   useEffect(() => {
+    console.log('!!!! pageService fx !!!! pageService:', pageService)
     if (pageService.status === 'loaded') {
-      setPageName(pageService.payload.slug)
-      setPageContent(pageService.payload.content)
+      if (pageService.payload) {
+        setPage(pageService.payload)
+      } else {
+        setPage({ slug: pageSlug, content: '' })
+      }
     }
-  }, [pageService])
+  }, [pageService, pageSlug])
 
   const [snackOpen, setSnackOpen] = React.useState(false)
+  const [snackMsg, setSnackMsg] = React.useState('')
 
   const handlePageContentChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    setPageContent(event.target.value)
+    setPage(prevPage => ({ ...prevPage, content: event.target.value }))
   }
 
   const handlePageNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPageName(event.target.value)
+    // setPageName(event.target.value)
+    setPage(prevPage => ({ ...prevPage, slug: event.target.value }))
   }
 
   const handleSnackClose = (
@@ -59,18 +71,65 @@ export default function EditPage() {
     setSnackOpen(false)
   }
 
-  return (
+  const slug = props.match.params.slug
+
+  useEffect(() => {
+    if (slug) {
+      setPageSlug(slug)
+      // setPage(prevPage => ({ ...prevPage, slug: slug, content: '' }))
+    }
+  }, [slug])
+
+  const onSaveBtnClick = (): void => {
+    console.log('zomg onSaveBtnClick!')
+    setDoSave(true)
+  }
+
+  usePageSaveService(page, doSave, setDoSave, setSnackMsg, setSnackOpen)
+
+  const onDeleteBtnClick = (): void => {
+    console.log('onDeleteBtnClick!')
+
+    fetch(`${API_HOST}/page`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(page)
+    })
+      .then(response => response.json())
+      .then(response => {
+        console.log('delete page response:', response)
+        if (response.error) {
+          setSnackMsg(response.msg)
+          setSnackOpen(true)
+        } else {
+          props.history.replace('/pages')
+        }
+      })
+      .catch(error => {
+        console.warn('delete page fetch caught err:', error)
+        setSnackMsg(`o noz! ${error}`)
+        setSnackOpen(true)
+      })
+  }
+
+  return page ? (
     <>
       <div className={classes.row}>
         <TextField
           className={classes.pageName}
           label="permalink"
           fullWidth
-          value={pageName}
+          value={page.slug}
           onChange={handlePageNameChange}
         />
 
-        <EditPageMenu />
+        <EditPageMenu
+          page={page}
+          onSaveBtnClick={onSaveBtnClick}
+          onDeleteBtnClick={onDeleteBtnClick}
+        />
       </div>
 
       {loading ? (
@@ -82,7 +141,7 @@ export default function EditPage() {
           fullWidth
           rows={4}
           rowsMax={28}
-          value={pageContent}
+          value={page.content}
           onChange={handlePageContentChange}
         />
       )}
@@ -98,7 +157,7 @@ export default function EditPage() {
         ContentProps={{
           'aria-describedby': 'message-id'
         }}
-        message={<span id="message-id">Page saved!</span>}
+        message={<span id="message-id">{snackMsg}</span>}
         action={[
           <IconButton
             key="close"
@@ -111,5 +170,9 @@ export default function EditPage() {
         ]}
       />
     </>
+  ) : (
+    <Loading />
   )
 }
+
+export default withRouter(EditPage)

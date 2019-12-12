@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, withRouter, RouteComponentProps } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import Paper from '@material-ui/core/Paper'
 import Grid from '@material-ui/core/Grid'
@@ -18,6 +18,7 @@ import { RootState } from '../redux'
 import { UserService, UserServiceProps } from '../redux/session/reducers'
 import EditPage from './EditPage'
 import { useAllPagesService } from './usePageService'
+import { PageRouterProps } from '../types/PageRouterProps'
 import { Page } from '../types/Page'
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -45,7 +46,11 @@ const useStyles = makeStyles((theme: Theme) =>
 
 const Default = () => <h3>pages!</h3>
 
-function Pages(props: { userService?: UserService }) {
+interface Props {
+  userService?: UserService
+}
+
+function Pages(props: Props & RouteComponentProps<PageRouterProps>) {
   const classes = useStyles()
   const { userService } = props
 
@@ -65,6 +70,11 @@ function Pages(props: { userService?: UserService }) {
       return
     }
     setSnackOpen(false)
+  }
+
+  function addPage() {
+    props.history.push('/pages/edit/newpage')
+    setSnackOpen(true)
   }
 
   return userService ? (
@@ -88,7 +98,7 @@ function Pages(props: { userService?: UserService }) {
                       aria-label="add page"
                       color="inherit"
                       title="add page"
-                      onClick={() => setSnackOpen(true)}
+                      onClick={() => addPage()}
                     >
                       <Add />
                     </IconButton>
@@ -121,7 +131,7 @@ function Pages(props: { userService?: UserService }) {
               />
               <ProtectedRoute
                 userService={userService}
-                path="/pages/edit/:page"
+                path="/pages/edit/:slug"
                 component={EditPage}
               />
             </Switch>
@@ -161,4 +171,4 @@ const mapStateToProps = (states: RootState): UserServiceProps => {
   }
 }
 
-export default connect(mapStateToProps, undefined)(Pages)
+export default connect(mapStateToProps, undefined)(withRouter(Pages))

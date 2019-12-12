@@ -11,6 +11,7 @@ import SaveIcon from '@material-ui/icons/Save'
 
 import DeleteIcon from '@material-ui/icons/Delete'
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
+import { Page } from '../types/Page'
 
 const StyledMenu = (props: MenuProps) => (
   <Menu
@@ -39,7 +40,13 @@ const StyledMenuItem = withStyles(theme => ({
   }
 }))(MenuItem)
 
-export default function EditPageMenu() {
+interface EditPageMenuProps {
+  page: Page
+  onSaveBtnClick: () => void
+  onDeleteBtnClick: () => void
+}
+
+export default function EditPageMenu(props: EditPageMenuProps) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -61,7 +68,7 @@ export default function EditPageMenu() {
           variant="contained"
           color="primary"
           startIcon={<SaveIcon />}
-          // onClick={() => setSnackOpen(true)}
+          onClick={props.onSaveBtnClick}
         >
           save
         </Button>
@@ -86,9 +93,12 @@ export default function EditPageMenu() {
       >
         <StyledMenuItem
           onClick={() => {
-            window.confirm('are you sure?')
+            if (window.confirm('are you sure?')) {
+              props.onDeleteBtnClick()
+            }
             handleClose()
           }}
+          disabled={!props.page.id}
         >
           <ListItemIcon>
             <DeleteIcon fontSize="small" />
