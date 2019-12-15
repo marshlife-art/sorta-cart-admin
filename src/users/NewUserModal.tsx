@@ -1,10 +1,13 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles'
 import Modal from '@material-ui/core/Modal'
 import Backdrop from '@material-ui/core/Backdrop'
 import Fade from '@material-ui/core/Fade'
 import Button from '@material-ui/core/Button'
 import TextField from '@material-ui/core/TextField'
+import Typography from '@material-ui/core/Typography'
+
+const API_HOST = 'http://localhost:3000'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -29,6 +32,42 @@ export default function NewUserModal(props: {
   const classes = useStyles()
 
   const [email, setEmail] = useState('')
+  const [disabled, setDiabled] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (email && email.includes('@')) {
+      setDiabled(false)
+    } else {
+      setDiabled(true)
+    }
+  }, [email])
+
+  const createUser = () => {
+    if (!email) {
+      setError('type an email!')
+      return
+    } else {
+      setError('')
+    }
+    fetch(`${API_HOST}/register`, {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email })
+    })
+      .then(response => response.json())
+      .then(result => {
+        console.log('result', result)
+        props.handleClose()
+      })
+      .catch(err => {
+        console.warn(err)
+        return setError(err)
+      })
+      .finally(() => setDiabled(false))
+  }
 
   return (
     <div>
@@ -59,9 +98,20 @@ export default function NewUserModal(props: {
                 fullWidth
               />
 
-              <Button variant="contained" color="primary">
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={createUser}
+                disabled={disabled}
+              >
                 Send Invite
               </Button>
+
+              {error && (
+                <Typography component="p" color="primary">
+                  {error}
+                </Typography>
+              )}
             </div>
           </div>
         </Fade>
