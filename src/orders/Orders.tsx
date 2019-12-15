@@ -16,9 +16,39 @@ import MaterialTable, { Action } from 'material-table'
 // import { Switch } from 'react-router'
 // import ProtectedRoute from '../auth/ProtectedRoute'
 // import { RootState } from '../redux'
-import { Order } from '../types/Order'
+import {
+  Order,
+  OrderStatus,
+  PaymentStatus,
+  ShipmentStatus
+} from '../types/Order'
 
 import { API_HOST } from '../constants'
+
+type OrderStatusLookup = { [key in OrderStatus]: string }
+const statusLookup: OrderStatusLookup = {
+  new: 'new',
+  needs_review: 'needs review',
+  void: 'void',
+  archived: 'archived'
+}
+type OrderPaymentStatusLookup = { [key in PaymentStatus]: string }
+const paymentStatusLookup: OrderPaymentStatusLookup = {
+  balance_due: 'balance due',
+  credit_owed: 'credit owed',
+  failed: 'failed',
+  paid: 'paid',
+  void: 'void'
+}
+type OrderShipmentStatusLookup = { [key in ShipmentStatus]: string }
+const shipmentStatusLookup: OrderShipmentStatusLookup = {
+  backorder: 'backorder',
+  canceled: 'canceled',
+  partial: 'partial',
+  pending: 'pending',
+  ready: 'ready',
+  shipped: 'shipped'
+}
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -76,12 +106,23 @@ function Orders(props: RouteComponentProps) {
       <MaterialTable
         tableRef={tableRef}
         columns={[
-          { title: 'status', field: 'status', type: 'string' },
-          { title: 'payment status', field: 'payment_status', type: 'string' },
+          {
+            title: 'status',
+            field: 'status',
+            type: 'string',
+            lookup: statusLookup
+          },
+          {
+            title: 'payment status',
+            field: 'payment_status',
+            type: 'string',
+            lookup: paymentStatusLookup
+          },
           {
             title: 'shipment status',
             field: 'shipment_status',
-            type: 'string'
+            type: 'string',
+            lookup: shipmentStatusLookup
           },
           {
             title: 'line items',
@@ -90,13 +131,17 @@ function Orders(props: RouteComponentProps) {
             filtering: false,
             render: row => (row.line_items ? row.line_items.length : 0)
           },
-          { title: 'total', field: 'total', type: 'numeric' },
-          { title: 'name', field: 'name', type: 'string' },
-          { title: 'email', field: 'email', type: 'string' },
-          { title: 'phone', field: 'phone', type: 'string' },
-          { title: 'address', field: 'address', type: 'string' },
-          { title: 'notes', field: 'notes', type: 'string' },
-
+          { title: 'total', field: 'total', type: 'numeric', filtering: false },
+          { title: 'name', field: 'name', type: 'string', filtering: false },
+          { title: 'email', field: 'email', type: 'string', filtering: false },
+          { title: 'phone', field: 'phone', type: 'string', filtering: false },
+          {
+            title: 'address',
+            field: 'address',
+            type: 'string',
+            filtering: false
+          },
+          { title: 'notes', field: 'notes', type: 'string', filtering: false },
           {
             title: 'created',
             field: 'createdAt',
