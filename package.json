@@ -13,6 +13,7 @@
     "@material-ui/icons": "^4.5.1",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "material-table": "^1.54.1",
     "react": "latest",
     "react-dom": "latest",
     "react-redux": "^7.1.3",
