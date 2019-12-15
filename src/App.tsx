@@ -28,6 +28,7 @@ import ProtectedRoute from './auth/ProtectedRoute'
 import UserMenu from './auth/UserMenu'
 import Pages from './pages/Pages'
 import Orders from './dashboard/Orders'
+import Users from './users/Users'
 
 const drawerWidth = 240
 
@@ -169,7 +170,7 @@ const App: React.FC<Props> = (props: Props) => {
               <ProtectedRoute
                 userService={userService}
                 path="/users"
-                component={Protected}
+                component={Users}
               />
               <ProtectedRoute
                 userService={userService}
