@@ -13,14 +13,18 @@ export type ShipmentStatus =
   | 'pending'
   | 'ready'
   | 'shipped'
-export type OrderStatus = 'new' | 'needs_review' | 'void' | 'archived'
+export type OrderStatus =
+  | 'new'
+  | 'pending'
+  | 'needs_review'
+  | 'void'
+  | 'archived'
 
 export interface Order {
   id: number
   status: OrderStatus
   payment_status: PaymentStatus
   shipment_status: ShipmentStatus
-  line_items: LineItem[]
   total: number
   name: string
   email: string
@@ -30,6 +34,7 @@ export interface Order {
   history?: object
   createdAt: string
   updatedAt: string
+  OrderLineItems: LineItem[]
   WholesaleOrderId?: number
 }
 

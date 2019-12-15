@@ -19,6 +19,7 @@ interface LineItemProps {
   quantity: number
   selected_unit: string
   total: number
+  kind: string
 }
 
 export type LineItem = Product & LineItemProps

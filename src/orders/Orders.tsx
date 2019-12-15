@@ -22,12 +22,13 @@ import {
   PaymentStatus,
   ShipmentStatus
 } from '../types/Order'
-
+import OrderDetailPanel from './OrderDetailPanel'
 import { API_HOST } from '../constants'
 
 type OrderStatusLookup = { [key in OrderStatus]: string }
 const statusLookup: OrderStatusLookup = {
   new: 'new',
+  pending: 'pending',
   needs_review: 'needs review',
   void: 'void',
   archived: 'archived'
@@ -59,6 +60,27 @@ const useStyles = makeStyles((theme: Theme) =>
     }
   })
 )
+
+// const detailPanel = (rowData: Order) => (
+//   <div>
+//     <table>
+//       <thead>
+//         <tr>
+//           <th>id</th>
+//           <th>address</th>
+//           <th>notes</th>
+//         </tr>
+//       </thead>
+//       <tbody>
+//         <tr>
+//           <td>{rowData.id}</td>
+//           <td>{rowData.address}</td>
+//           <td>{rowData.notes}</td>
+//         </tr>
+//       </tbody>
+//     </table>
+//   </div>
+// )
 
 function Orders(props: RouteComponentProps) {
   const classes = useStyles()
@@ -124,38 +146,42 @@ function Orders(props: RouteComponentProps) {
             type: 'string',
             lookup: shipmentStatusLookup
           },
-          {
-            title: 'line items',
-            field: 'line_items',
-            type: 'string',
-            filtering: false,
-            render: row => (row.line_items ? row.line_items.length : 0)
-          },
-          { title: 'total', field: 'total', type: 'numeric', filtering: false },
           { title: 'name', field: 'name', type: 'string', filtering: false },
           { title: 'email', field: 'email', type: 'string', filtering: false },
-          { title: 'phone', field: 'phone', type: 'string', filtering: false },
           {
-            title: 'address',
-            field: 'address',
+            title: 'line items',
+            field: 'OrderLineItems',
             type: 'string',
-            filtering: false
+            filtering: false,
+            render: (order: Order) =>
+              order.OrderLineItems ? order.OrderLineItems.length : 0
           },
-          { title: 'notes', field: 'notes', type: 'string', filtering: false },
+          { title: 'total', field: 'total', type: 'numeric', filtering: false },
           {
             title: 'created',
             field: 'createdAt',
             type: 'datetime',
             filtering: false,
-            render: row => new Date(row.createdAt).toLocaleString()
+            render: (order: Order) => new Date(order.createdAt).toLocaleString()
           },
           {
             title: 'updated',
             field: 'updatedAt',
             type: 'datetime',
             filtering: false,
-            render: row => new Date(row.updatedAt).toLocaleString()
+            render: (order: Order) =>
+              order.updatedAt
+                ? new Date(order.updatedAt).toLocaleString()
+                : null
           },
+          { title: 'phone', field: 'phone', type: 'string', hidden: true },
+          {
+            title: 'address',
+            field: 'address',
+            type: 'string',
+            hidden: true
+          },
+          { title: 'notes', field: 'notes', type: 'string', hidden: true },
           {
             title: 'WholesaleOrderId',
             field: 'WholesaleOrderId',
@@ -186,6 +212,10 @@ function Orders(props: RouteComponentProps) {
                 return resolve({ data: [], page: 0, totalCount: 0 })
               })
           })
+        }
+        detailPanel={order => <OrderDetailPanel order={order} />}
+        onRowClick={(event, rowData, togglePanel) =>
+          togglePanel && togglePanel()
         }
         title="Orders"
         options={{
