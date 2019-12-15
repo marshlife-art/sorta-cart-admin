@@ -2,10 +2,7 @@ import { ThunkAction, ThunkDispatch } from 'redux-thunk'
 import { AnyAction } from 'redux'
 
 import { User, LoginError } from '../../types/User'
-
-// import { reject } from 'q'
-
-const API_HOST = 'http://localhost:3000'
+import { API_HOST } from '../../constants'
 
 export interface SetAction {
   type: 'SET'

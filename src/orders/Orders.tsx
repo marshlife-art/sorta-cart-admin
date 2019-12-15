@@ -12,15 +12,12 @@ import MaterialTable, { Action } from 'material-table'
 // import Snackbar from '@material-ui/core/Snackbar'
 // import IconButton from '@material-ui/core/IconButton'
 // import CloseIcon from '@material-ui/icons/Close'
-import { connect } from 'react-redux'
+// import { connect } from 'react-redux'
 // import { Switch } from 'react-router'
 // import ProtectedRoute from '../auth/ProtectedRoute'
-import { RootState } from '../redux'
-import { UserService, UserServiceProps } from '../redux/session/reducers'
-// import { useAllUsersService } from './useUserService'
-import { UserRouterProps } from '../types/UserRouterProps'
-import { User } from '../types/User'
-import NewUserModal from './NewUserModal'
+// import { RootState } from '../redux'
+import { Order } from '../types/Order'
+
 import { API_HOST } from '../constants'
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -33,21 +30,12 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 )
 
-interface Props {
-  userService?: UserService
-}
-
-function Users(props: Props & RouteComponentProps<UserRouterProps>) {
+function Orders(props: RouteComponentProps) {
   const classes = useStyles()
-  const { userService } = props
   let tableRef = createRef<any>()
-
-  console.log('#TODO: deal with userService:', userService)
 
   const [searchExpanded, setSearchExpanded] = useState(false)
   const token = localStorage && localStorage.getItem('token')
-
-  const [newUserModalOpen, setNewUserModalOpen] = useState(false)
 
   const searchAction = {
     icon: searchExpanded ? 'zoom_out' : 'search',
@@ -56,17 +44,17 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
     onClick: () => setSearchExpanded(!searchExpanded)
   }
 
-  const newUserAction = {
+  const newOrderAction = {
     icon: 'add',
-    tooltip: 'add new user',
+    tooltip: 'add new order',
     isFreeAction: true,
-    onClick: () => setNewUserModalOpen(true)
+    onClick: () => console.log('#TODO: add new order')
   }
 
   const deleteAction = {
     tooltip: 'Remove All Selected Users',
     icon: 'delete',
-    onClick: (e: any, data: User[]) => {
+    onClick: (e: any, data: Order[]) => {
       console.log('deleteAction data:', data)
       alert('You want to delete ' + data.length + ' rows')
     }
@@ -74,12 +62,12 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
 
   const [actions, setActions] = useState<Action<any>[]>([
     searchAction,
-    newUserAction,
+    newOrderAction,
     deleteAction
   ])
 
   useEffect(() => {
-    setActions([searchAction, newUserAction, deleteAction])
+    setActions([searchAction, newOrderAction, deleteAction])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchExpanded]) // note: adding actions to dep array is not pleasant :/
 
@@ -88,9 +76,27 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
       <MaterialTable
         tableRef={tableRef}
         columns={[
+          { title: 'status', field: 'status', type: 'string' },
+          { title: 'payment status', field: 'payment_status', type: 'string' },
+          {
+            title: 'shipment status',
+            field: 'shipment_status',
+            type: 'string'
+          },
+          {
+            title: 'line items',
+            field: 'line_items',
+            type: 'string',
+            filtering: false,
+            render: row => (row.line_items ? row.line_items.length : 0)
+          },
+          { title: 'total', field: 'total', type: 'numeric' },
           { title: 'name', field: 'name', type: 'string' },
           { title: 'email', field: 'email', type: 'string' },
-          { title: 'roles', field: 'roles', type: 'string' },
+          { title: 'phone', field: 'phone', type: 'string' },
+          { title: 'address', field: 'address', type: 'string' },
+          { title: 'notes', field: 'notes', type: 'string' },
+
           {
             title: 'created',
             field: 'createdAt',
@@ -105,12 +111,19 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
             filtering: false,
             render: row => new Date(row.updatedAt).toLocaleString()
           },
+          {
+            title: 'WholesaleOrderId',
+            field: 'WholesaleOrderId',
+            type: 'string',
+            hidden: true
+          },
+          { title: 'history', field: 'history', type: 'string', hidden: true },
           { title: 'id', field: 'id', type: 'string', hidden: true }
         ]}
         data={query =>
           new Promise((resolve, reject) => {
             console.log('query:', query)
-            fetch(`${API_HOST}/users`, {
+            fetch(`${API_HOST}/orders`, {
               method: 'post',
               headers: {
                 'Content-Type': 'application/json',
@@ -129,7 +142,7 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
               })
           })
         }
-        title="Users"
+        title="Orders"
         options={{
           headerStyle: { position: 'sticky', top: 0 },
           maxBodyHeight: 'calc(100vh - 121px)',
@@ -143,24 +156,8 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
         }}
         actions={actions}
       />
-
-      <NewUserModal
-        open={newUserModalOpen}
-        handleClose={() => {
-          setNewUserModalOpen(false)
-        }}
-        handleRefresh={() =>
-          tableRef.current && tableRef.current.onQueryChange()
-        }
-      />
     </div>
   )
 }
 
-const mapStateToProps = (states: RootState): UserServiceProps => {
-  return {
-    userService: states.session.userService
-  }
-}
-
-export default connect(mapStateToProps, undefined)(withRouter(Users))
+export default withRouter(Orders)

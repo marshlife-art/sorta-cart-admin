@@ -7,7 +7,7 @@ import Button from '@material-ui/core/Button'
 import TextField from '@material-ui/core/TextField'
 import Typography from '@material-ui/core/Typography'
 
-const API_HOST = 'http://localhost:3000'
+import { API_HOST } from '../constants'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -28,6 +28,7 @@ const useStyles = makeStyles((theme: Theme) =>
 export default function NewUserModal(props: {
   open: boolean
   handleClose: () => void
+  handleRefresh: () => void
 }) {
   const classes = useStyles()
 
@@ -60,6 +61,7 @@ export default function NewUserModal(props: {
       .then(response => response.json())
       .then(result => {
         console.log('result', result)
+        props.handleRefresh()
         props.handleClose()
       })
       .catch(err => {

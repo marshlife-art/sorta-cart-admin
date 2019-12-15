@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { Service } from '../types/Service'
 import { Page } from '../types/Page'
-
-const API_HOST = 'http://localhost:3000'
+import { API_HOST } from '../constants'
 
 const usePageService = (
   slug: string | undefined,

@@ -27,8 +27,9 @@ import Login from './auth/Login'
 import ProtectedRoute from './auth/ProtectedRoute'
 import UserMenu from './auth/UserMenu'
 import Pages from './pages/Pages'
-import Orders from './dashboard/Orders'
+import Orders from './orders/Orders'
 import Users from './users/Users'
+import Products from './products/Products'
 
 const drawerWidth = 240
 
@@ -56,8 +57,6 @@ const useStyles = makeStyles((theme: Theme) =>
     toolbar: theme.mixins.toolbar
   })
 )
-
-const Protected = () => <h3>Protected</h3>
 
 interface DispatchProps {
   checkSession: () => void
@@ -160,7 +159,7 @@ const App: React.FC<Props> = (props: Props) => {
               <ProtectedRoute
                 userService={userService}
                 path="/products"
-                component={Protected}
+                component={Products}
               />
               <ProtectedRoute
                 userService={userService}

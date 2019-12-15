@@ -11,8 +11,7 @@ import Loading from '../Loading'
 import { usePageService, usePageSaveService } from './usePageService'
 import EditPageMenu from './EditPageMenu'
 import { Page } from '../types/Page'
-
-const API_HOST = 'http://localhost:3000'
+import { API_HOST } from '../constants'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
