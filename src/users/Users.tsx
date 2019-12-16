@@ -21,6 +21,7 @@ import { UserService, UserServiceProps } from '../redux/session/reducers'
 import { UserRouterProps } from '../types/UserRouterProps'
 import { User } from '../types/User'
 import NewUserModal from './NewUserModal'
+import UserRolesMenu from './UserRolesMenu'
 import { API_HOST } from '../constants'
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -40,13 +41,12 @@ interface Props {
 function Users(props: Props & RouteComponentProps<UserRouterProps>) {
   const classes = useStyles()
   const { userService } = props
-  let tableRef = createRef<any>()
+  const tableRef = createRef<any>()
 
   console.log('#TODO: deal with userService:', userService)
 
   const [searchExpanded, setSearchExpanded] = useState(false)
   const token = localStorage && localStorage.getItem('token')
-
   const [newUserModalOpen, setNewUserModalOpen] = useState(false)
 
   const searchAction = {
@@ -64,11 +64,34 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
   }
 
   const deleteAction = {
-    tooltip: 'Remove All Selected Users',
+    tooltip: 'Remove User',
     icon: 'delete',
-    onClick: (e: any, data: User[]) => {
-      console.log('deleteAction data:', data)
-      alert('You want to delete ' + data.length + ' rows')
+    onClick: (e: any, user: User) => {
+      console.log('deleteAction user:', user)
+      if (
+        userService &&
+        userService.user &&
+        userService.user.email === user.email
+      ) {
+        alert('you cannot delete yrself!')
+      } else {
+        if (!user.id) {
+          return
+        }
+        if (window.confirm(`Are you sure you want to delete ${user.email}?`)) {
+          fetch(`${API_HOST}/user`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ id: user.id })
+          })
+            .then(response => response.json())
+            .then(() => tableRef.current && tableRef.current.onQueryChange())
+            .catch(err => console.warn('user deleteAction caught err', err))
+        }
+      }
     }
   }
 
@@ -88,9 +111,25 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
       <MaterialTable
         tableRef={tableRef}
         columns={[
+          {
+            title: 'roles',
+            field: 'roles',
+            type: 'string',
+            render: row => (
+              <UserRolesMenu
+                user={row as User}
+                disabled={
+                  !!(
+                    userService &&
+                    userService.user &&
+                    userService.user.email === row.email
+                  )
+                }
+              />
+            )
+          },
           { title: 'name', field: 'name', type: 'string' },
           { title: 'email', field: 'email', type: 'string' },
-          { title: 'roles', field: 'roles', type: 'string' },
           {
             title: 'created',
             field: 'createdAt',
@@ -138,8 +177,7 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
           debounceInterval: 750,
           filtering: true,
           search: searchExpanded,
-          emptyRowsWhenPaging: false,
-          selection: true
+          emptyRowsWhenPaging: false
         }}
         actions={actions}
       />
