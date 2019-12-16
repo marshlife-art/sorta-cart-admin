@@ -20,7 +20,9 @@ const useStyles = makeStyles((theme: Theme) =>
       color: theme.palette.text.secondary
     },
     gridItem: {
-      padding: theme.spacing(2),
+      paddingTop: theme.spacing(2),
+      paddingLeft: theme.spacing(2),
+      paddingRight: theme.spacing(2),
       textAlign: 'center'
     }
   })
@@ -44,9 +46,7 @@ export default function OrderDetailPanel(props: { order: Order }) {
             >
               address
             </Typography>
-            <Typography variant="body1" gutterBottom>
-              {order.address}
-            </Typography>
+            <Typography variant="body1">{order.address}</Typography>
           </div>
         </Grid>
         <Grid item xs={6}>
@@ -59,20 +59,15 @@ export default function OrderDetailPanel(props: { order: Order }) {
             >
               notes
             </Typography>
-            <Typography variant="body1" gutterBottom>
-              {order.notes}
-            </Typography>
+            <Typography variant="body1">{order.notes}</Typography>
           </div>
         </Grid>
       </Grid>
 
-      <Table aria-label="order details table">
+      <Table aria-label="order details table" size="small">
         <TableHead>
           <TableRow>
-            <TableCell colSpan={3}>Line Items</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell component="th">kind</TableCell>
+            <TableCell component="th">Line Items</TableCell>
             <TableCell component="th" align="right">
               qty
             </TableCell>
