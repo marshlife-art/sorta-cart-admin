@@ -4,6 +4,8 @@ import { Service } from '../types/Service'
 import { Page } from '../types/Page'
 import { API_HOST } from '../constants'
 
+const token = localStorage && localStorage.getItem('token')
+
 const usePageService = (
   slug: string | undefined,
   setLoading: (value: boolean) => void
@@ -36,23 +38,32 @@ const usePageService = (
   return result
 }
 
-const useAllPagesService = () => {
+const useAllPagesService = (
+  reloadPages: boolean,
+  setReloadPages: (reloadPages: boolean) => void
+) => {
   const [result, setResult] = useState<Service<Page[]>>({
     status: 'loading'
   })
 
   useEffect(() => {
-    fetch(`${API_HOST}/pages`)
-      .then(response => response.json())
-      .then(response => {
-        // console.log('page', response)
-        setResult({ status: 'loaded', payload: response.rows as Page[] })
+    reloadPages &&
+      fetch(`${API_HOST}/pages`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       })
-      .catch(error => {
-        console.warn('usePageService fetch caught err:', error)
-        setResult({ ...error })
-      })
-  }, [])
+        .then(response => response.json())
+        .then(response => {
+          // console.log('page', response)
+          setResult({ status: 'loaded', payload: response.rows as Page[] })
+        })
+        .catch(error => {
+          console.warn('usePageService fetch caught err:', error)
+          setResult({ ...error })
+        })
+        .finally(() => setReloadPages(false))
+  }, [reloadPages, setReloadPages])
 
   return result
 }
@@ -77,7 +88,8 @@ const usePageSaveService = (
     fetch(`${API_HOST}/page`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify(page)
     })

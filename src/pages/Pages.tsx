@@ -55,7 +55,8 @@ function Pages(props: Props & RouteComponentProps<PageRouterProps>) {
   const { userService } = props
 
   const [pages, setPages] = useState<Page[]>([])
-  const allPages = useAllPagesService()
+  const [reloadPages, setReloadPages] = useState(true)
+  const allPages = useAllPagesService(reloadPages, setReloadPages)
 
   useEffect(() => {
     allPages.status === 'loaded' && setPages(allPages.payload)

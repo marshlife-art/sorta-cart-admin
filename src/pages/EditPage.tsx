@@ -13,6 +13,8 @@ import EditPageMenu from './EditPageMenu'
 import { Page } from '../types/Page'
 import { API_HOST } from '../constants'
 
+const token = localStorage && localStorage.getItem('token')
+
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     row: {
@@ -92,7 +94,8 @@ function EditPage(props: RouteComponentProps<PageRouterProps>) {
     fetch(`${API_HOST}/page`, {
       method: 'DELETE',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify(page)
     })
