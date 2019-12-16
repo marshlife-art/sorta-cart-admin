@@ -14,8 +14,8 @@ import { Order } from '../types/Order'
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
-      marginLeft: theme.spacing(2),
-      marginRight: theme.spacing(2)
+      marginRight: theme.spacing(2),
+      borderLeft: `${theme.spacing(6)}px solid ${theme.palette.divider}`
     },
     gridHeading: {
       color: theme.palette.text.secondary
