@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, createRef } from 'react'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import MaterialTable, { Action } from 'material-table'
 import { Chip } from '@material-ui/core'
-import MoreVertIcon from '@material-ui/icons/MoreVert'
-import IconButton from '@material-ui/core/IconButton'
-import Tooltip from '@material-ui/core/Tooltip'
+// import MoreVertIcon from '@material-ui/icons/MoreVert'
+// import IconButton from '@material-ui/core/IconButton'
+// import Tooltip from '@material-ui/core/Tooltip'
 
 import { Product } from '../types/Product'
 import { API_HOST } from '../constants'
+
+const token = localStorage && localStorage.getItem('token')
 
 const PROPERTY_MAP: { [index: string]: string } = {
   a: 'Artificial ingredients',
@@ -60,7 +62,15 @@ const useStyles = makeStyles((theme: Theme) =>
 
 function Products() {
   const classes = useStyles()
+  let tableRef = createRef<any>()
   const [searchExpanded, setSearchExpanded] = useState(false)
+
+  // ugh, this is needed because tableRef.current is always null inside the deleteAction onClick fn :/
+  const [needsRefresh, setNeedsRefresh] = useState(false)
+  const refreshTable = useCallback(() => {
+    tableRef.current && tableRef.current.onQueryChange()
+    setNeedsRefresh(false)
+  }, [tableRef, setNeedsRefresh])
 
   const searchAction = {
     icon: searchExpanded ? 'zoom_out' : 'search',
@@ -70,23 +80,41 @@ function Products() {
   }
 
   const deleteAction = {
-    tooltip: 'Remove All Selected Users',
+    tooltip: 'destroy all selected products',
     icon: 'delete',
     onClick: (e: any, data: Product[]) => {
-      console.log('deleteAction data:', data)
-      alert('You want to delete ' + data.length + ' rows')
+      const ids = data.map(p => p.id)
+      if (
+        window.confirm(
+          `are sure you want to destroy these ${ids.length} products?`
+        )
+      ) {
+        fetch(`${API_HOST}/products/destroy`, {
+          method: 'post',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ ids })
+        })
+          .catch(err => console.warn('destroy products caught err:', err))
+          .finally(() => setNeedsRefresh(true))
+      }
     }
   }
 
-  const [actions, setActions] = useState<Action<any>[]>([
-    searchAction,
-    deleteAction
-  ])
+  const [actions, setActions] = useState<Action<any>[]>([])
 
   useEffect(() => {
     setActions([searchAction, deleteAction])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchExpanded]) // note: adding 'searchAction' to dep array is not pleasant :/
+
+  useEffect(() => {
+    if (needsRefresh) {
+      refreshTable()
+    }
+  }, [needsRefresh, refreshTable])
 
   const [categoryLookup, setCategoryLookup] = useState<object>(() => {
     fetch(`${API_HOST}/categories`)
@@ -103,6 +131,7 @@ function Products() {
   return (
     <div className={classes.root}>
       <MaterialTable
+        tableRef={tableRef}
         columns={[
           {
             title: 'category',
@@ -159,27 +188,26 @@ function Products() {
             filterPlaceholder: 'filter',
             render: row => renderCodes(row.codes)
           },
-          {
-            title: undefined,
-            field: undefined,
-            type: 'string',
-            render: row => {
-              return (
-                <Tooltip aria-label="more" title="more">
-                  <IconButton color="primary" onClick={() => console.log(row)}>
-                    <MoreVertIcon />
-                  </IconButton>
-                </Tooltip>
-              )
-            }
-          },
+          // {
+          //   title: undefined,
+          //   field: undefined,
+          //   type: 'string',
+          //   render: row => {
+          //     return (
+          //       <Tooltip aria-label="more" title="more">
+          //         <IconButton color="primary" onClick={() => console.log(row)}>
+          //           <MoreVertIcon />
+          //         </IconButton>
+          //       </Tooltip>
+          //     )
+          //   }
+          // },
           { title: 'upc', field: 'upc_code', type: 'string', hidden: true },
           // { title: 'unf', field: 'unf', type: 'string' },
           { title: 'id', field: 'id', type: 'string', hidden: true }
         ]}
         data={query =>
           new Promise((resolve, reject) => {
-            console.log('query:', query)
             fetch(`${API_HOST}/products`, {
               method: 'post',
               headers: {
@@ -189,7 +217,6 @@ function Products() {
             })
               .then(response => response.json())
               .then(result => {
-                console.log('result', result)
                 resolve(result)
               })
               .catch(err => {
