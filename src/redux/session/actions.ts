@@ -93,7 +93,7 @@ export const login = (
       })
         .then(response => response.json())
         .then(response => {
-          console.log('[session/actions] user login', response)
+          // console.log('[session/actions] user login', response)
           if (response.msg === 'ok' && response.user && response.user.token) {
             localStorage && localStorage.setItem('token', response.user.token)
             dispatch(set(response.user))

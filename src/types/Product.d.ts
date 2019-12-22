@@ -13,13 +13,3 @@ export interface Product {
   u_price?: string
   codes?: string
 }
-
-interface LineItemProps {
-  product_id: number
-  quantity: number
-  selected_unit: string
-  total: number
-  kind: string
-}
-
-export type LineItem = Product & LineItemProps

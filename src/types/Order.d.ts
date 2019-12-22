@@ -1,4 +1,4 @@
-import { LineItem } from './Product'
+import { Product } from './Product'
 
 export type PaymentStatus =
   | 'balance_due'
@@ -39,3 +39,17 @@ export interface Order {
 }
 
 export type PartialOrder = Partial<Order>
+
+export interface OrderRouterProps {
+  id: string
+}
+
+export interface LineItem {
+  description: string
+  quantity: number
+  selected_unit?: string
+  price: number
+  total: number
+  kind: string
+  data?: { product?: Product }
+}

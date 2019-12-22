@@ -3,7 +3,7 @@ import Menu from '@material-ui/core/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
 import IconButton from '@material-ui/core/IconButton'
 import Badge from '@material-ui/core/Badge'
-import AccountCircleOutlined from '@material-ui/icons/AccountCircleOutlined'
+import TagFaces from '@material-ui/icons/TagFaces'
 import { connect } from 'react-redux'
 import { ThunkDispatch } from 'redux-thunk'
 
@@ -55,7 +55,7 @@ function UserMenu(props: UserServiceProps & DispatchProps) {
         onClick={handleClick}
       >
         <Badge badgeContent={0} color="secondary">
-          <AccountCircleOutlined />
+          <TagFaces />
         </Badge>
       </IconButton>
 

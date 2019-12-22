@@ -28,8 +28,11 @@ import ProtectedRoute from './auth/ProtectedRoute'
 import UserMenu from './auth/UserMenu'
 import Pages from './pages/Pages'
 import Orders from './orders/Orders'
+import WholesaleOrders from './orders/WholesaleOrders'
 import Users from './users/Users'
 import Products from './products/Products'
+import EditOrder from './orders/EditOrder'
+import CreateOrder from './orders/CreateOrder'
 
 const drawerWidth = 240
 
@@ -164,7 +167,23 @@ const App: React.FC<Props> = (props: Props) => {
               <ProtectedRoute
                 userService={userService}
                 path="/orders"
+                exact
                 component={Orders}
+              />
+              <ProtectedRoute
+                userService={userService}
+                path="/orders/edit/:id"
+                component={EditOrder}
+              />
+              <ProtectedRoute
+                userService={userService}
+                path="/orders/create"
+                component={CreateOrder}
+              />
+              <ProtectedRoute
+                userService={userService}
+                path="/wholesaleorders"
+                component={WholesaleOrders}
               />
               <ProtectedRoute
                 userService={userService}

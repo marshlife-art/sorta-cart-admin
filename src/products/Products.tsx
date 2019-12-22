@@ -188,20 +188,6 @@ function Products() {
             filterPlaceholder: 'filter',
             render: row => renderCodes(row.codes)
           },
-          // {
-          //   title: undefined,
-          //   field: undefined,
-          //   type: 'string',
-          //   render: row => {
-          //     return (
-          //       <Tooltip aria-label="more" title="more">
-          //         <IconButton color="primary" onClick={() => console.log(row)}>
-          //           <MoreVertIcon />
-          //         </IconButton>
-          //       </Tooltip>
-          //     )
-          //   }
-          // },
           { title: 'upc', field: 'upc_code', type: 'string', hidden: true },
           // { title: 'unf', field: 'unf', type: 'string' },
           { title: 'id', field: 'id', type: 'string', hidden: true }

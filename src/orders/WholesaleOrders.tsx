@@ -82,62 +82,46 @@ const useStyles = makeStyles((theme: Theme) =>
 //   </div>
 // )
 
-function Orders(props: RouteComponentProps) {
+function WholesaleOrders(props: RouteComponentProps) {
   const classes = useStyles()
   let tableRef = createRef<any>()
 
   const [searchExpanded, setSearchExpanded] = useState(false)
-  const [isSelecting, setIsSelecting] = useState(false)
   const token = localStorage && localStorage.getItem('token')
 
   const searchAction = {
     icon: searchExpanded ? 'zoom_out' : 'search',
-    tooltip: searchExpanded ? 'CLOSE SEARCH' : 'SEARCH',
+    tooltip: searchExpanded ? 'Close Search' : 'Search',
     isFreeAction: true,
     onClick: () => setSearchExpanded(!searchExpanded)
   }
 
   const newOrderAction = {
     icon: 'add',
-    tooltip: 'NEW ORDER',
+    tooltip: 'add new order',
     isFreeAction: true,
-    onClick: () => props.history.push('/orders/create')
-  }
-
-  const printAction = {
-    tooltip: 'PRINT',
-    icon: 'print',
-    onClick: (e: any, data: Order[]) => {
-      console.log('printAction data:', data)
-      alert('You want to print ' + data.length + ' orders')
-    }
+    onClick: () => console.log('#TODO: add new order')
   }
 
   const editAction = {
-    tooltip: 'EDIT',
+    tooltip: 'Edit Order',
     icon: 'edit',
-    onClick: (e: any, data: Order[]) => {
-      data[0] && data[0].id && props.history.push(`/orders/edit/${data[0].id}`)
-    }
-  }
-
-  const archiveAction = {
-    tooltip: 'ARCHIVE',
-    icon: 'archive',
-    onClick: (e: any, data: Order[]) => {
-      console.log('archive these muthafuckaz')
+    onClick: (e: any, data: Order) => {
+      console.log('editAction data:', data)
+      alert('You want to edit ' + data.id)
     }
   }
 
   const [actions, setActions] = useState<Action<any>[]>([
     searchAction,
-    newOrderAction
+    newOrderAction,
+    editAction
   ])
 
   useEffect(() => {
-    !isSelecting && setActions([searchAction, newOrderAction])
+    setActions([searchAction, newOrderAction, editAction])
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchExpanded, isSelecting]) // note: adding actions to dep array is not pleasant :/
+  }, [searchExpanded]) // note: adding actions to dep array is not pleasant :/
 
   return (
     <div className={classes.root}>
@@ -209,7 +193,7 @@ function Orders(props: RouteComponentProps) {
         ]}
         data={query =>
           new Promise((resolve, reject) => {
-            // console.log('query:', query)
+            console.log('query:', query)
             fetch(`${API_HOST}/orders`, {
               method: 'post',
               headers: {
@@ -220,7 +204,7 @@ function Orders(props: RouteComponentProps) {
             })
               .then(response => response.json())
               .then(result => {
-                // console.log('result', result)
+                console.log('result', result)
                 resolve(result)
               })
               .catch(err => {
@@ -233,7 +217,7 @@ function Orders(props: RouteComponentProps) {
         onRowClick={(event, rowData, togglePanel) =>
           togglePanel && togglePanel()
         }
-        title="Orders"
+        title="Wholesale Orders"
         options={{
           headerStyle: { position: 'sticky', top: 0 },
           maxBodyHeight: 'calc(100vh - 121px - 64px - 28px)',
@@ -242,21 +226,7 @@ function Orders(props: RouteComponentProps) {
           debounceInterval: 750,
           filtering: true,
           search: searchExpanded,
-          emptyRowsWhenPaging: false,
-          selection: true
-        }}
-        onSelectionChange={(data: Order[], rowData?: Order | undefined) => {
-          searchExpanded && setSearchExpanded(false)
-          if (data.length === 0) {
-            setIsSelecting(false)
-            return
-          }
-          setIsSelecting(true)
-          if (data.length === 1) {
-            setActions([printAction, archiveAction, editAction])
-          } else {
-            setActions([printAction, archiveAction])
-          }
+          emptyRowsWhenPaging: false
         }}
         actions={actions}
       />
@@ -264,4 +234,4 @@ function Orders(props: RouteComponentProps) {
   )
 }
 
-export default withRouter(Orders)
+export default withRouter(WholesaleOrders)

@@ -38,7 +38,6 @@ function EditPage(props: RouteComponentProps<PageRouterProps>) {
   const pageService = usePageService(pageSlug, setLoading)
 
   useEffect(() => {
-    console.log('!!!! pageService fx !!!! pageService:', pageService)
     if (pageService.status === 'loaded') {
       if (pageService.payload) {
         setPage(pageService.payload)
@@ -58,7 +57,6 @@ function EditPage(props: RouteComponentProps<PageRouterProps>) {
   }
 
   const handlePageNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    // setPageName(event.target.value)
     setPage(prevPage => ({ ...prevPage, slug: event.target.value }))
   }
 
@@ -77,20 +75,16 @@ function EditPage(props: RouteComponentProps<PageRouterProps>) {
   useEffect(() => {
     if (slug) {
       setPageSlug(slug)
-      // setPage(prevPage => ({ ...prevPage, slug: slug, content: '' }))
     }
   }, [slug])
 
   const onSaveBtnClick = (): void => {
-    console.log('zomg onSaveBtnClick!')
     setDoSave(true)
   }
 
   usePageSaveService(page, doSave, setDoSave, setSnackMsg, setSnackOpen)
 
   const onDeleteBtnClick = (): void => {
-    console.log('onDeleteBtnClick!')
-
     fetch(`${API_HOST}/page`, {
       method: 'DELETE',
       headers: {
@@ -101,7 +95,6 @@ function EditPage(props: RouteComponentProps<PageRouterProps>) {
     })
       .then(response => response.json())
       .then(response => {
-        console.log('delete page response:', response)
         if (response.error) {
           setSnackMsg(response.msg)
           setSnackOpen(true)

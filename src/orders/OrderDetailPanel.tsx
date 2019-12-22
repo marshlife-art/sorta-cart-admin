@@ -77,15 +77,33 @@ export default function OrderDetailPanel(props: { order: Order }) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {line_items.map(li => (
-            <TableRow key={`orderli${li.id}`}>
-              <TableCell component="th" scope="row">
-                {li.kind}
-              </TableCell>
-              <TableCell align="right">{li.quantity}</TableCell>
-              <TableCell align="right">{li.total}</TableCell>
-            </TableRow>
-          ))}
+          {line_items.map(
+            (li, idx) =>
+              li.kind === 'product' && (
+                <TableRow key={`orderli${idx}`}>
+                  <TableCell component="th" scope="row">
+                    {li.data && li.data.product
+                      ? `${li.data.product.name} ${li.data.product.description}`
+                      : 'product'}
+                  </TableCell>
+                  <TableCell align="right">{li.quantity}</TableCell>
+                  <TableCell align="right">{li.total}</TableCell>
+                </TableRow>
+              )
+          )}
+
+          {line_items.map(
+            (li, idx) =>
+              li.kind === 'adjustment' && (
+                <TableRow key={`orderli${idx}`}>
+                  <TableCell component="th" scope="row">
+                    [{li.kind}]{li.description}
+                  </TableCell>
+                  <TableCell align="right">{li.quantity}</TableCell>
+                  <TableCell align="right">{li.total}</TableCell>
+                </TableRow>
+              )
+          )}
         </TableBody>
       </Table>
     </div>

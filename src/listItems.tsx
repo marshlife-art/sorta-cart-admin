@@ -10,6 +10,7 @@ import ShoppingCartIcon from '@material-ui/icons/ShoppingCart'
 import PeopleIcon from '@material-ui/icons/People'
 import LayersIcon from '@material-ui/icons/Layers'
 import AssignmentIcon from '@material-ui/icons/Assignment'
+import LocalShippingIcon from '@material-ui/icons/LocalShipping'
 
 export const mainListItems = (
   <div>
@@ -30,6 +31,12 @@ export const mainListItems = (
         <ShoppingCartIcon />
       </ListItemIcon>
       <ListItemText primary="Orders" />
+    </ListItem>
+    <ListItem button component={Link} to="/wholesaleorders">
+      <ListItemIcon>
+        <LocalShippingIcon />
+      </ListItemIcon>
+      <ListItemText primary="Wholesale Orders" />
     </ListItem>
     <ListItem button component={Link} to="/users">
       <ListItemIcon>

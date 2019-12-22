@@ -67,7 +67,6 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
     tooltip: 'Remove User',
     icon: 'delete',
     onClick: (e: any, user: User) => {
-      console.log('deleteAction user:', user)
       if (
         userService &&
         userService.user &&
@@ -148,7 +147,6 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
         ]}
         data={query =>
           new Promise((resolve, reject) => {
-            console.log('query:', query)
             fetch(`${API_HOST}/users`, {
               method: 'post',
               headers: {
@@ -159,7 +157,6 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
             })
               .then(response => response.json())
               .then(result => {
-                console.log('result', result)
                 resolve(result)
               })
               .catch(err => {
