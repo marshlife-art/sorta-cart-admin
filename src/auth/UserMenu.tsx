@@ -41,8 +41,8 @@ function UserMenu(props: UserServiceProps & DispatchProps) {
     return !!(
       userService &&
       userService.user &&
-      userService.user.roles &&
-      userService.user.roles.includes('admin')
+      userService.user.role &&
+      userService.user.role === 'admin'
     )
   }
 

@@ -2,54 +2,14 @@ import React, { useState, useEffect, createRef } from 'react'
 import { withRouter, RouteComponentProps } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import MaterialTable, { Action } from 'material-table'
-// import Paper from '@material-ui/core/Paper'
-// import Grid from '@material-ui/core/Grid'
-// import List from '@material-ui/core/List'
-// import ListItem from '@material-ui/core/ListItem'
-// import Add from '@material-ui/icons/Add'
-// import ListItemText from '@material-ui/core/ListItemText'
-// import Divider from '@material-ui/core/Divider'
-// import Snackbar from '@material-ui/core/Snackbar'
-// import IconButton from '@material-ui/core/IconButton'
-// import CloseIcon from '@material-ui/icons/Close'
-// import { connect } from 'react-redux'
-// import { Switch } from 'react-router'
-// import ProtectedRoute from '../auth/ProtectedRoute'
-// import { RootState } from '../redux'
-import {
-  Order,
-  OrderStatus,
-  PaymentStatus,
-  ShipmentStatus
-} from '../types/Order'
+import { Order } from '../types/Order'
 import OrderDetailPanel from './OrderDetailPanel'
-import { API_HOST } from '../constants'
-
-type OrderStatusLookup = { [key in OrderStatus]: string }
-const statusLookup: OrderStatusLookup = {
-  new: 'new',
-  pending: 'pending',
-  needs_review: 'needs review',
-  void: 'void',
-  archived: 'archived'
-}
-type OrderPaymentStatusLookup = { [key in PaymentStatus]: string }
-const paymentStatusLookup: OrderPaymentStatusLookup = {
-  balance_due: 'balance due',
-  credit_owed: 'credit owed',
-  failed: 'failed',
-  paid: 'paid',
-  void: 'void'
-}
-type OrderShipmentStatusLookup = { [key in ShipmentStatus]: string }
-const shipmentStatusLookup: OrderShipmentStatusLookup = {
-  backorder: 'backorder',
-  canceled: 'canceled',
-  partial: 'partial',
-  pending: 'pending',
-  ready: 'ready',
-  shipped: 'shipped'
-}
+import {
+  API_HOST,
+  ORDER_STATUSES,
+  PAYMENT_STATUSES,
+  SHIPMENT_STATUSES
+} from '../constants'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -60,27 +20,6 @@ const useStyles = makeStyles((theme: Theme) =>
     }
   })
 )
-
-// const detailPanel = (rowData: Order) => (
-//   <div>
-//     <table>
-//       <thead>
-//         <tr>
-//           <th>id</th>
-//           <th>address</th>
-//           <th>notes</th>
-//         </tr>
-//       </thead>
-//       <tbody>
-//         <tr>
-//           <td>{rowData.id}</td>
-//           <td>{rowData.address}</td>
-//           <td>{rowData.notes}</td>
-//         </tr>
-//       </tbody>
-//     </table>
-//   </div>
-// )
 
 function Orders(props: RouteComponentProps) {
   const classes = useStyles()
@@ -145,22 +84,29 @@ function Orders(props: RouteComponentProps) {
         tableRef={tableRef}
         columns={[
           {
+            title: 'created',
+            field: 'createdAt',
+            type: 'datetime',
+            filtering: false,
+            render: (order: Order) => new Date(order.createdAt).toLocaleString()
+          },
+          {
             title: 'status',
             field: 'status',
             type: 'string',
-            lookup: statusLookup
+            lookup: ORDER_STATUSES
           },
           {
             title: 'payment status',
             field: 'payment_status',
             type: 'string',
-            lookup: paymentStatusLookup
+            lookup: PAYMENT_STATUSES
           },
           {
             title: 'shipment status',
             field: 'shipment_status',
             type: 'string',
-            lookup: shipmentStatusLookup
+            lookup: SHIPMENT_STATUSES
           },
           { title: 'name', field: 'name', type: 'string', filtering: false },
           { title: 'email', field: 'email', type: 'string', filtering: false },
@@ -173,22 +119,17 @@ function Orders(props: RouteComponentProps) {
               order.OrderLineItems ? order.OrderLineItems.length : 0
           },
           { title: 'total', field: 'total', type: 'numeric', filtering: false },
-          {
-            title: 'created',
-            field: 'createdAt',
-            type: 'datetime',
-            filtering: false,
-            render: (order: Order) => new Date(order.createdAt).toLocaleString()
-          },
+
           {
             title: 'updated',
             field: 'updatedAt',
             type: 'datetime',
             filtering: false,
-            render: (order: Order) =>
-              order.updatedAt
-                ? new Date(order.updatedAt).toLocaleString()
-                : null
+            hidden: true
+            // render: (order: Order) =>
+            //   order.updatedAt
+            //     ? new Date(order.updatedAt).toLocaleString()
+            //     : null
           },
           { title: 'phone', field: 'phone', type: 'string', hidden: true },
           {

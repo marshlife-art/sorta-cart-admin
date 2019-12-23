@@ -12,4 +12,6 @@ export interface Product {
   ws_price: string
   u_price?: string
   codes?: string
+  import_tag?: string
+  vendor: string
 }

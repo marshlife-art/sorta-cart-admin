@@ -5,7 +5,7 @@ export interface User {
   phone?: string
   address?: string
   token?: string
-  roles?: string[]
+  role?: string
 }
 
 export interface UserLogin {

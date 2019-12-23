@@ -1,4 +1,5 @@
 import { Product } from './Product'
+import { User } from './User'
 
 export type PaymentStatus =
   | 'balance_due'
@@ -18,6 +19,7 @@ export type OrderStatus =
   | 'pending'
   | 'needs_review'
   | 'void'
+  | 'complete'
   | 'archived'
 
 export interface Order {
@@ -35,7 +37,8 @@ export interface Order {
   createdAt: string
   updatedAt: string
   OrderLineItems: LineItem[]
-  WholesaleOrderId?: number
+  UserId?: string
+  User?: User
 }
 
 export type PartialOrder = Partial<Order>
@@ -51,5 +54,7 @@ export interface LineItem {
   price: number
   total: number
   kind: string
+  vendor?: string
+  WholesaleOrderId?: number
   data?: { product?: Product }
 }

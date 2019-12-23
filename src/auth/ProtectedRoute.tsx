@@ -12,8 +12,8 @@ const ProtectedRoute = ({
     {...rest}
     render={props =>
       userService.user &&
-      userService.user.roles &&
-      userService.user.roles.includes('admin') &&
+      userService.user.role &&
+      userService.user.role === 'admin' &&
       Component ? (
         <Component {...props} />
       ) : (

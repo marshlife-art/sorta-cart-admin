@@ -111,8 +111,8 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
         tableRef={tableRef}
         columns={[
           {
-            title: 'roles',
-            field: 'roles',
+            title: 'role',
+            field: 'role',
             type: 'string',
             render: row => (
               <UserRolesMenu

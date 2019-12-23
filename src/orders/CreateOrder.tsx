@@ -102,6 +102,7 @@ function CreateOrder(props: RouteComponentProps) {
         price: parseFloat(product.ws_price),
         total: parseFloat(product.ws_price),
         kind: 'product',
+        vendor: product.vendor,
         data: { product }
       }
       setOrder(order => ({

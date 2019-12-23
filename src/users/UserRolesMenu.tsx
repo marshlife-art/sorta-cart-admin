@@ -45,9 +45,7 @@ export default function UserRolesMenu(props: {
   disabled: boolean
 }) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
-  const [role, setRole] = React.useState(
-    (props.user.roles && props.user.roles[0]) || 'none'
-  )
+  const [role, setRole] = React.useState(props.user.role || 'none')
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)

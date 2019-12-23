@@ -7,6 +7,7 @@ import TableBody from '@material-ui/core/TableBody'
 import TableCell from '@material-ui/core/TableCell'
 import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
+import Link from '@material-ui/core/Link'
 
 import { Order } from '../types/Order'
 
@@ -20,10 +21,13 @@ const useStyles = makeStyles((theme: Theme) =>
       color: theme.palette.text.secondary
     },
     gridItem: {
-      paddingTop: theme.spacing(2),
+      paddingBottom: theme.spacing(2),
       paddingLeft: theme.spacing(2),
       paddingRight: theme.spacing(2),
       textAlign: 'center'
+    },
+    lastUpdated: {
+      marginLeft: theme.spacing(2)
     }
   })
 )
@@ -31,39 +35,11 @@ const useStyles = makeStyles((theme: Theme) =>
 export default function OrderDetailPanel(props: { order: Order }) {
   const classes = useStyles()
   const order = props.order
-  const line_items = props.order.OrderLineItems
+  const line_items = props.order.OrderLineItems || []
+  const adjustments = line_items.filter(li => li.kind !== 'product')
 
   return (
     <div className={classes.root}>
-      <Grid container direction="row" justify="center" alignItems="center">
-        <Grid item xs={6}>
-          <div className={classes.gridItem}>
-            <Typography
-              variant="overline"
-              display="block"
-              className={classes.gridHeading}
-              gutterBottom
-            >
-              address
-            </Typography>
-            <Typography variant="body1">{order.address}</Typography>
-          </div>
-        </Grid>
-        <Grid item xs={6}>
-          <div className={classes.gridItem}>
-            <Typography
-              variant="overline"
-              display="block"
-              className={classes.gridHeading}
-              gutterBottom
-            >
-              notes
-            </Typography>
-            <Typography variant="body1">{order.notes}</Typography>
-          </div>
-        </Grid>
-      </Grid>
-
       <Table aria-label="order details table" size="small">
         <TableHead>
           <TableRow>
@@ -81,7 +57,8 @@ export default function OrderDetailPanel(props: { order: Order }) {
             (li, idx) =>
               li.kind === 'product' && (
                 <TableRow key={`orderli${idx}`}>
-                  <TableCell component="th" scope="row">
+                  <TableCell component="td" scope="row">
+                    {li.vendor && `[${li.vendor}] `}
                     {li.data && li.data.product
                       ? `${li.data.product.name} ${li.data.product.description}`
                       : 'product'}
@@ -92,20 +69,99 @@ export default function OrderDetailPanel(props: { order: Order }) {
               )
           )}
 
-          {line_items.map(
-            (li, idx) =>
-              li.kind === 'adjustment' && (
-                <TableRow key={`orderli${idx}`}>
-                  <TableCell component="th" scope="row">
-                    [{li.kind}]{li.description}
-                  </TableCell>
-                  <TableCell align="right">{li.quantity}</TableCell>
-                  <TableCell align="right">{li.total}</TableCell>
-                </TableRow>
-              )
+          {adjustments.length > 0 && (
+            <TableRow>
+              <TableCell component="td" scope="row">
+                <b>Adjustments</b>
+              </TableCell>
+            </TableRow>
           )}
+          {adjustments.map((li, idx) => (
+            <TableRow key={`orderli${idx}`}>
+              <TableCell component="td" scope="row">
+                {`(${li.kind}) `} {li.description}
+              </TableCell>
+              <TableCell align="right">{li.quantity}</TableCell>
+              <TableCell align="right">{li.total}</TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
+
+      <Grid container direction="row" justify="center" alignItems="flex-start">
+        <Grid item xs={4}>
+          <div className={classes.gridItem}>
+            <Typography
+              variant="overline"
+              display="block"
+              className={classes.gridHeading}
+              gutterBottom
+            >
+              customer
+            </Typography>
+            <Typography variant="body1">
+              {order.name}{' '}
+              <Link color="primary" href={`mailto:${order.email}`}>
+                {order.email}
+              </Link>
+              <br />
+              <Link color="primary" href={`tel:${order.phone}`}>
+                {order.phone}
+              </Link>
+              <br />
+              {order.address} <br />
+            </Typography>
+          </div>
+        </Grid>
+        {order.User && (
+          <Grid item xs={4}>
+            <div className={classes.gridItem}>
+              <Typography
+                variant="overline"
+                display="block"
+                className={classes.gridHeading}
+                gutterBottom
+              >
+                user
+              </Typography>
+              <Typography variant="body1">
+                {order.User.name}{' '}
+                <Link color="primary" href={`mailto:${order.User.email}`}>
+                  {order.User.email}
+                </Link>{' '}
+                <br />
+                {order.User.phone && (
+                  <>
+                    <Link color="primary" href={`tel:${order.User.phone}`}>
+                      {order.User.phone}
+                    </Link>{' '}
+                    <br />
+                  </>
+                )}
+                {order.User.address && <>{order.User.address} </>}
+              </Typography>
+            </div>
+          </Grid>
+        )}
+        <Grid item xs={4}>
+          <div className={classes.gridItem}>
+            <Typography
+              variant="overline"
+              display="block"
+              className={classes.gridHeading}
+              gutterBottom
+            >
+              notes
+            </Typography>
+            <Typography variant="body2">{order.notes}</Typography>
+          </div>
+        </Grid>
+      </Grid>
+      {order.createdAt !== order.updatedAt && (
+        <div className={classes.lastUpdated}>
+          <i>Last updated</i> {new Date(order.updatedAt).toLocaleString()}
+        </div>
+      )}
     </div>
   )
 }

@@ -53,8 +53,8 @@ function Login(props: Props) {
       userService.user &&
       !userService.isFetching &&
       userService.user.name &&
-      userService.user.roles &&
-      userService.user.roles.includes('admin')
+      userService.user.role &&
+      userService.user.role === 'admin'
     ) {
       history.push('/admin')
     } else if (
