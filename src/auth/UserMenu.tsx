@@ -49,7 +49,6 @@ function UserMenu(props: UserServiceProps & DispatchProps) {
   return (
     <>
       <IconButton
-        color="inherit"
         aria-controls="user-menu"
         aria-haspopup="true"
         onClick={handleClick}

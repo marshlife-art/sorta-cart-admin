@@ -190,7 +190,6 @@ function WholesaleOrders(
               <span className={classes.titleText}>WHOLESALE ORDERS</span>
               <IconButton
                 aria-label="add wholesale order"
-                color="inherit"
                 title="add wholeslae order"
                 onClick={() => addWholesaleOrder()}
               >
@@ -289,12 +288,7 @@ function WholesaleOrders(
         }}
         message={<span id="message-id">Created new Wholesale Order!</span>}
         action={[
-          <IconButton
-            key="close"
-            aria-label="close"
-            color="inherit"
-            onClick={handleSnackClose}
-          >
+          <IconButton key="close" aria-label="close" onClick={handleSnackClose}>
             <CloseIcon />
           </IconButton>
         ]}

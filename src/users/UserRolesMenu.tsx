@@ -69,7 +69,7 @@ export default function UserRolesMenu(props: {
     })
       .then(response => response.json())
       .then(resp => {
-        console.log('resp success!?', resp)
+        // console.log('resp success!?', resp)
         handleClose()
         setRole(role)
       })

@@ -104,9 +104,7 @@ export default function UserAutocomplete(props: UserAutocompleteProps) {
             ...params.InputProps,
             endAdornment: (
               <React.Fragment>
-                {loading ? (
-                  <CircularProgress color="inherit" size={20} />
-                ) : null}
+                {loading ? <CircularProgress size={20} /> : null}
                 {params.InputProps.endAdornment}
               </React.Fragment>
             )

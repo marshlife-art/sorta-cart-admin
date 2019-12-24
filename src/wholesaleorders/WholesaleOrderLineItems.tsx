@@ -17,7 +17,9 @@ export default function WholesaleOrderLineItems(props: {
               {li.description}
               {li.quantity}
               {li.total}
-              {li.data && li.data.product}
+              {li.data &&
+                li.data.product &&
+                `${li.data.product.name} ${li.data.product.description}`}
             </div>
           )
         })}

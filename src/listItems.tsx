@@ -11,6 +11,7 @@ import PeopleIcon from '@material-ui/icons/People'
 import LayersIcon from '@material-ui/icons/Layers'
 import AssignmentIcon from '@material-ui/icons/Assignment'
 import LocalShippingIcon from '@material-ui/icons/LocalShipping'
+import OpenInBrowserIcon from '@material-ui/icons/OpenInBrowser'
 
 export const mainListItems = (
   <div>
@@ -25,6 +26,12 @@ export const mainListItems = (
         <ViewListIcon />
       </ListItemIcon>
       <ListItemText primary="Products" />
+    </ListItem>
+    <ListItem button component={Link} to="/products/import">
+      <ListItemIcon>
+        <OpenInBrowserIcon />
+      </ListItemIcon>
+      <ListItemText primary="Import Products" />
     </ListItem>
     <ListItem button component={Link} to="/orders">
       <ListItemIcon>

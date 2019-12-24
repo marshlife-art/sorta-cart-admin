@@ -128,6 +128,12 @@ function Products() {
       .then(result => setSubCategoryLookup(result))
   })
 
+  const [vendorLookup, setVendorLookup] = useState<object>(() => {
+    fetch(`${API_HOST}/products/vendors`)
+      .then(response => response.json())
+      .then(result => setVendorLookup(result))
+  })
+
   return (
     <div className={classes.root}>
       <MaterialTable
@@ -147,12 +153,20 @@ function Products() {
             lookup: subCategoryLookup,
             filterPlaceholder: 'filter'
           },
-          { title: 'name', field: 'name', type: 'string', filtering: false },
+          {
+            title: 'vendor',
+            field: 'vendor',
+            type: 'string',
+            lookup: vendorLookup,
+            filterPlaceholder: 'filter'
+          },
+          { title: 'name', field: 'name', type: 'string', hidden: true },
           {
             title: 'description',
             field: 'description',
             type: 'string',
-            filtering: false
+            filtering: false,
+            render: row => `${row.name} -- ${row.description}`
           },
           {
             title: 'pk',

@@ -213,6 +213,7 @@ function EditWholesaleOrder(
   }
 
   const addLineItemsToOrder = (data: LineItem[]) => {
+    console.log('[EditWholesaleOrder] addLineItemsToOrder data:', data)
     setWholesaleOrder(
       prevOrder =>
         prevOrder && {
@@ -334,12 +335,7 @@ function EditWholesaleOrder(
         }}
         message={<span id="message-id">{snackMsg}</span>}
         action={[
-          <IconButton
-            key="close"
-            aria-label="close"
-            color="inherit"
-            onClick={handleSnackClose}
-          >
+          <IconButton key="close" aria-label="close" onClick={handleSnackClose}>
             <CloseIcon />
           </IconButton>
         ]}

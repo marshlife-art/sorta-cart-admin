@@ -31,6 +31,7 @@ import Orders from './orders/Orders'
 import WholesaleOrders from './wholesaleorders/WholesaleOrders'
 import Users from './users/Users'
 import Products from './products/Products'
+import ImportProducts from './products/ImportProducts'
 import EditOrder from './orders/EditOrder'
 import CreateOrder from './orders/CreateOrder'
 
@@ -114,7 +115,6 @@ const App: React.FC<Props> = (props: Props) => {
             {userService.user && (
               <IconButton
                 edge="start"
-                color="inherit"
                 aria-label="open drawer"
                 onClick={() => setOpen(true)}
               >
@@ -124,7 +124,6 @@ const App: React.FC<Props> = (props: Props) => {
             <Typography
               component="h1"
               variant="h6"
-              color="inherit"
               className={classes.title}
               noWrap
             >
@@ -163,6 +162,12 @@ const App: React.FC<Props> = (props: Props) => {
                 userService={userService}
                 path="/products"
                 component={Products}
+                exact
+              />
+              <ProtectedRoute
+                userService={userService}
+                path="/products/import"
+                component={ImportProducts}
               />
               <ProtectedRoute
                 userService={userService}

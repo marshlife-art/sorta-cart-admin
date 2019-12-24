@@ -102,6 +102,7 @@ function AddWholesaleOrderLineItems(props: {
     icon: 'add',
     onClick: (e: any, data: LineItem[]) => {
       // const ids = data.map(p => p.id)
+      // console.log('addLineItemsToOrder data:', data)
       props.addLineItemsToOrder(data)
     }
   }

@@ -97,7 +97,6 @@ function Pages(props: Props & RouteComponentProps<PageRouterProps>) {
                     <span className={classes.titleText}>PAGES</span>
                     <IconButton
                       aria-label="add page"
-                      color="inherit"
                       title="add page"
                       onClick={() => addPage()}
                     >
@@ -152,12 +151,7 @@ function Pages(props: Props & RouteComponentProps<PageRouterProps>) {
         }}
         message={<span id="message-id">Created new page!</span>}
         action={[
-          <IconButton
-            key="close"
-            aria-label="close"
-            color="inherit"
-            onClick={handleSnackClose}
-          >
+          <IconButton key="close" aria-label="close" onClick={handleSnackClose}>
             <CloseIcon />
           </IconButton>
         ]}

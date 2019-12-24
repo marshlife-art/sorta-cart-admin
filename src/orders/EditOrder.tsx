@@ -280,12 +280,7 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
         }}
         message={<span id="message-id">snackMsg</span>}
         action={[
-          <IconButton
-            key="close"
-            aria-label="close"
-            color="inherit"
-            onClick={handleSnackClose}
-          >
+          <IconButton key="close" aria-label="close" onClick={handleSnackClose}>
             <CloseIcon />
           </IconButton>
         ]}
