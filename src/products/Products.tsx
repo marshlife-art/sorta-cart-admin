@@ -33,21 +33,24 @@ const PROPERTY_MAP: { [index: string]: string } = {
   3: '70%+ organic'
 }
 
-function renderCodes(codes: string) {
-  return codes
-    .split(', ')
-    .map((code, idx) =>
-      PROPERTY_MAP[code] ? (
-        <Chip
-          label={PROPERTY_MAP[code]}
-          style={{ margin: 5 }}
-          size="small"
-          key={`pprop${idx}`}
-        />
-      ) : (
-        ''
+function renderCodes(codes: string | undefined) {
+  return (
+    codes &&
+    codes
+      .split(', ')
+      .map((code, idx) =>
+        PROPERTY_MAP[code] ? (
+          <Chip
+            label={PROPERTY_MAP[code]}
+            style={{ margin: 5 }}
+            size="small"
+            key={`pprop${idx}`}
+          />
+        ) : (
+          ''
+        )
       )
-    )
+  )
 }
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -63,7 +66,6 @@ const useStyles = makeStyles((theme: Theme) =>
 function Products() {
   const classes = useStyles()
   let tableRef = createRef<any>()
-  const [searchExpanded, setSearchExpanded] = useState(false)
 
   // ugh, this is needed because tableRef.current is always null inside the deleteAction onClick fn :/
   const [needsRefresh, setNeedsRefresh] = useState(false)
@@ -72,18 +74,14 @@ function Products() {
     setNeedsRefresh(false)
   }, [tableRef, setNeedsRefresh])
 
-  const searchAction = {
-    icon: searchExpanded ? 'zoom_out' : 'search',
-    tooltip: searchExpanded ? 'Close Search' : 'Search',
-    isFreeAction: true,
-    onClick: () => setSearchExpanded(!searchExpanded)
-  }
-
   const deleteAction = {
     tooltip: 'destroy all selected products',
     icon: 'delete',
-    onClick: (e: any, data: Product[]) => {
-      const ids = data.map(p => p.id)
+    onClick: (e: any, data: Product | Product[]) => {
+      const ids = Array.isArray(data) ? data.map(p => p.id) : [data.id]
+      if (ids.length === 0) {
+        return
+      }
       if (
         window.confirm(
           `are sure you want to destroy these ${ids.length} products?`
@@ -102,13 +100,6 @@ function Products() {
       }
     }
   }
-
-  const [actions, setActions] = useState<Action<any>[]>([])
-
-  useEffect(() => {
-    setActions([searchAction, deleteAction])
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchExpanded]) // note: adding 'searchAction' to dep array is not pleasant :/
 
   useEffect(() => {
     if (needsRefresh) {
@@ -233,11 +224,11 @@ function Products() {
           pageSizeOptions: [50, 100, 500],
           debounceInterval: 750,
           filtering: true,
-          search: searchExpanded,
+          search: true,
           emptyRowsWhenPaging: false,
           selection: true
         }}
-        actions={actions}
+        actions={[deleteAction]}
       />
     </div>
   )
