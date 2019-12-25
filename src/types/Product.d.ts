@@ -16,4 +16,6 @@ export interface Product {
   codes?: string
   import_tag?: string
   vendor: string
+  createdAt?: string
+  updatedAt?: string
 }

@@ -1,5 +1,6 @@
 import { Product } from './Product'
 import { User } from './User'
+import { Member } from './Member'
 
 export type PaymentStatus =
   | 'balance_due'
@@ -39,6 +40,7 @@ export interface Order {
   OrderLineItems: LineItem[]
   UserId?: string
   User?: User
+  Member?: Member
 }
 
 export type PartialOrder = Partial<Order>

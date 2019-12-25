@@ -34,6 +34,8 @@ import Products from './products/Products'
 import ImportProducts from './products/ImportProducts'
 import EditOrder from './orders/EditOrder'
 import CreateOrder from './orders/CreateOrder'
+import Members from './members/Members'
+import EditMember from './members/EditMember'
 
 const drawerWidth = 240
 
@@ -194,6 +196,17 @@ const App: React.FC<Props> = (props: Props) => {
                 userService={userService}
                 path="/users"
                 component={Users}
+              />
+              <ProtectedRoute
+                userService={userService}
+                path="/members"
+                component={Members}
+                exact
+              />
+              <ProtectedRoute
+                userService={userService}
+                path="/members/:id"
+                component={EditMember}
               />
               <ProtectedRoute
                 userService={userService}

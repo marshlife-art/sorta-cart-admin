@@ -1,3 +1,5 @@
+import { Member } from './Member'
+
 export interface User {
   id?: string
   name?: string
@@ -6,6 +8,9 @@ export interface User {
   address?: string
   token?: string
   role?: string
+  Member?: Member
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface UserLogin {

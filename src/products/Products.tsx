@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, createRef } from 'react'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
-import MaterialTable, { Action } from 'material-table'
+import MaterialTable from 'material-table'
 import { Chip } from '@material-ui/core'
 // import MoreVertIcon from '@material-ui/icons/MoreVert'
 // import IconButton from '@material-ui/core/IconButton'

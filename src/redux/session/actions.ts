@@ -44,7 +44,7 @@ export const checkSession = (): ThunkAction<
       if (!token) {
         // reject('no token')
         dispatch(isFetching(false))
-        dispatch(set({ name: undefined, email: undefined, token: undefined }))
+        dispatch(set({ email: undefined, token: undefined }))
         resolve()
         return
       }
@@ -58,14 +58,12 @@ export const checkSession = (): ThunkAction<
           if (response.msg === 'ok' && response.user) {
             dispatch(set(response.user))
           } else {
-            dispatch(
-              set({ name: undefined, email: undefined, token: undefined })
-            )
+            dispatch(set({ email: undefined, token: undefined }))
           }
         })
         .catch(err => {
           console.warn('check_session caught err:', err)
-          dispatch(set({ name: undefined, email: undefined, token: undefined }))
+          dispatch(set({ email: undefined, token: undefined }))
         })
         .finally(() => {
           dispatch(isFetching(false))

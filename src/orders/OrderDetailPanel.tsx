@@ -35,6 +35,7 @@ const useStyles = makeStyles((theme: Theme) =>
 export default function OrderDetailPanel(props: { order: Order }) {
   const classes = useStyles()
   const order = props.order
+  console.log('[OrderDetailPanel] zeeee order:', order)
   const line_items = props.order.OrderLineItems || []
   const adjustments = line_items.filter(li => li.kind !== 'product')
 
@@ -44,6 +45,12 @@ export default function OrderDetailPanel(props: { order: Order }) {
         <TableHead>
           <TableRow>
             <TableCell component="th">Line Items</TableCell>
+            <TableCell component="th" align="right">
+              price
+            </TableCell>
+            <TableCell component="th" align="right">
+              unit
+            </TableCell>
             <TableCell component="th" align="right">
               qty
             </TableCell>
@@ -58,11 +65,11 @@ export default function OrderDetailPanel(props: { order: Order }) {
               li.kind === 'product' && (
                 <TableRow key={`orderli${idx}`}>
                   <TableCell component="td" scope="row">
-                    {li.vendor && `[${li.vendor}] `}
-                    {li.data && li.data.product
-                      ? `${li.data.product.name} ${li.data.product.description}`
-                      : 'product'}
+                    {li.vendor && `[${li.vendor}] ${li.description} `}
+                    {li.data && li.data.product ? `${li.data.product.unf}` : ''}
                   </TableCell>
+                  <TableCell align="right">{li.price}</TableCell>
+                  <TableCell align="right">{li.selected_unit}</TableCell>
                   <TableCell align="right">{li.quantity}</TableCell>
                   <TableCell align="right">{li.total}</TableCell>
                 </TableRow>
@@ -78,7 +85,7 @@ export default function OrderDetailPanel(props: { order: Order }) {
           )}
           {adjustments.map((li, idx) => (
             <TableRow key={`orderli${idx}`}>
-              <TableCell component="td" scope="row">
+              <TableCell component="td" scope="row" colSpan={3}>
                 {`(${li.kind}) `} {li.description}
               </TableCell>
               <TableCell align="right">{li.quantity}</TableCell>
@@ -113,7 +120,7 @@ export default function OrderDetailPanel(props: { order: Order }) {
             </Typography>
           </div>
         </Grid>
-        {order.User && (
+        {order.User && order.User !== order.Member && (
           <Grid item xs={4}>
             <div className={classes.gridItem}>
               <Typography
@@ -122,23 +129,26 @@ export default function OrderDetailPanel(props: { order: Order }) {
                 className={classes.gridHeading}
                 gutterBottom
               >
-                user
+                created by
               </Typography>
               <Typography variant="body1">
-                {order.User.name}{' '}
+                {order.User.Member && order.User.Member.name}{' '}
                 <Link color="primary" href={`mailto:${order.User.email}`}>
                   {order.User.email}
                 </Link>{' '}
                 <br />
-                {order.User.phone && (
+                {order.User.Member && order.User.Member.phone && (
                   <>
-                    <Link color="primary" href={`tel:${order.User.phone}`}>
-                      {order.User.phone}
+                    <Link
+                      color="primary"
+                      href={`tel:${order.User.Member.phone}`}
+                    >
+                      {order.User.Member.phone}
                     </Link>{' '}
                     <br />
                   </>
                 )}
-                {order.User.address && <>{order.User.address} </>}
+                {order.User.Member && <>{order.User.Member.address} </>}
               </Typography>
             </div>
           </Grid>
