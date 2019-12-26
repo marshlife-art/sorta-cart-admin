@@ -312,7 +312,7 @@ function EditWholesaleOrder(
               </div>
             </Grid>
           </Grid>
-          <WholesaleOrderLineItems lineItems={wholesaleOrder.OrderLineItems} />
+          <WholesaleOrderLineItems wholesaleOrder={wholesaleOrder} />
         </>
       )}
 
