@@ -3,27 +3,27 @@ import TextField from '@material-ui/core/TextField'
 import Autocomplete from '@material-ui/lab/Autocomplete'
 import CircularProgress from '@material-ui/core/CircularProgress'
 
-import { User } from '../types/User'
+import { Member } from '../types/Member'
 import { API_HOST } from '../constants'
 
 const token = localStorage && localStorage.getItem('token')
 
-interface UserResponse {
-  data: User[]
+interface MemberResponse {
+  data: Member[]
 }
 
-interface UserOption {
+interface MemberOption {
   name: string
-  user: User
+  member: Member
 }
 
-interface UserAutocompleteProps {
-  onItemSelected: (value: { name: string; user: User }) => void
+interface MemberAutocompleteProps {
+  onItemSelected: (value: { name: string; member: Member }) => void
 }
 
-export default function UserAutocomplete(props: UserAutocompleteProps) {
+export default function MemberAutocomplete(props: MemberAutocompleteProps) {
   const [open, setOpen] = React.useState(false)
-  const [options, setOptions] = React.useState<UserOption[]>([])
+  const [options, setOptions] = React.useState<MemberOption[]>([])
   const [q, setQ] = React.useState('')
   const [loading, setLoading] = React.useState(open && options.length === 0)
 
@@ -35,7 +35,7 @@ export default function UserAutocomplete(props: UserAutocompleteProps) {
     }
 
     ;(async () => {
-      const response = await fetch(`${API_HOST}/users`, {
+      const response = await fetch(`${API_HOST}/members`, {
         method: 'post',
         headers: {
           'Content-Type': 'application/json',
@@ -44,13 +44,15 @@ export default function UserAutocomplete(props: UserAutocompleteProps) {
         body: JSON.stringify({ search: q })
       })
 
-      const users = (await response.json()) as UserResponse
-
+      const members = (await response.json()) as MemberResponse
+      console.log('[MemberAutocomplete] members:', members)
       if (active) {
         setOptions(
-          users.data.map(p => ({
-            name: `${p.name} ${p.email}`,
-            user: p
+          members.data.map(p => ({
+            name: `${p.name} ${
+              p.User && p.User.email ? p.User.email : p.registration_email
+            }`,
+            member: p
           }))
         )
         setLoading(false)
@@ -95,8 +97,9 @@ export default function UserAutocomplete(props: UserAutocompleteProps) {
       renderInput={params => (
         <TextField
           {...params}
-          label="User search"
+          label="Member search"
           fullWidth
+          autoFocus
           variant="outlined"
           value={q}
           onChange={event => onInputChnage(event.target.value)}

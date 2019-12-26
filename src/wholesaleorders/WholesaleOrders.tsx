@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link, withRouter, RouteComponentProps } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
+import MUILink from '@material-ui/core/Link'
 import Paper from '@material-ui/core/Paper'
 import Grid from '@material-ui/core/Grid'
 import List from '@material-ui/core/List'
@@ -29,6 +30,7 @@ import { withStyles } from '@material-ui/core/styles'
 import { OrderStatus } from '../types/Order'
 import Loading from '../Loading'
 import { ORDER_STATUSES } from '../constants'
+import AddWholesaleOrderLineItems from './AddWholesaleOrderLineItems'
 
 const ExpansionPanel = withStyles({
   root: {
@@ -113,8 +115,6 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 )
 
-const Default = () => <h3>wholesale orders!</h3>
-
 interface Props {
   userService?: UserService
 }
@@ -184,10 +184,20 @@ function WholesaleOrders(
         className={classes.root}
         spacing={2}
       >
-        <Grid xs={12} sm={4} md={3} item>
+        <Grid sm={12} md={3} lg={2} item>
           <Paper className={classes.paperNav}>
             <div className={classes.title}>
-              <span className={classes.titleText}>WHOLESALE ORDERS</span>
+              <MUILink
+                color="textPrimary"
+                href=""
+                onClick={(e: any) => {
+                  e.preventDefault()
+                  props.history.push('/wholesaleorders')
+                }}
+                className={classes.titleText}
+              >
+                WHOLESALE ORDERS
+              </MUILink>
               <IconButton
                 aria-label="add wholesale order"
                 title="add wholeslae order"
@@ -237,9 +247,10 @@ function WholesaleOrders(
                               }
                             >
                               <ListItemText
-                                primary={`${order.vendor} ${new Date(
+                                primary={order.vendor}
+                                secondary={new Date(
                                   order.createdAt
-                                ).toLocaleDateString()}`}
+                                ).toLocaleDateString()}
                               />
                             </ListItem>
                           )
@@ -257,22 +268,24 @@ function WholesaleOrders(
           </Paper>
         </Grid>
 
-        <Grid xs={12} sm={8} md={9} item>
-          <Paper className={classes.paper}>
-            <Switch>
-              <ProtectedRoute
-                userService={userService}
-                path="/wholesaleorders"
-                component={Default}
-                exact
-              />
-              <ProtectedRoute
-                userService={userService}
-                path="/wholesaleorders/edit/:id"
-                component={EditWholesaleOrder}
-              />
-            </Switch>
-          </Paper>
+        <Grid sm={12} md={9} lg={10} item>
+          <Switch>
+            <ProtectedRoute
+              userService={userService}
+              path="/wholesaleorders"
+              exact
+            >
+              <AddWholesaleOrderLineItems setReloadOrders={setReloadOrders} />
+            </ProtectedRoute>
+            <ProtectedRoute
+              userService={userService}
+              path="/wholesaleorders/edit/:id"
+            >
+              <Paper className={classes.paper}>
+                <EditWholesaleOrder />
+              </Paper>
+            </ProtectedRoute>
+          </Switch>
         </Grid>
       </Grid>
       <Snackbar

@@ -11,16 +11,16 @@ import Typography from '@material-ui/core/Typography'
 import CloseIcon from '@material-ui/icons/Close'
 import AddIcon from '@material-ui/icons/Add'
 import ClearIcon from '@material-ui/icons/Clear'
-import TagFacesIcon from '@material-ui/icons/TagFaces'
+import PeopleIcon from '@material-ui/icons/People'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 
 import { Order } from '../types/Order'
 import { LineItem } from '../types/Order'
 import OrderLineItems from './OrderLineItems'
 import LineItemAutocomplete from './LineItemAutocomplete'
-import UserAutocomplete from './UserAutocomplete'
+import MemberAutocomplete from './MemberAutocomplete'
 import { Product } from '../types/Product'
-import { User } from '../types/User'
+import { Member } from '../types/Member'
 import { API_HOST } from '../constants'
 
 const token = localStorage && localStorage.getItem('token')
@@ -74,7 +74,7 @@ function CreateOrder(props: RouteComponentProps) {
   const [order, setOrder] = useState<Order>(blankOrder)
   const [saving, setSaving] = useState(false)
   const [showLiAutocomplete, setShowLiAutocomplete] = useState(false)
-  const [showUserAutocomplete, setShowUserAutocomplete] = useState(false)
+  const [showMemberAutocomplete, setShowMemberAutocomplete] = useState(false)
   const [snackOpen, setSnackOpen] = React.useState(false)
   const [snackMsg, setSnackMsg] = React.useState('')
 
@@ -148,10 +148,14 @@ function CreateOrder(props: RouteComponentProps) {
     }))
   }
 
-  function onUserItemSelected(value?: { name: string; user: User }) {
-    // console.log('onUserItemSelected value:', value)
-    if (value && value.user) {
-      const { name, email, phone, address } = value.user
+  function onMembertemSelected(value?: { name: string; member: Member }) {
+    // console.log('onMembertemSelected value:', value)
+    if (value && value.member) {
+      const { name, phone, address } = value.member // email
+      const email =
+        value.member.User && value.member.User.email
+          ? value.member.User.email
+          : value.member.registration_email
       setOrder(prevOrder => ({
         ...prevOrder,
         name: name || '',
@@ -159,6 +163,7 @@ function CreateOrder(props: RouteComponentProps) {
         phone: phone || '',
         address: address || ''
       }))
+      setShowMemberAutocomplete(false)
     }
   }
 
@@ -203,17 +208,17 @@ function CreateOrder(props: RouteComponentProps) {
         alignItems="flex-start"
       >
         <Grid item sm={12} md={4} className={classes.sticky}>
-          {showUserAutocomplete ? (
+          {showMemberAutocomplete ? (
             <div style={{ display: 'flex' }}>
               <Tooltip title="close">
                 <IconButton
                   aria-label="close"
-                  onClick={() => setShowUserAutocomplete(false)}
+                  onClick={() => setShowMemberAutocomplete(false)}
                 >
                   <ClearIcon fontSize="inherit" />
                 </IconButton>
               </Tooltip>
-              <UserAutocomplete onItemSelected={onUserItemSelected} />
+              <MemberAutocomplete onItemSelected={onMembertemSelected} />
             </div>
           ) : (
             <div
@@ -240,9 +245,9 @@ function CreateOrder(props: RouteComponentProps) {
                 <Tooltip title="ADD USER DETAILS">
                   <IconButton
                     aria-label="add user details"
-                    onClick={() => setShowUserAutocomplete(true)}
+                    onClick={() => setShowMemberAutocomplete(true)}
                   >
-                    <TagFacesIcon />
+                    <PeopleIcon />
                   </IconButton>
                 </Tooltip>
               </div>

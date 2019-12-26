@@ -114,7 +114,7 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
           justify="center"
           alignItems="flex-start"
         >
-          <Grid item sm={12} md={6}>
+          <Grid item sm={12} md={4}>
             <h2>
               EDIT ORDER <i>#{order.id}</i>
             </h2>
@@ -209,13 +209,13 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
               </Grid>
 
               <Grid item>
-                <Button variant="contained" color="primary">
+                <Button variant="contained" color="primary" disabled>
                   Save
                 </Button>
               </Grid>
             </Grid>
           </Grid>
-          <Grid item sm={12} md={6}>
+          <Grid item sm={12} md={8}>
             <div>
               {showLiAutocomplete ? (
                 <div style={{ display: 'flex' }}>

@@ -1,21 +1,32 @@
 import React from 'react'
 import { RouteProps, Redirect, Route } from 'react-router-dom'
 
-import { UserServiceProps } from '../redux/session/reducers'
+import { UserServiceProps, UserService } from '../redux/session/reducers'
+
+const isAdmin = (userService: UserService): boolean =>
+  userService.user && userService.user.role && userService.user.role === 'admin'
+    ? true
+    : false
+
+interface ProtectedRouteProps {
+  children?: React.ReactNode
+}
 
 const ProtectedRoute = ({
   component: Component,
   userService,
+  children,
   ...rest
-}: RouteProps & UserServiceProps) => (
+}: ProtectedRouteProps & RouteProps & UserServiceProps) => (
   <Route
     {...rest}
     render={props =>
-      userService.user &&
-      userService.user.role &&
-      userService.user.role === 'admin' &&
-      Component ? (
-        <Component {...props} />
+      isAdmin(userService) ? (
+        Component ? (
+          <Component {...props} />
+        ) : (
+          children
+        )
       ) : (
         <Redirect
           to={{

@@ -50,6 +50,7 @@ export interface OrderRouterProps {
 }
 
 export interface LineItem {
+  id?: string
   description: string
   quantity: number
   selected_unit?: string

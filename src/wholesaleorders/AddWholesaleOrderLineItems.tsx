@@ -1,118 +1,53 @@
-// import React, { useState } from 'react'
-// import { Button } from '@material-ui/core'
-
-// export default function AddWholesaleOrderLineItems() {
-//   const [showTable, setShowTable] = useState(false)
-
-//   return (
-//     <div>
-//       <Button onClick={() => setShowTable(!showTable)}>
-//         {showTable ? 'X' : 'add more line items'}
-//       </Button>
-//       {showTable && <>li table</>}
-//     </div>
-//   )
-// }
-
 import React, { useState, useEffect, useCallback, createRef } from 'react'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
-import MaterialTable, { Action } from 'material-table'
-// import { Chip } from '@material-ui/core'
-// import MoreVertIcon from '@material-ui/icons/MoreVert'
-// import IconButton from '@material-ui/core/IconButton'
-// import Tooltip from '@material-ui/core/Tooltip'
+import { Menu, MenuItem } from '@material-ui/core'
+import Divider from '@material-ui/core/Divider'
+import MaterialTable from 'material-table'
 
 import { LineItem } from '../types/Order'
 import { API_HOST } from '../constants'
 
 const token = localStorage && localStorage.getItem('token')
 
-// const PROPERTY_MAP: { [index: string]: string } = {
-//   a: 'Artificial ingredients',
-//   c: 'Low carb',
-//   d: 'Dairy free',
-//   f: 'Food Service items',
-//   g: 'Gluten free',
-//   k: 'Kosher',
-//   l: 'Low sodium/no salt',
-//   m: 'Non-GMO Project Verified',
-//   og: 'Organic',
-//   r: 'Refined sugar',
-//   v: 'Vegan',
-//   w: 'Wheat free',
-//   ft: 'Fair Trade',
-//   n: 'Natural',
-//   s: 'Specialty Only',
-//   y: 'Yeast free',
-//   1: '100% organic',
-//   2: '95%+ organic',
-//   3: '70%+ organic'
-// }
-
-// function renderCodes(codes: string) {
-//   return codes
-//     .split(', ')
-//     .map((code, idx) =>
-//       PROPERTY_MAP[code] ? (
-//         <Chip
-//           label={PROPERTY_MAP[code]}
-//           style={{ margin: 5 }}
-//           size="small"
-//           key={`pprop${idx}`}
-//         />
-//       ) : (
-//         ''
-//       )
-//     )
-// }
-
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
-      padding: theme.spacing(2),
-      maxWidth: '100vw',
-      minHeight: `calc(100vh - 64px)`
+      maxWidth: '100vw'
     }
   })
 )
 
-function AddWholesaleOrderLineItems(props: {
-  addLineItemsToOrder: (data: LineItem[]) => void
-}) {
+interface AddWholesaleOrderLineItemsProps {
+  setReloadOrders: React.Dispatch<React.SetStateAction<boolean>>
+}
+
+function AddWholesaleOrderLineItems(props: AddWholesaleOrderLineItemsProps) {
   const classes = useStyles()
   let tableRef = createRef<any>()
-  const [searchExpanded, setSearchExpanded] = useState(false)
 
-  // ugh, this is needed because tableRef.current is always null inside the addAction onClick fn :/
   const [needsRefresh, setNeedsRefresh] = useState(false)
   const refreshTable = useCallback(() => {
     tableRef.current && tableRef.current.onQueryChange()
     setNeedsRefresh(false)
   }, [tableRef, setNeedsRefresh])
 
-  const searchAction = {
-    icon: searchExpanded ? 'zoom_out' : 'search',
-    tooltip: searchExpanded ? 'Close Search' : 'Search',
-    isFreeAction: true,
-    onClick: () => setSearchExpanded(!searchExpanded)
-  }
+  const [selectedLineItems, setSelectedLineItems] = useState<string[]>()
 
   const addAction = {
     tooltip: 'ADD LINE ITEMS TO ORDER',
     icon: 'add',
-    onClick: (e: any, data: LineItem[]) => {
-      // const ids = data.map(p => p.id)
-      // console.log('addLineItemsToOrder data:', data)
-      props.addLineItemsToOrder(data)
+    onClick: (
+      event: React.MouseEvent<HTMLButtonElement>,
+      data: LineItem | LineItem[]
+    ) => {
+      handleWholesaleOrderMenuOpen(event)
+      console.log('addLineItemsToOrder data:', data)
+      if (Array.isArray(data)) {
+        // ain't nobody (tsc) tell me nothin
+        setSelectedLineItems(data.map(li => li.id) as string[])
+      }
     }
   }
-
-  const [actions, setActions] = useState<Action<any>[]>([])
-
-  useEffect(() => {
-    setActions([searchAction, addAction])
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchExpanded]) // note: adding 'searchAction' to dep array is not pleasant :/
 
   useEffect(() => {
     if (needsRefresh) {
@@ -120,17 +55,75 @@ function AddWholesaleOrderLineItems(props: {
     }
   }, [needsRefresh, refreshTable])
 
-  // const [categoryLookup, setCategoryLookup] = useState<object>(() => {
-  //   fetch(`${API_HOST}/categories`)
-  //     .then(response => response.json())
-  //     .then(result => setCategoryLookup(result))
-  // })
+  const [wholesaleorderLookup, setWholesaleOrderLookup] = useState<
+    Array<{ id: string; name: string }>
+  >()
+  useEffect(() => {
+    fetch(`${API_HOST}/wholesaleorders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ status: 'new' })
+    })
+      .then(response => response.json())
+      .then(result =>
+        setWholesaleOrderLookup(
+          result.data.map(
+            (order: { id: string; vendor: string; createdAt: string }) => ({
+              id: order.id,
+              name: `${order.vendor} ${new Date(
+                order.createdAt
+              ).toLocaleDateString()}`
+            })
+          )
+        )
+      )
+      .catch(console.warn)
+  }, [])
+  const [
+    wholesaleorderMenuAnchorEl,
+    setWholesaleOrderMenuAnchorEl
+  ] = React.useState<null | HTMLElement>(null)
 
-  // const [subCategoryLookup, setSubCategoryLookup] = useState<object>(() => {
-  //   fetch(`${API_HOST}/sub_categories`)
-  //     .then(response => response.json())
-  //     .then(result => setSubCategoryLookup(result))
-  // })
+  const handleWholesaleOrderMenuOpen = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setWholesaleOrderMenuAnchorEl(event.currentTarget)
+  }
+
+  const handleWholesaleOrderMenuClose = () => {
+    setSelectedLineItems([])
+    setWholesaleOrderMenuAnchorEl(null)
+  }
+
+  const handleWholesaleOrderSelect = (id: string) => {
+    console.log(
+      'handleWholesaleOrderSelect id:',
+      id,
+      ' selectedLineItems:',
+      selectedLineItems
+    )
+    fetch(`${API_HOST}/wholesaleorder/addlineitems`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ id, selectedLineItems })
+    })
+      .then(response => response.json())
+      .then(result => {
+        console.log('update line items result:', result)
+      })
+      .catch(console.warn)
+      .finally(() => {
+        handleWholesaleOrderMenuClose()
+        setNeedsRefresh(true)
+        props.setReloadOrders(true)
+      })
+  }
 
   return (
     <div className={classes.root}>
@@ -188,7 +181,7 @@ function AddWholesaleOrderLineItems(props: {
               })
           })
         }
-        title="Add Line Items"
+        title="Line Items"
         options={{
           headerStyle: { position: 'sticky', top: 0 },
           maxBodyHeight: 'calc(100vh - 121px - 64px - 28px)',
@@ -196,12 +189,36 @@ function AddWholesaleOrderLineItems(props: {
           pageSizeOptions: [50, 100, 500],
           debounceInterval: 750,
           filtering: true,
-          search: searchExpanded,
+          search: true,
           emptyRowsWhenPaging: false,
           selection: true
         }}
-        actions={actions}
+        actions={[addAction]}
       />
+
+      <Menu
+        id="simple-menu"
+        anchorEl={wholesaleorderMenuAnchorEl}
+        keepMounted
+        open={Boolean(wholesaleorderMenuAnchorEl)}
+        onClose={handleWholesaleOrderMenuClose}
+      >
+        <MenuItem onClick={() => handleWholesaleOrderSelect('new')}>
+          New wholesale order
+        </MenuItem>
+        <Divider />
+        {wholesaleorderLookup &&
+          wholesaleorderLookup.map(
+            (wholesaleorder: { id: string; name: string }) => (
+              <MenuItem
+                key={`wholesaleorder-sel-${wholesaleorder.id}`}
+                onClick={() => handleWholesaleOrderSelect(wholesaleorder.id)}
+              >
+                {wholesaleorder.name}
+              </MenuItem>
+            )
+          )}
+      </Menu>
     </div>
   )
 }

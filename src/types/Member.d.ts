@@ -1,3 +1,5 @@
+import { User } from './User'
+
 export interface Member {
   id: string
   registration_email: string
@@ -13,6 +15,7 @@ export interface Member {
   data: object
   createdAt?: string
   updatedAt?: string
+  User?: User
 }
 
 export interface MemberRouterProps {

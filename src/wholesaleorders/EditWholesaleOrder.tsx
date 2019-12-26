@@ -29,8 +29,7 @@ import {
 } from '../constants'
 import EditMenu from './EditMenu'
 import WholesaleOrderLineItems from './WholesaleOrderLineItems'
-import AddWholesaleOrderLineItems from './AddWholesaleOrderLineItems'
-import { LineItem } from '../types/Order'
+// import { LineItem } from '../types/Order'
 
 const token = localStorage && localStorage.getItem('token')
 
@@ -188,41 +187,33 @@ function EditWholesaleOrder(
   )
 
   const onDeleteBtnClick = (): void => {
-    fetch(`${API_HOST}/wholesaleorder`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(wholesaleOrder)
-    })
-      .then(response => response.json())
-      .then(response => {
-        if (response.error) {
-          setSnackMsg(response.msg)
+    wholesaleOrder &&
+      fetch(`${API_HOST}/wholesaleorder`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ id: wholesaleOrder.id })
+      })
+        .then(response => response.json())
+        .then(response => {
+          if (response.error) {
+            setSnackMsg(response.msg)
+            setSnackOpen(true)
+          } else {
+            props.history.replace('/wholesaleorders')
+          }
+        })
+        .catch(error => {
+          console.warn('delete wholesaleOrder fetch caught err:', error)
+          setSnackMsg(`o noz! ${error}`)
           setSnackOpen(true)
-        } else {
-          props.history.replace('/wholesaleorders')
-        }
-      })
-      .catch(error => {
-        console.warn('delete wholesaleOrder fetch caught err:', error)
-        setSnackMsg(`o noz! ${error}`)
-        setSnackOpen(true)
-      })
+        })
   }
 
-  const addLineItemsToOrder = (data: LineItem[]) => {
-    console.log('[EditWholesaleOrder] addLineItemsToOrder data:', data)
-    setWholesaleOrder(
-      prevOrder =>
-        prevOrder && {
-          ...prevOrder,
-          OrderLineItems: prevOrder.OrderLineItems
-            ? [...prevOrder.OrderLineItems, ...data]
-            : [...data]
-        }
-    )
+  function valueFor(field: keyof WholesaleOrder) {
+    return wholesaleOrder && wholesaleOrder[field] ? wholesaleOrder[field] : ''
   }
 
   return wholesaleOrder ? (
@@ -243,7 +234,7 @@ function EditWholesaleOrder(
                 className={classes.vendor}
                 label="vendor"
                 fullWidth
-                value={wholesaleOrder.vendor}
+                value={valueFor('vendor')}
                 onChange={handleOrderVendorChange}
               />
               <FormControl fullWidth>
@@ -251,7 +242,7 @@ function EditWholesaleOrder(
                 <Select
                   labelId="order-status-select-label"
                   id="order-status-select"
-                  value={wholesaleOrder.status}
+                  value={valueFor('status')}
                   onChange={handleStatusChange}
                 >
                   {Object.keys(ORDER_STATUSES).map(status => (
@@ -268,7 +259,7 @@ function EditWholesaleOrder(
                 <Select
                   labelId="payment-status-select-label"
                   id="payment-status-select"
-                  value={wholesaleOrder.payment_status}
+                  value={valueFor('payment_status')}
                   onChange={handlePaymentStatusChange}
                 >
                   {Object.keys(PAYMENT_STATUSES).map(status => (
@@ -285,7 +276,7 @@ function EditWholesaleOrder(
                 <Select
                   labelId="shipment-status-select-label"
                   id="shipment-status-select"
-                  value={wholesaleOrder.shipment_status}
+                  value={valueFor('shipment_status')}
                   onChange={handleShipmentStatusChange}
                 >
                   {Object.keys(SHIPMENT_STATUSES).map(status => (
@@ -303,7 +294,7 @@ function EditWholesaleOrder(
                 fullWidth
                 rows={4}
                 rowsMax={28}
-                value={wholesaleOrder.notes}
+                value={valueFor('notes')}
                 onChange={handleOrderNotesChange}
               />
               <div className={classes.editMenu}>
@@ -316,9 +307,6 @@ function EditWholesaleOrder(
             </Grid>
           </Grid>
           <WholesaleOrderLineItems lineItems={wholesaleOrder.OrderLineItems} />
-          <AddWholesaleOrderLineItems
-            addLineItemsToOrder={addLineItemsToOrder}
-          />
         </>
       )}
 
