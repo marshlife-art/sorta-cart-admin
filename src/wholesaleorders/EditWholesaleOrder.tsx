@@ -46,8 +46,13 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 )
 
+interface EditWholesaleOrderProps {
+  setReloadOrders: React.Dispatch<React.SetStateAction<boolean>>
+}
+
 function EditWholesaleOrder(
-  props: RouteComponentProps<WholesaleOrderRouterProps>
+  props: EditWholesaleOrderProps &
+    RouteComponentProps<WholesaleOrderRouterProps>
 ) {
   const classes = useStyles()
 
@@ -176,6 +181,7 @@ function EditWholesaleOrder(
       })
     }
     setDoSave(true)
+    props.setReloadOrders(true)
   }
 
   useWholesaleOrderSaveService(

@@ -282,7 +282,7 @@ function WholesaleOrders(
               path="/wholesaleorders/edit/:id"
             >
               <Paper className={classes.paper}>
-                <EditWholesaleOrder />
+                <EditWholesaleOrder setReloadOrders={setReloadOrders} />
               </Paper>
             </ProtectedRoute>
           </Switch>

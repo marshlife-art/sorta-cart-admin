@@ -65,7 +65,7 @@ function AddWholesaleOrderLineItems(props: AddWholesaleOrderLineItemsProps) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`
       },
-      body: JSON.stringify({ status: 'new' })
+      body: JSON.stringify({ status: ['new', 'pending'] })
     })
       .then(response => response.json())
       .then(result =>
