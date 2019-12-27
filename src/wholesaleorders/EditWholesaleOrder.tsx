@@ -60,10 +60,13 @@ function EditWholesaleOrder(
   const [wholesaleOrder, setWholesaleOrder] = useState<WholesaleOrder>()
   const [loading, setLoading] = useState(true)
   const [doSave, setDoSave] = useState(false)
+  const [reload, setReload] = useState(true)
 
   const wholesaleOrderService = useWholesaleOrderService(
     wholesaleOrderId,
-    setLoading
+    setLoading,
+    reload,
+    setReload
   )
 
   useEffect(() => {
@@ -312,7 +315,10 @@ function EditWholesaleOrder(
               </div>
             </Grid>
           </Grid>
-          <WholesaleOrderLineItems wholesaleOrder={wholesaleOrder} />
+          <WholesaleOrderLineItems
+            wholesaleOrder={wholesaleOrder}
+            setReload={setReload}
+          />
         </>
       )}
 

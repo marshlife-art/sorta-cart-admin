@@ -1,14 +1,18 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Table from '@material-ui/core/Table'
 import TableBody from '@material-ui/core/TableBody'
 import TableCell from '@material-ui/core/TableCell'
 import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
+import Tooltip from '@material-ui/core/Tooltip'
+import IconButton from '@material-ui/core/IconButton'
+import CloseIcon from '@material-ui/icons/Close'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 
 import { LineItem } from '../types/Order'
 import { Product } from '../types/Product'
 import { WholesaleOrder } from '../types/WholesaleOrder'
+import { API_HOST } from '../constants'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -28,7 +32,6 @@ const useStyles = makeStyles((theme: Theme) =>
 interface GroupedItem {
   qtySum: number
   totalSum: number
-  // id: number | undefined
   product: Product | undefined
   vendor: string | undefined
   description: string
@@ -37,75 +40,107 @@ interface GroupedItem {
 
 export default function WholesaleOrderLineItems(props: {
   wholesaleOrder?: WholesaleOrder
+  setReload: React.Dispatch<React.SetStateAction<boolean>>
 }) {
   const classes = useStyles()
   const lineItems = props?.wholesaleOrder?.OrderLineItems
-  // console.log('wholesaleOrder:', props?.wholesaleOrder)
-  let orderTotal: number = 0
-  let productTotal: number = 0
-  let adjustmentTotal: number = 0
-  let groupedLineItems: {
+
+  const [orderTotal, setOrderTotal] = useState(0)
+  const [productTotal, setProductTotal] = useState(0)
+  const [adjustmentTotal, setAdjustmentTotal] = useState(0)
+  const [groupedLineItems, setGroupedLineItems] = useState<{
     [key: string]: GroupedItem
-  } = {}
+  }>({})
 
-  lineItems?.forEach(li => {
-    const id = li.data && li.data.product && li.data.product.id
-    const key = id ? id : li.description
+  function calc() {
+    let _groupedLineItems: {
+      [key: string]: GroupedItem
+    } = {}
 
-    let acc = groupedLineItems[key]
+    setOrderTotal(0)
+    setProductTotal(0)
+    setAdjustmentTotal(0)
 
-    const qty =
-      li.data && li.data.product && li.selected_unit === 'EA'
-        ? li.quantity / li.data.product.pk
-        : li.quantity
+    lineItems?.forEach(li => {
+      const id = li.data && li.data.product && li.data.product.id
+      const key = id ? id : li.description
 
-    // ain't no(tsc)body tell me nothin'
-    // const liTotal = parseFloat((li.total as unknown) as string)
-    const liTotal =
-      li.data && li.data.product
-        ? +(parseFloat(li.data.product.ws_price_cost) * qty).toFixed(2)
-        : li.total
+      let acc = _groupedLineItems[key]
 
-    groupedLineItems[key] = {
-      qtySum: acc ? acc.qtySum + qty : qty,
-      totalSum: acc ? acc.totalSum + liTotal : liTotal,
-      product: li && li.data && li.data.product,
-      vendor: li.vendor,
-      description: li.description,
-      line_items: acc ? [...acc.line_items, li] : [li]
-    }
-    productTotal = productTotal + parseFloat(`${liTotal}`)
-    orderTotal = orderTotal + liTotal
-  })
+      const qty =
+        li.data && li.data.product && li.selected_unit === 'EA'
+          ? li.quantity / li.data.product.pk
+          : li.quantity
 
-  Object.values(groupedLineItems).forEach(item => {
-    // check if qtySum is not a round number (i.e. a partial case)
-    if (item.qtySum % 1 !== 0 && item.product) {
-      const pk = item.product.pk
-      const qty = item.line_items.reduce((acc, v) => acc + v.quantity, 0)
-      // quantity needed to complete a case
-      const quantity = Math.abs((qty % pk) - pk)
-      const price = +(quantity * parseFloat(item.product.u_price_cost)).toFixed(
-        2
-      )
+      const liTotal =
+        li.data && li.data.product
+          ? +(parseFloat(li.data.product.ws_price_cost) * qty).toFixed(2)
+          : li.total
 
-      const total = price
-      item.line_items.push({
-        quantity,
-        price,
-        total,
-        kind: 'adjustment',
-        description: `add ${quantity} EA`
+      _groupedLineItems[key] = {
+        qtySum: acc ? acc.qtySum + qty : qty,
+        totalSum: acc ? acc.totalSum + liTotal : liTotal,
+        product: li && li.data && li.data.product,
+        vendor: li.vendor,
+        description: li.description,
+        line_items: acc ? [...acc.line_items, li] : [li]
+      }
+
+      setProductTotal(prevTotal => prevTotal + parseFloat(`${liTotal}`))
+      setOrderTotal(prevTotal => prevTotal + liTotal)
+    })
+
+    Object.values(_groupedLineItems).forEach(item => {
+      // check if qtySum is not a round number (i.e. a partial case)
+      if (item.qtySum % 1 !== 0 && item.product) {
+        const pk = item.product.pk
+        const qty = item.line_items.reduce((acc, v) => acc + v.quantity, 0)
+        // quantity needed to complete a case
+        const quantity = Math.abs((qty % pk) - pk)
+        const price = +(
+          quantity * parseFloat(item.product.u_price_cost)
+        ).toFixed(2)
+
+        const total = price
+        item.line_items.push({
+          quantity,
+          price,
+          total,
+          kind: 'adjustment',
+          description: `add ${quantity} EA`
+        })
+        // also add to the sums when creating this adjustment.
+        item.totalSum = item.totalSum + total
+        item.qtySum = Math.round(item.qtySum + quantity / pk)
+
+        setOrderTotal(prevTotal => prevTotal + total)
+        setAdjustmentTotal(prevTotal => prevTotal + total)
+      }
+    })
+
+    setGroupedLineItems(_groupedLineItems)
+  }
+
+  useEffect(calc, [lineItems])
+
+  function removeLineItem(item: GroupedItem) {
+    const ids = item.line_items.map(li => li.id).filter(a => a)
+    if (ids && ids.length && window.confirm('are you sure?')) {
+      const token = localStorage && localStorage.getItem('token')
+      fetch(`${API_HOST}/wholesaleorder/removelineitem`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ ids })
       })
-      // also add to the sums when creating this adjustment.
-      item.totalSum = item.totalSum + total
-      item.qtySum = Math.round(item.qtySum + quantity / pk)
-      orderTotal = orderTotal + total
-      adjustmentTotal = adjustmentTotal + total
+        .then(response => response.json())
+        .then(response => !response.error && props.setReload(true))
+        .catch(err => console.warn('members removelineitem caught err', err))
     }
-  })
+  }
 
-  // console.log(' groupedLineItems:', groupedLineItems)
   return (
     <Table size="small" className={classes.liTable}>
       <TableHead>
@@ -126,6 +161,15 @@ export default function WholesaleOrderLineItems(props: {
             <React.Fragment key={`wsgli${idx}`}>
               <TableRow className={classes.groupedRow}>
                 <TableCell>
+                  <Tooltip title="delete line item">
+                    <IconButton
+                      aria-label="delete line item"
+                      onClick={() => removeLineItem(item)}
+                    >
+                      <CloseIcon />
+                    </IconButton>
+                  </Tooltip>
+
                   {item.product &&
                     `${
                       item.product.unf

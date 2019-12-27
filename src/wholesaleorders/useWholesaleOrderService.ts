@@ -20,7 +20,9 @@ const blankWholesaleOrder: WholesaleOrder = {
 
 const useWholesaleOrderService = (
   id: string | undefined,
-  setLoading: (value: boolean) => void
+  setLoading: (value: boolean) => void,
+  reload: boolean,
+  setReload: React.Dispatch<React.SetStateAction<boolean>>
 ) => {
   const [result, setResult] = useState<Service<WholesaleOrder>>({
     status: 'loading'
@@ -29,12 +31,14 @@ const useWholesaleOrderService = (
   useEffect(() => {
     if (!id) {
       setLoading(false)
+      setReload(false)
       return
     }
 
     if (id === 'new') {
       setResult({ status: 'loaded', payload: blankWholesaleOrder })
       setLoading(false)
+      setReload(false)
       return
     }
 
@@ -53,8 +57,9 @@ const useWholesaleOrderService = (
       })
       .finally(() => {
         setLoading(false)
+        setReload(false)
       })
-  }, [id, setLoading])
+  }, [id, setLoading, reload, setReload])
 
   return result
 }
