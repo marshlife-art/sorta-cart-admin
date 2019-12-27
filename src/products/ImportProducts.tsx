@@ -10,6 +10,7 @@ import FormHelperText from '@material-ui/core/FormHelperText'
 import Select from '@material-ui/core/Select'
 import Button from '@material-ui/core/Button'
 import Menu from '@material-ui/core/Menu'
+import Typography from '@material-ui/core/Typography'
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
 
 import Loading from '../Loading'
@@ -40,6 +41,7 @@ export default function ImportProducts() {
   const [vendor, setVendor] = useState('')
   const [importTag, setImportTag] = useState('')
   const [prevImportTag, setPrevImportTag] = useState('')
+  const [markup, setMarkup] = useState(0.0)
   const [formData, setFormData] = useState<FormData>()
   const [error, setError] = useState('')
   const [response, setResponse] = useState('')
@@ -67,9 +69,11 @@ export default function ImportProducts() {
     formData.delete('vendor')
     formData.delete('import_tag')
     formData.delete('prev_import_tag')
+    formData.delete('markup')
     formData.append('vendor', vendor)
     formData.append('import_tag', importTag)
     formData.append('prev_import_tag', prevImportTag)
+    formData.append('markup', `${markup}`)
 
     fetch(`${API_HOST}/products/upload`, {
       method: 'POST',
@@ -135,7 +139,7 @@ export default function ImportProducts() {
         justify="center"
         alignItems="flex-start"
       >
-        <Grid item sm={6}>
+        <Grid item sm={4}>
           <div className={classes.vendor}>
             <TextField
               label="Vendor"
@@ -211,6 +215,26 @@ export default function ImportProducts() {
             onChange={event => setImportTag(event.target.value)}
             className={classes.gridItem}
           />
+          <TextField
+            label="Markup"
+            helperText="Markup percentage. Use decimal format."
+            type="number"
+            inputProps={{
+              min: '0',
+              max: '1',
+              step: '0.01'
+            }}
+            fullWidth
+            value={markup}
+            onChange={event =>
+              setMarkup(
+                isNaN(parseFloat(event.target.value))
+                  ? 0.0
+                  : parseFloat(event.target.value)
+              )
+            }
+            className={classes.gridItem}
+          />
 
           <input
             type="file"
@@ -231,21 +255,198 @@ export default function ImportProducts() {
               UPLOAD
             </Button>
           </div>
+
+          <div className={classes.gridItem}>
+            {loading && <Loading />}
+            {error && (
+              <div className={classes.gridItem}>
+                <h3>Response Error!</h3>
+                <p>{error}</p>
+              </div>
+            )}
+            {response && (
+              <div className={classes.gridItem}>
+                <h3>Response</h3>
+                <p>{response}</p>
+              </div>
+            )}
+          </div>
         </Grid>
-        <Grid item sm={6}>
-          {loading && <Loading />}
-          {error && (
-            <div className={classes.gridItem}>
-              <h3>Response Error!</h3>
-              <p>{error}</p>
-            </div>
-          )}
-          {response && (
-            <div className={classes.gridItem}>
-              <h3>Response</h3>
-              <p>{response}</p>
-            </div>
-          )}
+        <Grid item sm={8}>
+          <Typography variant="h6" gutterBottom>
+            Helpful Information
+          </Typography>
+          <Typography variant="body1" gutterBottom>
+            <dl>
+              <dt>What kind of file should be uploaded?</dt>
+              <dd>Comma separated value files with the extension .csv</dd>
+
+              <dt>What columns will get processed?</dt>
+              <dd>
+                <b>unf</b>, <b>upc_code</b>, <b>name</b>, <b>description</b>,{' '}
+                <b>pk</b>, <b>size</b>, <b>unit_type</b>, <b>ws_price</b>,{' '}
+                <b>u_price</b>, <b>ws_price_markup</b>, <b>u_price_markup</b>,{' '}
+                <b>category</b>, <b>sub_category</b>, <b>codes</b>, <b>a</b>,{' '}
+                <b>r</b>, <b>c</b>, <b>l</b>, <b>d</b>, <b>f</b>, <b>g</b>,{' '}
+                <b>v</b>, <b>w</b>, <b>y</b>, <b>k</b>, <b>ft</b>, <b>m</b>,{' '}
+                <b>s</b>, <b>n</b>, <b>og</b>.
+              </dd>
+
+              <dt>Are any of these optional?</dt>
+              <dd>
+                <b>unf</b>, <b>ws_price_markup</b>, <b>u_price_markup</b>,{' '}
+                <b>category</b>, <b>sub_category</b>, <b>codes</b>, <b>a</b>,{' '}
+                <b>r</b>, <b>c</b>, <b>l</b>, <b>d</b>, <b>f</b>, <b>g</b>,{' '}
+                <b>v</b>, <b>w</b>, <b>y</b>, <b>k</b>, <b>ft</b>, <b>m</b>,{' '}
+                <b>s</b>, <b>n</b>, <b>og</b>.
+              </dd>
+
+              <dt>
+                <b>codes</b> column
+              </dt>
+              <dd>
+                the <b>codes</b> column value can be a comma-separated list of
+                codes. the values that can be entered in this field are any
+                combination of a, r, c, l, d, f, g, v, w, y, k, ft, m, s, n, og,
+                1, 2, 3.
+              </dd>
+
+              <dt>How do the code columns translate?</dt>
+              <dd>
+                The values in the code columns need to be the same as the
+                header. so for example if there's a column <b>a</b> then the
+                value for the fields in the column need to be <i>a</i> (or blank
+                if not appliciable). except for the <b>og</b> column which can
+                have values og, 1, 2, or 3.
+                <br />
+                <br />
+                <table>
+                  <thead>
+                    <tr>
+                      <th>code</th>
+                      <th>translation</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>a</td>
+                      <td>Artificial ingredients</td>
+                    </tr>
+                    <tr>
+                      <td>c</td>
+                      <td>Low carb</td>
+                    </tr>
+                    <tr>
+                      <td>d</td>
+                      <td>Dairy free</td>
+                    </tr>
+                    <tr>
+                      <td>f</td>
+                      <td>Food Service items</td>
+                    </tr>
+                    <tr>
+                      <td>g</td>
+                      <td>Gluten free</td>
+                    </tr>
+                    <tr>
+                      <td>k</td>
+                      <td>Kosher</td>
+                    </tr>
+                    <tr>
+                      <td>l</td>
+                      <td>Low sodium/no salt</td>
+                    </tr>
+                    <tr>
+                      <td>m</td>
+                      <td>Non-GMO Project Verified</td>
+                    </tr>
+                    <tr>
+                      <td>r</td>
+                      <td>Refined sugar</td>
+                    </tr>
+                    <tr>
+                      <td>v</td>
+                      <td>Vegan</td>
+                    </tr>
+                    <tr>
+                      <td>w</td>
+                      <td>Wheat free</td>
+                    </tr>
+                    <tr>
+                      <td>ft</td>
+                      <td>Fair Trade</td>
+                    </tr>
+                    <tr>
+                      <td>n</td>
+                      <td>Natural</td>
+                    </tr>
+                    <tr>
+                      <td>s</td>
+                      <td>Specialty Only</td>
+                    </tr>
+                    <tr>
+                      <td>y</td>
+                      <td>Yeast free</td>
+                    </tr>
+                    <tr>
+                      <td>og</td>
+                      <td>Organic</td>
+                    </tr>
+                    <tr>
+                      <td>1</td>
+                      <td>100% organic</td>
+                    </tr>
+                    <tr>
+                      <td>2</td>
+                      <td>95%+ organic</td>
+                    </tr>
+                    <tr>
+                      <td>3</td>
+                      <td>70%+ organic</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </dd>
+
+              <dt>How is markup applied?</dt>
+              <dd>
+                Markup is a percentage in decimal format so 0.10 will markup
+                products by 10%. The formula is: <i>PRICE + (PRICE * MARKUP)</i>{' '}
+                so if the value of <b>ws_price</b> is 10.00 and the markup
+                specified is 0.10 the the markup price will be 11.00.
+                <br />
+                <br />
+                If any rows of the price sheet has a non-empty, non-zero value
+                in the <b>ws_price_markup</b> or <b>u_price_markup</b> then that
+                will be used as the markup price. This means only some rows of
+                the price sheet can contain special markups while the rest of
+                the sheet can have a single markup applied.
+              </dd>
+
+              <dt>Import Tag</dt>
+              <dd>
+                This field is used to track changes to new price sheets that are
+                meant to update products that have already been imported once. A
+                use-case for this is when uploading partial lists of product for
+                a vendor. So for example if a sub-set of products are imported,
+                then a while later a new sheet of products can be imported
+                without having to destroy and re-import all the products for a
+                vendor. If uploading a complete list of all products for a
+                particular vendor then it would be reasonable to use the same
+                value as the Vendor field.
+                <br />
+                <br />
+                <b>NOTE:</b> it can be useful to include the current date in the
+                value for the Import Tag field (or otherwise make this a unique
+                value). When creating wholesale orders it might be useful to
+                know which price sheet a product that was ordered came from.
+                <br />
+                <br />
+                When the Previous Import Tag is specified, products with that
+                tag are first deleted before new products are created.
+              </dd>
+            </dl>
+          </Typography>
         </Grid>
       </Grid>
     </Paper>

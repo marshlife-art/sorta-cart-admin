@@ -42,29 +42,70 @@ export default function WholesaleOrderLineItems(props: {
   const lineItems = props?.wholesaleOrder?.OrderLineItems
   // console.log('wholesaleOrder:', props?.wholesaleOrder)
   let orderTotal: number = 0
+  let productTotal: number = 0
+  let adjustmentTotal: number = 0
   let groupedLineItems: {
     [key: string]: GroupedItem
   } = {}
+
   lineItems?.forEach(li => {
     const id = li.data && li.data.product && li.data.product.id
     const key = id ? id : li.description
-    // ain't no(tsc)body tell me nothin'
-    const liTotal = parseFloat((li.total as unknown) as string)
+
     let acc = groupedLineItems[key]
+
+    const qty =
+      li.data && li.data.product && li.selected_unit === 'EA'
+        ? li.quantity / li.data.product.pk
+        : li.quantity
+
+    // ain't no(tsc)body tell me nothin'
+    // const liTotal = parseFloat((li.total as unknown) as string)
+    const liTotal =
+      li.data && li.data.product
+        ? +(parseFloat(li.data.product.ws_price_cost) * qty).toFixed(2)
+        : li.total
+
     groupedLineItems[key] = {
-      qtySum: acc ? acc.qtySum + li.quantity : li.quantity,
+      qtySum: acc ? acc.qtySum + qty : qty,
       totalSum: acc ? acc.totalSum + liTotal : liTotal,
       product: li && li.data && li.data.product,
       vendor: li.vendor,
       description: li.description,
       line_items: acc ? [...acc.line_items, li] : [li]
     }
+    productTotal = productTotal + parseFloat(`${liTotal}`)
     orderTotal = orderTotal + liTotal
   })
 
-  orderTotal = orderTotal
+  Object.values(groupedLineItems).forEach(item => {
+    // check if qtySum is not a round number (i.e. a partial case)
+    if (item.qtySum % 1 !== 0 && item.product) {
+      const pk = item.product.pk
+      const qty = item.line_items.reduce((acc, v) => acc + v.quantity, 0)
+      // quantity needed to complete a case
+      const quantity = Math.abs((qty % pk) - pk)
+      const price = +(quantity * parseFloat(item.product.u_price_cost)).toFixed(
+        2
+      )
 
-  console.log(' groupedLineItems:', groupedLineItems)
+      const total = price
+      item.line_items.push({
+        quantity,
+        price,
+        total,
+        kind: 'adjustment',
+        description: `add ${quantity} EA`
+      })
+      // also add to the sums when creating this adjustment.
+      item.totalSum = item.totalSum + total
+      item.qtySum = Math.round(item.qtySum + quantity / pk)
+      orderTotal = orderTotal + total
+      adjustmentTotal = adjustmentTotal + total
+    }
+  })
+
+  // console.log(' groupedLineItems:', groupedLineItems)
   return (
     <Table size="small" className={classes.liTable}>
       <TableHead>
@@ -72,7 +113,9 @@ export default function WholesaleOrderLineItems(props: {
           <TableCell className={classes.unf}>unf</TableCell>
           <TableCell>description</TableCell>
           <TableCell>price</TableCell>
+          <TableCell>cost</TableCell>
           <TableCell>pk</TableCell>
+
           <TableCell align="center">qty</TableCell>
           <TableCell align="right">total</TableCell>
         </TableRow>
@@ -80,8 +123,8 @@ export default function WholesaleOrderLineItems(props: {
       <TableBody>
         {Object.values(groupedLineItems).map(
           (item: GroupedItem, idx: number) => (
-            <>
-              <TableRow key={`wsgli${idx}`} className={classes.groupedRow}>
+            <React.Fragment key={`wsgli${idx}`}>
+              <TableRow className={classes.groupedRow}>
                 <TableCell>
                   {item.product &&
                     `${
@@ -92,27 +135,40 @@ export default function WholesaleOrderLineItems(props: {
                 </TableCell>
                 <TableCell>
                   {item.product &&
-                    `${item.product.category} ${item.product.sub_category} ${item.product.name} ${item.product.description}`}
+                    `${item.product.name} ${item.product.description}`}
                   {item.product && (
                     <>
                       <br />
-                      {`${item.product.upc_code}`}
+                      {`${item.product.upc_code} ${item.product.category} > ${item.product.sub_category}`}{' '}
                     </>
                   )}
                 </TableCell>
                 <TableCell>
-                  {item.product && ` ${item.product.ws_price}`}
+                  {item.product && item.product.ws_price}
+                  {item.product &&
+                  item.product.ws_price !== item.product.u_price ? (
+                    <>
+                      <br />
+                      {`(${item.product.u_price}EA)`}
+                    </>
+                  ) : (
+                    ''
+                  )}
+                </TableCell>
+                <TableCell>
+                  {item.product && ` ${item.product.ws_price_cost}`}
                   <br />
                   {item.product &&
                     `${
-                      item.product.ws_price !== item.product.u_price
-                        ? `(${item.product.u_price}EA)`
+                      item.product.ws_price_cost !== item.product.u_price_cost
+                        ? `(${item.product.u_price_cost}EA)`
                         : ''
                     }`}
                 </TableCell>
                 <TableCell>{item.product && item.product.pk}</TableCell>
+
                 <TableCell align="center" className={classes.groupedRowTotals}>
-                  {item.qtySum}
+                  {+item.qtySum.toFixed(2)}
                 </TableCell>
                 <TableCell align="right" className={classes.groupedRowTotals}>
                   {item.totalSum.toFixed(2)}
@@ -121,54 +177,67 @@ export default function WholesaleOrderLineItems(props: {
               {item.line_items.map(li => (
                 <TableRow key={`wsli${li.id}`}>
                   <TableCell />
-                  <TableCell>{li.vendor}</TableCell>
-                  <TableCell>{li.selected_unit}</TableCell>
+                  <TableCell>
+                    [{li.kind}] {li.vendor}{' '}
+                    {li.data && li.data.product && li.data.product.import_tag
+                      ? li.data.product.import_tag
+                      : li.description}
+                    {li.OrderId && ` Order #${li.OrderId}`}
+                  </TableCell>
                   <TableCell />
-                  <TableCell align="center">{li.quantity}</TableCell>
+                  <TableCell />
+                  <TableCell>
+                    {li.kind === 'adjustment'
+                      ? `${li.quantity} EA`
+                      : `${li.quantity} ${li.selected_unit}`}
+                  </TableCell>
+                  <TableCell align="center">
+                    {li.data && li.data.product && li.selected_unit === 'EA'
+                      ? +(li.quantity / li.data.product.pk).toFixed(2)
+                      : null}
+                  </TableCell>
                   <TableCell align="right">{li.total}</TableCell>
                 </TableRow>
               ))}
-            </>
+            </React.Fragment>
           )
         )}
 
         <TableRow>
-          <TableCell colSpan={4}></TableCell>
+          <TableCell align="center">ITEM COUNT</TableCell>
+          <TableCell colSpan={2} align="right">
+            PRODUCT TOTAL
+          </TableCell>
+          <TableCell colSpan={2} align="right">
+            ADJUSTMENTS TOTAL
+          </TableCell>
           <TableCell
             colSpan={2}
-            align="center"
+            align="right"
             className={classes.groupedRowTotals}
           >
             TOTAL
           </TableCell>
         </TableRow>
         <TableRow>
-          <TableCell colSpan={4}></TableCell>
-          <TableCell className={classes.groupedRowTotals} align="center">
+          <TableCell align="center">
             {Object.keys(groupedLineItems).length}
           </TableCell>
-          <TableCell align="right" className={classes.groupedRowTotals}>
+          <TableCell colSpan={2} align="right">
+            {productTotal.toFixed(2)}
+          </TableCell>
+          <TableCell colSpan={2} align="right">
+            {adjustmentTotal.toFixed(2)}
+          </TableCell>
+          <TableCell
+            colSpan={2}
+            align="right"
+            className={classes.groupedRowTotals}
+          >
             {orderTotal.toFixed(2)}
           </TableCell>
         </TableRow>
       </TableBody>
     </Table>
-
-    // <div>
-    //   <h4>line itemz {lineItems && lineItems.length}</h4>
-    //   {lineItems &&
-    //     lineItems.map((li, idx) => {
-    //       return (
-    //         <div key={`wsoli${idx}`}>
-    //           <h5>LINE ITEM</h5>
-    //           {li.vendor}
-    //           {li.description}
-    //           {li.quantity}
-    //           {li.total}
-
-    //         </div>
-    //       )
-    //     })}
-    // </div>
   )
 }

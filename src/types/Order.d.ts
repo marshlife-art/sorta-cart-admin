@@ -59,5 +59,6 @@ export interface LineItem {
   kind: string
   vendor?: string
   WholesaleOrderId?: number
+  OrderId?: number
   data?: { product?: Product }
 }
