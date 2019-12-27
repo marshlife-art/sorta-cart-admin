@@ -16,7 +16,7 @@ import ClearIcon from '@material-ui/icons/Clear'
 
 import { LineItem } from '../types/Order'
 
-const TAX_RATE = 0.07
+const TAX_RATE = 0.06175
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -331,7 +331,7 @@ function OrderLineItems(props: {
             <TableCell rowSpan={1} colSpan={3} />
             <TableCell align="right">Tax</TableCell>
             <TableCell align="center">{`${(TAX_RATE * 100).toFixed(
-              0
+              3
             )} %`}</TableCell>
             <TableCell align="right">{usdFormat(orderTaxes)}</TableCell>
           </TableRow>

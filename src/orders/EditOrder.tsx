@@ -11,14 +11,50 @@ import Typography from '@material-ui/core/Typography'
 import CloseIcon from '@material-ui/icons/Close'
 import AddIcon from '@material-ui/icons/Add'
 import ClearIcon from '@material-ui/icons/Clear'
+import PeopleIcon from '@material-ui/icons/People'
+import ArrowBackIcon from '@material-ui/icons/ArrowBack'
+import InputLabel from '@material-ui/core/InputLabel'
+import MenuItem from '@material-ui/core/MenuItem'
+import FormControl from '@material-ui/core/FormControl'
+import Select from '@material-ui/core/Select'
 
 import Loading from '../Loading'
 import { useOrderService } from './useOrderService'
-import { Order, OrderRouterProps } from '../types/Order'
+import {
+  Order,
+  OrderRouterProps,
+  OrderStatus,
+  ShipmentStatus,
+  PaymentStatus
+} from '../types/Order'
 import { LineItem } from '../types/Order'
 import OrderLineItems from './OrderLineItems'
 import LineItemAutocomplete from './LineItemAutocomplete'
+import MemberAutocomplete from './MemberAutocomplete'
 import { Product } from '../types/Product'
+import { Member } from '../types/Member'
+import {
+  API_HOST,
+  ORDER_STATUSES,
+  PAYMENT_STATUSES,
+  SHIPMENT_STATUSES
+} from '../constants'
+
+const blankOrder: Order = {
+  id: 'new',
+  status: 'new',
+  payment_status: 'balance_due',
+  shipment_status: 'backorder',
+  total: 0.0,
+  name: '',
+  email: '',
+  phone: '',
+  address: '',
+  notes: '',
+  createdAt: '',
+  updatedAt: '',
+  OrderLineItems: []
+}
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -28,15 +64,24 @@ const useStyles = makeStyles((theme: Theme) =>
       minHeight: `calc(100vh - 64px)`
     },
     form: {
-      marginBottom: theme.spacing(2)
+      marginBottom: theme.spacing(4)
     },
     formInput: {
       display: 'block',
       marginBottom: theme.spacing(2)
     },
+    status: {
+      marginBottom: theme.spacing(2)
+    },
     liHeader: {
       display: 'inline-block',
       marginRight: theme.spacing(2)
+    },
+    sticky: {
+      [theme.breakpoints.up('md')]: {
+        position: 'sticky',
+        top: '72px'
+      }
     }
   })
 )
@@ -44,10 +89,16 @@ const useStyles = makeStyles((theme: Theme) =>
 function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
   const classes = useStyles()
 
+  const token = localStorage && localStorage.getItem('token')
+
   const [orderId, setOrderId] = useState('')
-  const [order, setOrder] = useState<Order>()
   const [loading, setLoading] = useState(true)
+  const [order, setOrder] = useState<Order>(blankOrder)
+  const [saving, setSaving] = useState(false)
   const [showLiAutocomplete, setShowLiAutocomplete] = useState(false)
+  const [showMemberAutocomplete, setShowMemberAutocomplete] = useState(false)
+  const [snackOpen, setSnackOpen] = React.useState(false)
+  const [snackMsg, setSnackMsg] = React.useState('')
 
   const orderService = useOrderService(orderId, setLoading)
 
@@ -56,12 +107,19 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
       if (orderService.payload) {
         setOrder(orderService.payload)
       } else {
-        setOrder(undefined)
+        console.log('does the order need to be set to a blank order??')
+        // setOrder(undefined)
       }
     }
   }, [orderService])
 
-  const [snackOpen, setSnackOpen] = React.useState(false)
+  const pOrderId = props.match.params.id
+
+  useEffect(() => {
+    if (pOrderId && pOrderId !== 'new') {
+      setOrderId(pOrderId)
+    }
+  }, [pOrderId])
 
   const handleSnackClose = (
     event: React.SyntheticEvent | React.MouseEvent,
@@ -73,40 +131,168 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
     setSnackOpen(false)
   }
 
-  const pOrderId = props.match.params.id
-
-  useEffect(() => {
-    if (pOrderId) {
-      setOrderId(pOrderId)
-    }
-  }, [pOrderId])
-
   function onAddLineitem(value: { name: string; product: Product }) {
-    if (value && value.name) {
+    if (!value) {
+      return
+    }
+    const { product } = value
+    if (value && value.name && product) {
       const lineItem: LineItem = {
-        description: value.name,
+        description: `${product.name} ${product.description}`,
         quantity: 1,
-        selected_unit: '',
-        price: 0.0,
-        total: 0.0,
-        kind: 'product'
+        selected_unit: 'CS',
+        price: parseFloat(product.ws_price),
+        total: parseFloat(product.ws_price),
+        kind: 'product',
+        vendor: product.vendor,
+        data: { product }
       }
-      setOrder(order => {
-        if (order) {
-          return {
-            ...order,
-            OrderLineItems: [...order?.OrderLineItems, lineItem]
-          }
-        }
-      })
+      setOrder(order => ({
+        ...order,
+        OrderLineItems: [...order.OrderLineItems, lineItem]
+      }))
     }
   }
 
-  return loading ? (
-    <Loading />
-  ) : (
+  function onLineItemUpdated(idx: number, line_item: LineItem) {
+    setOrder(prevOrder => {
+      let orderLineItems = prevOrder.OrderLineItems
+      orderLineItems.splice(idx, 1, line_item)
+
+      return {
+        ...prevOrder,
+        OrderLineItems: orderLineItems
+      }
+    })
+  }
+  function removeLineItem(idx: number) {
+    setOrder(prevOrder => {
+      let orderLineItems = prevOrder.OrderLineItems
+      orderLineItems.splice(idx, 1)
+      return {
+        ...prevOrder,
+        OrderLineItems: orderLineItems
+      }
+    })
+  }
+
+  function createAdjustment(event: any) {
+    const adjustment: LineItem = {
+      description: 'new adjustment',
+      quantity: 1,
+      price: 0.0,
+      total: 0.0,
+      kind: 'adjustment'
+    }
+    setOrder(prevOrder => ({
+      ...prevOrder,
+      OrderLineItems: [...prevOrder.OrderLineItems, adjustment]
+    }))
+  }
+
+  function onMembertemSelected(value?: { name: string; member: Member }) {
+    if (value && value.member) {
+      const { id, name, phone, address } = value.member // email
+      const email =
+        value.member.User && value.member.User.email
+          ? value.member.User.email
+          : value.member.registration_email
+      setOrder(prevOrder => ({
+        ...prevOrder,
+        name: name || '',
+        email: email || '',
+        phone: phone || '',
+        address: address || '',
+        MemberId: id
+      }))
+      setShowMemberAutocomplete(false)
+    }
+  }
+
+  const onSaveBtnClick = (): void => {
+    setSaving(true)
+    const path =
+      orderId && orderId !== 'new' ? '/order/update' : '/order/create'
+    fetch(`${API_HOST}${path}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(order)
+    })
+      .then(response => response.json())
+      .then(response => {
+        if (response.success) {
+          setSnackOpen(true)
+          setSnackMsg('Saved order!')
+          console.log('save response: ', response)
+          if (response.order.id && (!orderId || orderId === 'new')) {
+            console.log('we got an order id back, gonna setorderid')
+            props.history.replace(`/orders/edit/${response.order.id}`)
+            // setOrderId(response.order.id)
+          }
+        }
+      })
+      .finally(() => setSaving(false))
+  }
+
+  function onTaxesChange(tax: number) {
+    console.log('onTaxesChange tax:', tax)
+  }
+
+  function onTotalChange(total: number) {
+    setOrder(prevOrder => ({
+      ...prevOrder,
+      total
+    }))
+  }
+
+  function valueFor(field: keyof Order) {
+    return order && order[field] ? order[field] : ''
+  }
+
+  const handleStatusChange = (
+    event: React.ChangeEvent<{
+      name?: string | undefined
+      value: unknown
+    }>
+  ) => {
+    setOrder(prevOrder => ({
+      ...prevOrder,
+      status: event.target.value as OrderStatus
+    }))
+  }
+
+  const handlePaymentStatusChange = (
+    event: React.ChangeEvent<{
+      name?: string | undefined
+      value: unknown
+    }>
+  ) => {
+    setOrder(prevOrder => ({
+      ...prevOrder,
+      payment_status: event.target.value as PaymentStatus
+    }))
+  }
+
+  const handleShipmentStatusChange = (
+    event: React.ChangeEvent<{
+      name?: string | undefined
+      value: unknown
+    }>
+  ) => {
+    setOrder(prevOrder => ({
+      ...prevOrder,
+      shipment_status: event.target.value as ShipmentStatus
+    }))
+  }
+
+  return (
     <div className={classes.root}>
-      {order ? (
+      {loading ? (
+        <Loading />
+      ) : (
         <Grid
           container
           spacing={2}
@@ -114,10 +300,61 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
           justify="center"
           alignItems="flex-start"
         >
-          <Grid item sm={12} md={4}>
-            <h2>
-              EDIT ORDER <i>#{order.id}</i>
-            </h2>
+          <Grid item sm={12} md={4} className={classes.sticky}>
+            {showMemberAutocomplete ? (
+              <div style={{ display: 'flex' }}>
+                <Tooltip title="close">
+                  <IconButton
+                    aria-label="close"
+                    onClick={() => setShowMemberAutocomplete(false)}
+                  >
+                    <ClearIcon fontSize="inherit" />
+                  </IconButton>
+                </Tooltip>
+                <MemberAutocomplete onItemSelected={onMembertemSelected} />
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  minHeight: '54px'
+                }}
+              >
+                <div>
+                  <Tooltip title="BACK TO ORDERS">
+                    <IconButton
+                      aria-label="back to orders"
+                      onClick={() => props.history.push('/orders')}
+                    >
+                      <ArrowBackIcon />
+                    </IconButton>
+                  </Tooltip>
+
+                  <h2 style={{ display: 'inline' }}>
+                    {orderId && orderId !== 'new' ? (
+                      <>
+                        EDIT ORDER <i>#{order.id}</i>
+                      </>
+                    ) : (
+                      'CREATE ORDER'
+                    )}
+                  </h2>
+                </div>
+                <div>
+                  <Tooltip title="ADD USER DETAILS">
+                    <IconButton
+                      aria-label="add user details"
+                      onClick={() => setShowMemberAutocomplete(true)}
+                    >
+                      <PeopleIcon />
+                    </IconButton>
+                  </Tooltip>
+                </div>
+              </div>
+            )}
+
             {order.status !== 'new' && order.status !== 'needs_review' && (
               <Typography variant="overline" display="block" gutterBottom>
                 warning: this order status is not "new" or "needs review" so
@@ -133,11 +370,7 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
                 value={order.name}
                 onChange={(event: any) => {
                   event.persist()
-                  setOrder(order => {
-                    if (order !== undefined) {
-                      return { ...order, name: event.target.value }
-                    }
-                  })
+                  setOrder(order => ({ ...order, name: event.target.value }))
                 }}
               />
               <TextField
@@ -148,11 +381,7 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
                 value={order.email}
                 onChange={(event: any) => {
                   event.persist()
-                  setOrder(order => {
-                    if (order !== undefined) {
-                      return { ...order, email: event.target.value }
-                    }
-                  })
+                  setOrder(order => ({ ...order, email: event.target.value }))
                 }}
               />
               <TextField
@@ -163,11 +392,18 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
                 value={order.phone}
                 onChange={(event: any) => {
                   event.persist()
-                  setOrder(order => {
-                    if (order !== undefined) {
-                      return { ...order, phone: event.target.value }
-                    }
-                  })
+                  setOrder(order => ({ ...order, phone: event.target.value }))
+                }}
+              />
+              <TextField
+                label="address"
+                type="text"
+                className={classes.formInput}
+                fullWidth
+                value={order.address}
+                onChange={(event: any) => {
+                  event.persist()
+                  setOrder(order => ({ ...order, address: event.target.value }))
                 }}
               />
               <TextField
@@ -179,41 +415,68 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
                 value={order.notes}
                 onChange={(event: any) => {
                   event.persist()
-                  setOrder(order => {
-                    if (order !== undefined) {
-                      return { ...order, notes: event.target.value }
-                    }
-                  })
+                  setOrder(order => ({ ...order, notes: event.target.value }))
                 }}
               />
-            </form>
-            <p>
-              Created on {new Date(order.createdAt).toLocaleString()}
-              {order.createdAt !== order.updatedAt && (
-                <>
-                  <br />
-                  <i>Last updated</i>{' '}
-                  {new Date(order.updatedAt).toLocaleString()}
-                </>
-              )}
-            </p>
-            <Grid container spacing={6} direction="row" justify="flex-end">
-              <Grid item>
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  onClick={() => props.history.push('/orders')}
-                >
-                  Cancel
-                </Button>
-              </Grid>
 
-              <Grid item>
-                <Button variant="contained" color="primary" disabled>
-                  Save
-                </Button>
-              </Grid>
-            </Grid>
+              <FormControl fullWidth className={classes.status}>
+                <InputLabel id="order-status-select-label">status</InputLabel>
+                <Select
+                  labelId="order-status-select-label"
+                  id="order-status-select"
+                  value={valueFor('status')}
+                  onChange={handleStatusChange}
+                >
+                  {Object.keys(ORDER_STATUSES).map(status => (
+                    <MenuItem key={`os-sel-${status}`} value={status}>
+                      {ORDER_STATUSES[status as OrderStatus]}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth className={classes.status}>
+                <InputLabel id="payment-status-select-label">
+                  payment status
+                </InputLabel>
+                <Select
+                  labelId="payment-status-select-label"
+                  id="payment-status-select"
+                  value={valueFor('payment_status')}
+                  onChange={handlePaymentStatusChange}
+                >
+                  {Object.keys(PAYMENT_STATUSES).map(status => (
+                    <MenuItem key={`ps-sel-${status}`} value={status}>
+                      {PAYMENT_STATUSES[status as PaymentStatus]}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth className={classes.status}>
+                <InputLabel id="shipment-status-select-label">
+                  shipment status
+                </InputLabel>
+                <Select
+                  labelId="shipment-status-select-label"
+                  id="shipment-status-select"
+                  value={valueFor('shipment_status')}
+                  onChange={handleShipmentStatusChange}
+                >
+                  {Object.keys(SHIPMENT_STATUSES).map(status => (
+                    <MenuItem key={`ship-sel-${status}`} value={status}>
+                      {SHIPMENT_STATUSES[status as ShipmentStatus]}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </form>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={onSaveBtnClick}
+              disabled={saving}
+            >
+              Save
+            </Button>
           </Grid>
           <Grid item sm={12} md={8}>
             <div>
@@ -243,9 +506,7 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
                   <Button
                     aria-label="add adjustment"
                     size="large"
-                    onClick={() =>
-                      console.log('adda fuckin adjustment i guess')
-                    }
+                    onClick={createAdjustment}
                   >
                     <AddIcon />
                     ADJUSTMENT
@@ -256,17 +517,14 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
             </div>
             <OrderLineItems
               line_items={order.OrderLineItems}
-              onLineItemUpdated={() => {}}
-              removeLineItem={() => {}}
-              onTaxesChange={() => {}}
-              onTotalChange={() => {}}
+              onLineItemUpdated={onLineItemUpdated}
+              removeLineItem={removeLineItem}
+              onTaxesChange={onTaxesChange}
+              onTotalChange={onTotalChange}
             />
           </Grid>
         </Grid>
-      ) : (
-        <div>order not found...</div>
       )}
-
       <Snackbar
         anchorOrigin={{
           vertical: 'bottom',
@@ -278,7 +536,7 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
         ContentProps={{
           'aria-describedby': 'message-id'
         }}
-        message={<span id="message-id">snackMsg</span>}
+        message={<span id="message-id">{snackMsg}</span>}
         action={[
           <IconButton key="close" aria-label="close" onClick={handleSnackClose}>
             <CloseIcon />

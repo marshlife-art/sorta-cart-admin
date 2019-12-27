@@ -19,6 +19,9 @@ const useStyles = makeStyles((theme: Theme) =>
     liTable: {
       marginTop: theme.spacing(4)
     },
+    deleteBtn: {
+      width: '88px'
+    },
     unf: {
       minWidth: '105px'
     },
@@ -145,6 +148,7 @@ export default function WholesaleOrderLineItems(props: {
     <Table size="small" className={classes.liTable}>
       <TableHead>
         <TableRow>
+          <TableCell className={classes.deleteBtn} />
           <TableCell className={classes.unf}>unf</TableCell>
           <TableCell>description</TableCell>
           <TableCell>price</TableCell>
@@ -160,16 +164,17 @@ export default function WholesaleOrderLineItems(props: {
           (item: GroupedItem, idx: number) => (
             <React.Fragment key={`wsgli${idx}`}>
               <TableRow className={classes.groupedRow}>
-                <TableCell>
-                  <Tooltip title="delete line item">
+                <TableCell className={classes.deleteBtn}>
+                  <Tooltip title="remove these line item(s)">
                     <IconButton
-                      aria-label="delete line item"
+                      aria-label="remove these line item(s)"
                       onClick={() => removeLineItem(item)}
                     >
                       <CloseIcon />
                     </IconButton>
                   </Tooltip>
-
+                </TableCell>
+                <TableCell>
                   {item.product &&
                     `${
                       item.product.unf
@@ -220,7 +225,7 @@ export default function WholesaleOrderLineItems(props: {
               </TableRow>
               {item.line_items.map(li => (
                 <TableRow key={`wsli${li.id}`}>
-                  <TableCell />
+                  <TableCell colSpan={2} />
                   <TableCell>
                     [{li.kind}] {li.vendor}{' '}
                     {li.data && li.data.product && li.data.product.import_tag
@@ -248,7 +253,9 @@ export default function WholesaleOrderLineItems(props: {
         )}
 
         <TableRow>
-          <TableCell align="center">ITEM COUNT</TableCell>
+          <TableCell colSpan={2} align="center">
+            ITEM COUNT
+          </TableCell>
           <TableCell colSpan={2} align="right">
             PRODUCT TOTAL
           </TableCell>
@@ -264,7 +271,7 @@ export default function WholesaleOrderLineItems(props: {
           </TableCell>
         </TableRow>
         <TableRow>
-          <TableCell align="center">
+          <TableCell colSpan={2} align="center">
             {Object.keys(groupedLineItems).length}
           </TableCell>
           <TableCell colSpan={2} align="right">

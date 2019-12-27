@@ -24,7 +24,7 @@ export type OrderStatus =
   | 'archived'
 
 export interface Order {
-  id: number
+  id: number | string
   status: OrderStatus
   payment_status: PaymentStatus
   shipment_status: ShipmentStatus

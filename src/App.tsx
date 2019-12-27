@@ -33,7 +33,6 @@ import Users from './users/Users'
 import Products from './products/Products'
 import ImportProducts from './products/ImportProducts'
 import EditOrder from './orders/EditOrder'
-import CreateOrder from './orders/CreateOrder'
 import Members from './members/Members'
 import EditMember from './members/EditMember'
 
@@ -185,7 +184,7 @@ const App: React.FC<Props> = (props: Props) => {
               <ProtectedRoute
                 userService={userService}
                 path="/orders/create"
-                component={CreateOrder}
+                component={EditOrder}
               />
               <ProtectedRoute
                 userService={userService}
