@@ -4,13 +4,13 @@ import ButtonGroup from '@material-ui/core/ButtonGroup'
 import Button from '@material-ui/core/Button'
 import Menu, { MenuProps } from '@material-ui/core/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
-import ListItemIcon from '@material-ui/core/ListItemIcon'
 import ListItemText from '@material-ui/core/ListItemText'
-
+import ListItemIcon from '@material-ui/core/ListItemIcon'
 import SaveIcon from '@material-ui/icons/Save'
-
 import DeleteIcon from '@material-ui/icons/Delete'
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
+import FileIcon from '@material-ui/icons/FileCopy'
+
 import { WholesaleOrder } from '../types/WholesaleOrder'
 
 const StyledMenu = (props: MenuProps) => (
@@ -44,6 +44,8 @@ interface EditWholesaleOrderMenuProps {
   wholesaleOrder: WholesaleOrder
   onSaveBtnClick: () => void
   onDeleteBtnClick: () => void
+  onExportToCsv: () => void
+  onProductsExportToCsv: () => void
 }
 
 export default function EditMenu(props: EditWholesaleOrderMenuProps) {
@@ -73,7 +75,7 @@ export default function EditMenu(props: EditWholesaleOrderMenuProps) {
           save
         </Button>
         <Button
-          aria-controls="customized-menu"
+          aria-controls="wholesaleorders-menu"
           aria-haspopup="true"
           variant="contained"
           color="primary"
@@ -85,7 +87,7 @@ export default function EditMenu(props: EditWholesaleOrderMenuProps) {
       </ButtonGroup>
 
       <StyledMenu
-        id="customized-menu"
+        id="wholesaleorders-menu"
         anchorEl={anchorEl}
         keepMounted
         open={Boolean(anchorEl)}
@@ -104,6 +106,32 @@ export default function EditMenu(props: EditWholesaleOrderMenuProps) {
             <DeleteIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText primary="delete wholesale order" />
+        </StyledMenuItem>
+
+        {/* <StyledMenuItem
+          onClick={() => {
+            props.onExportToCsv()
+            handleClose()
+          }}
+          disabled={!props.wholesaleOrder.id}
+        >
+          <ListItemIcon>
+            <FileIcon />
+          </ListItemIcon>
+          <ListItemText primary="Export to .csv" />
+        </StyledMenuItem> */}
+
+        <StyledMenuItem
+          onClick={() => {
+            props.onProductsExportToCsv()
+            handleClose()
+          }}
+          disabled={!props.wholesaleOrder.id}
+        >
+          <ListItemIcon>
+            <FileIcon />
+          </ListItemIcon>
+          <ListItemText primary="Export products to .csv" />
         </StyledMenuItem>
       </StyledMenu>
     </>

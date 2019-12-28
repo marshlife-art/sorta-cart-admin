@@ -11,11 +11,8 @@ import Snackbar from '@material-ui/core/Snackbar'
 import IconButton from '@material-ui/core/IconButton'
 import CloseIcon from '@material-ui/icons/Close'
 
-import Loading from '../Loading'
-import {
-  useWholesaleOrderService,
-  useWholesaleOrderSaveService
-} from './useWholesaleOrderService'
+import { LineItem } from '../types/Order'
+import { Product } from '../types/Product'
 import {
   WholesaleOrder,
   WholesaleOrderRouterProps
@@ -27,9 +24,13 @@ import {
   PAYMENT_STATUSES,
   SHIPMENT_STATUSES
 } from '../constants'
+import Loading from '../Loading'
+import {
+  useWholesaleOrderService,
+  useWholesaleOrderSaveService
+} from './useWholesaleOrderService'
 import EditMenu from './EditMenu'
 import WholesaleOrderLineItems from './WholesaleOrderLineItems'
-// import { LineItem } from '../types/Order'
 
 const token = localStorage && localStorage.getItem('token')
 
@@ -46,6 +47,24 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 )
 
+export interface GroupedItem {
+  qtySum: number
+  totalSum: number
+  product: Product | undefined
+  vendor: string | undefined
+  description: string
+  line_items: LineItem[]
+}
+
+export interface LineItemData {
+  groupedLineItems: {
+    [key: string]: GroupedItem
+  }
+  orderTotal: number
+  productTotal: number
+  adjustmentTotal: number
+}
+
 interface EditWholesaleOrderProps {
   setReloadOrders: React.Dispatch<React.SetStateAction<boolean>>
 }
@@ -61,6 +80,13 @@ function EditWholesaleOrder(
   const [loading, setLoading] = useState(true)
   const [doSave, setDoSave] = useState(false)
   const [reload, setReload] = useState(true)
+
+  const [lineItemData, setLineItemData] = useState<LineItemData>({
+    groupedLineItems: {},
+    productTotal: 0,
+    adjustmentTotal: 0,
+    orderTotal: 0
+  })
 
   const wholesaleOrderService = useWholesaleOrderService(
     wholesaleOrderId,
@@ -221,6 +247,66 @@ function EditWholesaleOrder(
         })
   }
 
+  const saveStreamCSV = (filename: string, text: any) => {
+    // lolol shoutout to https://stackoverflow.com/questions/37095233/downloading-and-saving-data-with-fetch-from-authenticated-rest
+    if (window.navigator.msSaveBlob) {
+      // IE 10 and later, and Edge.
+      var blobObject = new Blob([text], { type: 'text/csv' })
+      window.navigator.msSaveBlob(blobObject, filename)
+    } else {
+      // Everthing else (except old IE).
+      // Create a dummy anchor (with a download attribute) to click.
+      var anchor = document.createElement('a')
+      anchor.download = filename
+      if (window.URL.createObjectURL) {
+        // Everything else new.
+        var blobObject = new Blob([text], { type: 'text/csv' })
+        anchor.href = window.URL.createObjectURL(blobObject)
+      } else {
+        // Fallback for older browsers (limited to 2MB on post-2010 Chrome).
+        // Load up the data into the URI for "download."
+        anchor.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(text)
+      }
+      // Now, click it.
+      if (document.createEvent) {
+        var event = document.createEvent('MouseEvents')
+        event.initEvent('click', true, true)
+        anchor.dispatchEvent(event)
+      } else {
+        anchor.click()
+      }
+    }
+  }
+
+  const onExportToCsv = (): void => {
+    console.log('handle onExportToCsv wholesaleOrder:', lineItemData)
+  }
+  const onProductsExportToCsv = (): void => {
+    const vendor = wholesaleOrder && wholesaleOrder.vendor
+    if (!vendor) {
+      return
+    }
+    fetch(`${API_HOST}/whosaleorder/exportcsv`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'text/csv',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        lineItemData,
+        vendor
+      })
+    })
+      .then(response => response.text())
+      .then(responseText => saveStreamCSV(`${vendor}.csv`, responseText))
+      .catch(error => {
+        console.warn('wholesaleOrder onExportToCsv fetch caught err:', error)
+        setSnackMsg(`o noz! ran into a problem ;(`)
+        setSnackOpen(true)
+      })
+  }
+
   function valueFor(field: keyof WholesaleOrder) {
     return wholesaleOrder && wholesaleOrder[field] ? wholesaleOrder[field] : ''
   }
@@ -311,6 +397,8 @@ function EditWholesaleOrder(
                   wholesaleOrder={wholesaleOrder}
                   onSaveBtnClick={onSaveBtnClick}
                   onDeleteBtnClick={onDeleteBtnClick}
+                  onExportToCsv={onExportToCsv}
+                  onProductsExportToCsv={onProductsExportToCsv}
                 />
               </div>
             </Grid>
@@ -318,6 +406,8 @@ function EditWholesaleOrder(
           <WholesaleOrderLineItems
             wholesaleOrder={wholesaleOrder}
             setReload={setReload}
+            lineItemData={lineItemData}
+            setLineItemData={setLineItemData}
           />
         </>
       )}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { withRouter, RouteComponentProps } from 'react-router-dom'
 import Table from '@material-ui/core/Table'
 import TableBody from '@material-ui/core/TableBody'
@@ -11,8 +11,7 @@ import CloseIcon from '@material-ui/icons/Close'
 import Link from '@material-ui/core/Link'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 
-import { LineItem } from '../types/Order'
-import { Product } from '../types/Product'
+import { LineItemData, GroupedItem } from './EditWholesaleOrder'
 import { WholesaleOrder } from '../types/WholesaleOrder'
 import { API_HOST } from '../constants'
 
@@ -34,45 +33,35 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 )
 
-interface GroupedItem {
-  qtySum: number
-  totalSum: number
-  product: Product | undefined
-  vendor: string | undefined
-  description: string
-  line_items: LineItem[]
-}
-
 function WholesaleOrderLineItems(
   props: {
     wholesaleOrder?: WholesaleOrder
     setReload: React.Dispatch<React.SetStateAction<boolean>>
+    lineItemData: LineItemData
+    setLineItemData: React.Dispatch<React.SetStateAction<LineItemData>>
   } & RouteComponentProps
 ) {
   const classes = useStyles()
   const lineItems = props?.wholesaleOrder?.OrderLineItems
-
-  const [orderTotal, setOrderTotal] = useState(0)
-  const [productTotal, setProductTotal] = useState(0)
-  const [adjustmentTotal, setAdjustmentTotal] = useState(0)
-  const [groupedLineItems, setGroupedLineItems] = useState<{
-    [key: string]: GroupedItem
-  }>({})
+  const { lineItemData, setLineItemData } = props
 
   function calc() {
-    let _groupedLineItems: {
+    let groupedLineItems: {
       [key: string]: GroupedItem
     } = {}
 
-    setOrderTotal(0)
-    setProductTotal(0)
-    setAdjustmentTotal(0)
+    setLineItemData(prevData => ({
+      ...prevData,
+      productTotal: 0,
+      adjustmentTotal: 0,
+      orderTotal: 0
+    }))
 
     lineItems?.forEach(li => {
       const id = li.data && li.data.product && li.data.product.id
       const key = id ? id : li.description
 
-      let acc = _groupedLineItems[key]
+      let acc = groupedLineItems[key]
 
       const qty =
         li.data && li.data.product && li.selected_unit === 'EA'
@@ -84,7 +73,7 @@ function WholesaleOrderLineItems(
           ? +(parseFloat(li.data.product.ws_price_cost) * qty).toFixed(2)
           : li.total
 
-      _groupedLineItems[key] = {
+      groupedLineItems[key] = {
         qtySum: acc ? acc.qtySum + qty : qty,
         totalSum: acc ? acc.totalSum + liTotal : liTotal,
         product: li && li.data && li.data.product,
@@ -93,11 +82,14 @@ function WholesaleOrderLineItems(
         line_items: acc ? [...acc.line_items, li] : [li]
       }
 
-      setProductTotal(prevTotal => prevTotal + parseFloat(`${liTotal}`))
-      setOrderTotal(prevTotal => prevTotal + liTotal)
+      setLineItemData(prevData => ({
+        ...prevData,
+        productTotal: prevData.productTotal + parseFloat(`${liTotal}`),
+        orderTotal: prevData.orderTotal + liTotal
+      }))
     })
 
-    Object.values(_groupedLineItems).forEach(item => {
+    Object.values(groupedLineItems).forEach(item => {
       // check if qtySum is not a round number (i.e. a partial case)
       if (item.qtySum % 1 !== 0 && item.product) {
         const pk = item.product.pk
@@ -120,12 +112,18 @@ function WholesaleOrderLineItems(
         item.totalSum = item.totalSum + total
         item.qtySum = Math.round(item.qtySum + quantity / pk)
 
-        setOrderTotal(prevTotal => prevTotal + total)
-        setAdjustmentTotal(prevTotal => prevTotal + total)
+        setLineItemData(prevData => ({
+          ...prevData,
+          adjustmentTotal: prevData.adjustmentTotal + +total,
+          orderTotal: prevData.orderTotal + total
+        }))
       }
     })
 
-    setGroupedLineItems(_groupedLineItems)
+    setLineItemData(prevData => ({
+      ...prevData,
+      groupedLineItems
+    }))
   }
 
   useEffect(calc, [lineItems])
@@ -164,7 +162,7 @@ function WholesaleOrderLineItems(
         </TableRow>
       </TableHead>
       <TableBody>
-        {Object.values(groupedLineItems).map(
+        {Object.values(lineItemData.groupedLineItems).map(
           (item: GroupedItem, idx: number) => (
             <React.Fragment key={`wsgli${idx}`}>
               <TableRow className={classes.groupedRow}>
@@ -287,20 +285,20 @@ function WholesaleOrderLineItems(
         </TableRow>
         <TableRow>
           <TableCell colSpan={2} align="center">
-            {Object.keys(groupedLineItems).length}
+            {Object.keys(lineItemData.groupedLineItems).length}
           </TableCell>
           <TableCell colSpan={2} align="right">
-            {productTotal.toFixed(2)}
+            {lineItemData.productTotal.toFixed(2)}
           </TableCell>
           <TableCell colSpan={2} align="right">
-            {adjustmentTotal.toFixed(2)}
+            {lineItemData.adjustmentTotal.toFixed(2)}
           </TableCell>
           <TableCell
             colSpan={2}
             align="right"
             className={classes.groupedRowTotals}
           >
-            {orderTotal.toFixed(2)}
+            {lineItemData.orderTotal.toFixed(2)}
           </TableCell>
         </TableRow>
       </TableBody>
