@@ -18,6 +18,7 @@ import InputLabel from '@material-ui/core/InputLabel'
 import MenuItem from '@material-ui/core/MenuItem'
 import FormControl from '@material-ui/core/FormControl'
 import Select from '@material-ui/core/Select'
+import Box from '@material-ui/core/Box'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 
 import { RootState } from '../redux'
@@ -211,7 +212,7 @@ function EditOrder(
     }
 
     setNeedToCheckForDiscounts(false)
-  }, [needToCheckForDiscounts, order])
+  }, [needToCheckForDiscounts, order, canApplyMemberDiscount])
 
   const handleSnackClose = (
     event: React.SyntheticEvent | React.MouseEvent,
@@ -462,10 +463,22 @@ function EditOrder(
             )}
 
             {order.status !== 'new' && order.status !== 'needs_review' && (
-              <Typography variant="overline" display="block" gutterBottom>
-                warning: this order status is not "new" or "needs review" so
-                editing is discouraged!
-              </Typography>
+              <Box color="error.main">
+                <Typography variant="overline" display="block">
+                  ohey!
+                </Typography>
+                <Typography variant="body1" display="block" gutterBottom>
+                  this order status is not "new" or "needs review" so making
+                  changes might not be great...
+                </Typography>
+              </Box>
+            )}
+            {order.Member && (
+              <Box color="info.main">
+                <Typography variant="overline" display="block" gutterBottom>
+                  Member has discount {order.Member.discount}
+                </Typography>
+              </Box>
             )}
             <form className={classes.form} noValidate autoComplete="off">
               <TextField
