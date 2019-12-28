@@ -27,6 +27,7 @@ function Orders(props: RouteComponentProps) {
 
   const [searchExpanded, setSearchExpanded] = useState(false)
   const [isSelecting, setIsSelecting] = useState(false)
+
   const token = localStorage && localStorage.getItem('token')
 
   const searchAction = {
@@ -47,8 +48,32 @@ function Orders(props: RouteComponentProps) {
     tooltip: 'PRINT',
     icon: 'print',
     onClick: (e: any, data: Order[]) => {
-      console.log('printAction data:', data)
-      alert('You want to print ' + data.length + ' orders')
+      const orderIds = data.map(order => order.id)
+      console.log('printAction orderIds:', orderIds, ' data:', data)
+
+      fetch(`${API_HOST}/orders/print`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ orderIds })
+      })
+        .then(response => response.text())
+        .then(result => {
+          try {
+            // eslint-disable-next-line
+            const wOpen = window.open('about:blank')
+            if (wOpen) {
+              wOpen.document.body.innerHTML += result
+            }
+          } catch (e) {
+            console.warn('caught error doing this razzle dazze shit e:', e)
+          }
+        })
+        .catch(err => {
+          console.warn(err)
+        })
     }
   }
 
@@ -60,13 +85,13 @@ function Orders(props: RouteComponentProps) {
     }
   }
 
-  const archiveAction = {
-    tooltip: 'ARCHIVE',
-    icon: 'archive',
-    onClick: (e: any, data: Order[]) => {
-      console.log('archive these muthafuckaz')
-    }
-  }
+  // const archiveAction = {
+  //   tooltip: 'ARCHIVE',
+  //   icon: 'archive',
+  //   onClick: (e: any, data: Order[]) => {
+  //     console.log('archive these muthafuckaz')
+  //   }
+  // }
 
   const [actions, setActions] = useState<Action<any>[]>([
     searchAction,
@@ -194,9 +219,9 @@ function Orders(props: RouteComponentProps) {
           }
           setIsSelecting(true)
           if (data.length === 1) {
-            setActions([printAction, archiveAction, editAction])
+            setActions([printAction, editAction])
           } else {
-            setActions([printAction, archiveAction])
+            setActions([printAction])
           }
         }}
         actions={actions}

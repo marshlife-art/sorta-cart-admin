@@ -131,7 +131,7 @@ export default function EditMenu(props: EditWholesaleOrderMenuProps) {
           <ListItemIcon>
             <FileIcon />
           </ListItemIcon>
-          <ListItemText primary="Export products to .csv" />
+          <ListItemText primary="export products to .csv" />
         </StyledMenuItem>
       </StyledMenu>
     </>
