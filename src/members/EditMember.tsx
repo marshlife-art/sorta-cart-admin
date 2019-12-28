@@ -97,7 +97,7 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
       })
         .then(response => response.json())
         .then(response => {
-          console.log('zomfg response:', response)
+          // console.log('zomfg response:', response)
           setMember(response.data[0] as Member)
         })
         .catch(err => setMember(blankMember))

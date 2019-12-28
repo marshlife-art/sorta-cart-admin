@@ -60,7 +60,7 @@ export default function NewUserModal(props: {
     })
       .then(response => response.json())
       .then(result => {
-        console.log('result', result)
+        // console.log('result', result)
         props.handleRefresh()
         props.handleClose()
       })

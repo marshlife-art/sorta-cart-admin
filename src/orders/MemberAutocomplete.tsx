@@ -45,7 +45,6 @@ export default function MemberAutocomplete(props: MemberAutocompleteProps) {
       })
 
       const members = (await response.json()) as MemberResponse
-      console.log('[MemberAutocomplete] members:', members)
       if (active) {
         setOptions(
           members.data.map(p => ({

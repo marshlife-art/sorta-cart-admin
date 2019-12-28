@@ -35,7 +35,6 @@ const useStyles = makeStyles((theme: Theme) =>
 export default function OrderDetailPanel(props: { order: Order }) {
   const classes = useStyles()
   const order = props.order
-  console.log('[OrderDetailPanel] zeeee order:', order)
   const line_items = props.order.OrderLineItems || []
   const adjustments = line_items.filter(li => li.kind !== 'product')
 

@@ -41,7 +41,6 @@ function AddWholesaleOrderLineItems(props: AddWholesaleOrderLineItemsProps) {
       data: LineItem | LineItem[]
     ) => {
       handleWholesaleOrderMenuOpen(event)
-      console.log('addLineItemsToOrder data:', data)
       if (Array.isArray(data)) {
         // ain't nobody (tsc) tell me nothin
         setSelectedLineItems(data.map(li => li.id) as string[])
@@ -65,7 +64,7 @@ function AddWholesaleOrderLineItems(props: AddWholesaleOrderLineItemsProps) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`
       },
-      body: JSON.stringify({ status: ['new', 'pending'] })
+      body: JSON.stringify({ status: ['new', 'needs_review'] })
     })
       .then(response => response.json())
       .then(result =>
@@ -99,12 +98,6 @@ function AddWholesaleOrderLineItems(props: AddWholesaleOrderLineItemsProps) {
   }
 
   const handleWholesaleOrderSelect = (id: string) => {
-    console.log(
-      'handleWholesaleOrderSelect id:',
-      id,
-      ' selectedLineItems:',
-      selectedLineItems
-    )
     fetch(`${API_HOST}/wholesaleorder/addlineitems`, {
       method: 'POST',
       headers: {
@@ -115,7 +108,7 @@ function AddWholesaleOrderLineItems(props: AddWholesaleOrderLineItemsProps) {
     })
       .then(response => response.json())
       .then(result => {
-        console.log('update line items result:', result)
+        // console.log('update line items result:', result)
       })
       .catch(console.warn)
       .finally(() => {
