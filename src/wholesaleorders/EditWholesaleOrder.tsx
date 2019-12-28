@@ -294,8 +294,7 @@ function EditWholesaleOrder(
         Authorization: `Bearer ${token}`
       },
       body: JSON.stringify({
-        lineItemData,
-        vendor
+        lineItemData
       })
     })
       .then(response => response.text())
