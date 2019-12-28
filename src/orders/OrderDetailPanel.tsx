@@ -132,23 +132,10 @@ export default function OrderDetailPanel(props: { order: Order }) {
                 created by
               </Typography>
               <Typography variant="body1">
-                {order.User.Member && order.User.Member.name}{' '}
                 <Link color="primary" href={`mailto:${order.User.email}`}>
                   {order.User.email}
                 </Link>{' '}
-                <br />
-                {order.User.Member && order.User.Member.phone && (
-                  <>
-                    <Link
-                      color="primary"
-                      href={`tel:${order.User.Member.phone}`}
-                    >
-                      {order.User.Member.phone}
-                    </Link>{' '}
-                    <br />
-                  </>
-                )}
-                {order.User.Member && <>{order.User.Member.address} </>}
+                {order.User.role && <>({order.User.role}) </>}
               </Typography>
             </div>
           </Grid>

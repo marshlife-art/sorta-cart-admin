@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { withRouter, RouteComponentProps } from 'react-router-dom'
-import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
+import { connect } from 'react-redux'
+
 import TextField from '@material-ui/core/TextField'
 import Grid from '@material-ui/core/Grid'
 import Button from '@material-ui/core/Button'
@@ -17,7 +18,10 @@ import InputLabel from '@material-ui/core/InputLabel'
 import MenuItem from '@material-ui/core/MenuItem'
 import FormControl from '@material-ui/core/FormControl'
 import Select from '@material-ui/core/Select'
+import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 
+import { RootState } from '../redux'
+import { UserService, UserServiceProps } from '../redux/session/reducers'
 import Loading from '../Loading'
 import { useOrderService } from './useOrderService'
 import {
@@ -86,7 +90,13 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 )
 
-function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
+interface EditOrderProps {
+  userService?: UserService
+}
+
+function EditOrder(
+  props: EditOrderProps & RouteComponentProps<OrderRouterProps>
+) {
   const classes = useStyles()
 
   const token = localStorage && localStorage.getItem('token')
@@ -126,6 +136,23 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
       setOrderId(pOrderId)
     }
   }, [pOrderId])
+
+  useEffect(() => {
+    if (
+      order &&
+      !order.UserId &&
+      props.userService &&
+      props.userService.user &&
+      props.userService.user.id
+    ) {
+      const UserId = props.userService.user.id
+      UserId &&
+        setOrder(prevOrder => ({
+          ...prevOrder,
+          UserId
+        }))
+    }
+  }, [props.userService, order])
 
   useEffect(() => {
     if (!needToCheckForDiscounts || !order) {
@@ -639,4 +666,10 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
   )
 }
 
-export default withRouter(EditOrder)
+const mapStateToProps = (states: RootState): UserServiceProps => {
+  return {
+    userService: states.session.userService
+  }
+}
+
+export default connect(mapStateToProps, undefined)(withRouter(EditOrder))
