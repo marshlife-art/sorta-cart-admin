@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { withRouter, RouteComponentProps } from 'react-router-dom'
 import Table from '@material-ui/core/Table'
 import TableBody from '@material-ui/core/TableBody'
 import TableCell from '@material-ui/core/TableCell'
@@ -7,6 +8,7 @@ import TableRow from '@material-ui/core/TableRow'
 import Tooltip from '@material-ui/core/Tooltip'
 import IconButton from '@material-ui/core/IconButton'
 import CloseIcon from '@material-ui/icons/Close'
+import Link from '@material-ui/core/Link'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 
 import { LineItem } from '../types/Order'
@@ -41,10 +43,12 @@ interface GroupedItem {
   line_items: LineItem[]
 }
 
-export default function WholesaleOrderLineItems(props: {
-  wholesaleOrder?: WholesaleOrder
-  setReload: React.Dispatch<React.SetStateAction<boolean>>
-}) {
+function WholesaleOrderLineItems(
+  props: {
+    wholesaleOrder?: WholesaleOrder
+    setReload: React.Dispatch<React.SetStateAction<boolean>>
+  } & RouteComponentProps
+) {
   const classes = useStyles()
   const lineItems = props?.wholesaleOrder?.OrderLineItems
 
@@ -230,8 +234,19 @@ export default function WholesaleOrderLineItems(props: {
                     [{li.kind}] {li.vendor}{' '}
                     {li.data && li.data.product && li.data.product.import_tag
                       ? li.data.product.import_tag
-                      : li.description}
-                    {li.OrderId && ` Order #${li.OrderId}`}
+                      : li.description}{' '}
+                    {li.OrderId && (
+                      <Link
+                        color="primary"
+                        href=""
+                        onClick={(e: any) => {
+                          e.preventDefault()
+                          props.history.push(`/orders/edit/${li.OrderId}`)
+                        }}
+                      >
+                        Order #{li.OrderId}
+                      </Link>
+                    )}
                   </TableCell>
                   <TableCell />
                   <TableCell />
@@ -292,3 +307,5 @@ export default function WholesaleOrderLineItems(props: {
     </Table>
   )
 }
+
+export default withRouter(WholesaleOrderLineItems)

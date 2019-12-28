@@ -99,16 +99,22 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
   const [showMemberAutocomplete, setShowMemberAutocomplete] = useState(false)
   const [snackOpen, setSnackOpen] = React.useState(false)
   const [snackMsg, setSnackMsg] = React.useState('')
-
+  const [needToCheckForDiscounts, setNeedToCheckForDiscounts] = useState(true)
+  const [canApplyMemberDiscount, setCanApplyMemberDiscount] = useState(false)
   const orderService = useOrderService(orderId, setLoading)
 
   useEffect(() => {
     if (orderService.status === 'loaded') {
       if (orderService.payload) {
-        setOrder(orderService.payload)
-      } else {
-        console.log('does the order need to be set to a blank order??')
-        // setOrder(undefined)
+        const _order = orderService.payload
+        if (
+          _order.Member &&
+          _order.Member.discount &&
+          _order.Member.discount > 0
+        ) {
+          setCanApplyMemberDiscount(true)
+        }
+        setOrder(_order)
       }
     }
   }, [orderService])
@@ -120,6 +126,65 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
       setOrderId(pOrderId)
     }
   }, [pOrderId])
+
+  useEffect(() => {
+    if (!needToCheckForDiscounts || !order) {
+      setNeedToCheckForDiscounts(false)
+      return
+    }
+    if (order && order.OrderLineItems && canApplyMemberDiscount) {
+      const discountAmt = order.OrderLineItems.map(li => {
+        let canDiscount = false
+        if (li.data && li.data.product && li.selected_unit === 'CS') {
+          canDiscount =
+            li.data.product.ws_price !== li.data.product.ws_price_cost
+        } else if (li.data && li.data.product && li.selected_unit === 'EA') {
+          canDiscount = li.data.product.u_price !== li.data.product.u_price_cost
+        }
+        if (canDiscount && li.data && li.data.product) {
+          const price =
+            li.selected_unit === 'CS'
+              ? parseFloat(li.data.product.ws_price_cost)
+              : parseFloat(li.data.product.u_price_cost)
+
+          return +(li.total - price * li.quantity).toFixed(2)
+        } else {
+          return 0
+        }
+      }).reduce((acc, v) => acc + v, 0)
+
+      if (discountAmt > 0) {
+        const discountPrice = -discountAmt.toFixed(2)
+        const discounts = order.OrderLineItems.filter(
+          li => li.kind === 'adjustment' && li.description === 'member discount'
+        )
+        if (discounts[0]) {
+          if (discounts[0].total !== discountPrice) {
+            const idx = order.OrderLineItems.indexOf(discounts[0])
+            updateLineItem(idx, {
+              ...discounts[0],
+              price: discountPrice,
+              total: discountPrice
+            })
+          }
+        } else {
+          const adjustment: LineItem = {
+            description: 'member discount',
+            quantity: 1,
+            price: discountPrice,
+            total: discountPrice,
+            kind: 'adjustment'
+          }
+          setOrder(prevOrder => ({
+            ...prevOrder,
+            OrderLineItems: [...prevOrder.OrderLineItems, adjustment]
+          }))
+        }
+      }
+    }
+
+    setNeedToCheckForDiscounts(false)
+  }, [needToCheckForDiscounts, order])
 
   const handleSnackClose = (
     event: React.SyntheticEvent | React.MouseEvent,
@@ -151,10 +216,11 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
         ...order,
         OrderLineItems: [...order.OrderLineItems, lineItem]
       }))
+      setNeedToCheckForDiscounts(true)
     }
   }
 
-  function onLineItemUpdated(idx: number, line_item: LineItem) {
+  function updateLineItem(idx: number, line_item: LineItem) {
     setOrder(prevOrder => {
       let orderLineItems = prevOrder.OrderLineItems
       orderLineItems.splice(idx, 1, line_item)
@@ -165,7 +231,17 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
       }
     })
   }
+  function onLineItemUpdated(idx: number, line_item: LineItem) {
+    updateLineItem(idx, line_item)
+    setNeedToCheckForDiscounts(true)
+  }
   function removeLineItem(idx: number) {
+    if (idx > -1) {
+      const li = order.OrderLineItems[idx]
+      if (li.kind === 'adjustment' && li.description === 'member discount') {
+        setCanApplyMemberDiscount(false)
+      }
+    }
     setOrder(prevOrder => {
       let orderLineItems = prevOrder.OrderLineItems
       orderLineItems.splice(idx, 1)
@@ -226,11 +302,8 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
         if (response.success) {
           setSnackOpen(true)
           setSnackMsg('Saved order!')
-          console.log('save response: ', response)
           if (response.order.id && (!orderId || orderId === 'new')) {
-            console.log('we got an order id back, gonna setorderid')
             props.history.replace(`/orders/edit/${response.order.id}`)
-            // setOrderId(response.order.id)
           }
         }
       })
@@ -287,6 +360,12 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
       shipment_status: event.target.value as ShipmentStatus
     }))
   }
+
+  const shouldShowAddMemberDiscount =
+    !canApplyMemberDiscount ||
+    (order &&
+      order.OrderLineItems.filter(li => li.description === 'member discount')
+        .length === 0)
 
   return (
     <div className={classes.root}>
@@ -511,7 +590,20 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
                     <AddIcon />
                     ADJUSTMENT
                   </Button>
-                  {/* <h4 className={classes.liHeader}>LINE ITEMS</h4> */}
+
+                  {shouldShowAddMemberDiscount && (
+                    <Button
+                      aria-label="add member discount"
+                      size="large"
+                      onClick={() => {
+                        setCanApplyMemberDiscount(true)
+                        setNeedToCheckForDiscounts(true)
+                      }}
+                    >
+                      <AddIcon />
+                      MEMBER DISCOUNT
+                    </Button>
+                  )}
                 </>
               )}
             </div>

@@ -290,7 +290,7 @@ function OrderLineItems(props: {
                   type="number"
                   margin="dense"
                   fullWidth
-                  value={line_item.price}
+                  value={line_item.price || line_item.total}
                   onChange={(event: any) =>
                     handlePriceChange(line_item, event.target.value)
                   }
