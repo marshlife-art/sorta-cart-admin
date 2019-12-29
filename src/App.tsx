@@ -51,14 +51,16 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     nav: {
       background: theme.palette.primary.main,
-      zIndex: theme.zIndex.drawer + 1,
       display: 'flex',
       height: '48px',
       alignItems: 'center',
       paddingLeft: '10px',
       position: 'fixed',
       top: 0,
-      left: 0
+      left: 0,
+      '&:hover': {
+        zIndex: theme.zIndex.drawer + 1
+      }
     },
     drawer: {
       width: drawerWidth,
