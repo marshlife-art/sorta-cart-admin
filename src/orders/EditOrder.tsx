@@ -43,8 +43,7 @@ import {
   ORDER_STATUSES,
   PAYMENT_STATUSES,
   SHIPMENT_STATUSES,
-  TAX_RATE_STRING,
-  TAX_RATE
+  TAX_RATE_STRING
 } from '../constants'
 
 const blankOrder: Order = {
@@ -361,8 +360,8 @@ function EditOrder(
           {
             kind: 'tax',
             description: `tax ${TAX_RATE_STRING}`,
-            price: TAX_RATE,
             quantity: 1,
+            price: tax,
             total: tax
           }
         ]

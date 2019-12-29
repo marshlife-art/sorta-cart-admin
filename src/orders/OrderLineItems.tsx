@@ -163,6 +163,7 @@ function OrderLineItems(props: {
   }
 
   const adjustments = props.line_items.filter(li => li.kind === 'adjustment')
+  const payments = props.line_items.filter(li => li.kind === 'payment')
 
   return (
     <Paper className={classes.root}>
@@ -338,6 +339,24 @@ function OrderLineItems(props: {
             <TableCell align="center">{TAX_RATE_STRING}</TableCell>
             <TableCell align="right">{usdFormat(orderTaxes)}</TableCell>
           </TableRow>
+
+          {payments.map((line_item, idx) => (
+            <TableRow key={`li${idx}`}>
+              <TableCell align="center">
+                <Tooltip title="remove adjustment">
+                  <IconButton
+                    aria-label="delete"
+                    size="small"
+                    onClick={(event: any) => removeLineItem(line_item)}
+                  >
+                    <ClearIcon fontSize="inherit" />
+                  </IconButton>
+                </Tooltip>
+              </TableCell>
+              <TableCell colSpan={4}>{line_item.description}</TableCell>
+              <TableCell align="right">{usdFormat(line_item.total)}</TableCell>
+            </TableRow>
+          ))}
 
           <TableRow>
             <TableCell rowSpan={1} colSpan={3} />
