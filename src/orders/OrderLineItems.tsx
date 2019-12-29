@@ -129,6 +129,12 @@ function OrderLineItems(props: {
 
   const handleUnitChange = (line_item: LineItem, unit: string) => {
     line_item.selected_unit = unit
+    if (line_item.data && line_item.data.product) {
+      line_item.price =
+        unit === 'CS'
+          ? +line_item.data.product.ws_price
+          : +line_item.data.product.u_price
+    }
     line_item.total = liTotal(line_item)
     const idx = props.line_items.indexOf(line_item)
     props.onLineItemUpdated(idx, line_item)
