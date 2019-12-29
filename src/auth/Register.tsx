@@ -1,25 +1,28 @@
 import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import { ThunkDispatch } from 'redux-thunk'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
+import { withRouter, RouteComponentProps, useLocation } from 'react-router-dom'
 import { Container, Button, TextField } from '@material-ui/core'
 import Box from '@material-ui/core/Box'
 import Typography from '@material-ui/core/Typography'
 import { makeStyles } from '@material-ui/core/styles'
 
 import { RootState } from '../redux'
-import { login } from '../redux/session/actions'
+import { register } from '../redux/session/actions'
 import { UserServiceProps } from '../redux/session/reducers'
 
 interface OwnProps {}
 
 interface DispatchProps {
-  login: (email: string, password: string) => void
+  register: (regKey: string, password: string) => void
 }
 
 type Props = UserServiceProps & OwnProps & DispatchProps & RouteComponentProps
 
 const useStyles = makeStyles(theme => ({
+  container: {
+    // minHeight: 'calc(100vh - 64px)'
+  },
   form: {
     width: '100%',
     minHeight: 'calc(100vh - 64px)',
@@ -33,24 +36,55 @@ const useStyles = makeStyles(theme => ({
   }
 }))
 
-function Login(props: Props) {
+function useQuery() {
+  return new URLSearchParams(useLocation().search)
+}
+
+function Register(props: Props) {
   const doLogin = (event: React.FormEvent) => {
     event.preventDefault()
     setError('')
     const target = event.currentTarget as HTMLFormElement
-    const emailEl = target.elements.namedItem('email') as HTMLInputElement
+
     const passwordEl = target.elements.namedItem('password') as HTMLInputElement
+    const passwordConfirmEl = target.elements.namedItem(
+      'password_confirm'
+    ) as HTMLInputElement
+
+    let regKey: string = ''
+
+    if (regKeyParam) {
+      regKey = regKeyParam
+    }
+
+    if (!regKey) {
+      const regKeyEl = target.elements.namedItem('regKey') as HTMLInputElement
+      if (regKeyEl && regKeyEl.value.length > 1) {
+        regKey = regKeyEl.value
+      }
+    }
+
+    if (!regKey) {
+      setError('no registration key')
+    }
 
     if (
-      emailEl &&
-      emailEl.value.length > 0 &&
       passwordEl &&
-      passwordEl.value.length > 0
+      passwordEl.value.length > 0 &&
+      passwordConfirmEl &&
+      passwordConfirmEl.value.length > 0
     ) {
-      props.login(emailEl.value, passwordEl.value)
+      if (passwordConfirmEl.value !== passwordEl.value) {
+        setError('passwords do not match')
+      } else {
+        props.register(regKey, passwordConfirmEl.value)
+      }
     }
   }
 
+  let query = useQuery()
+  const regKeyParam = query.get('regKey')
+  console.log('[Register] regKeyParam', regKeyParam)
   const { userService, history } = props
   const classes = useStyles()
   const [error, setError] = useState('')
@@ -71,19 +105,30 @@ function Login(props: Props) {
   }, [userService, history])
 
   return (
-    <Container maxWidth="sm">
+    <Container maxWidth="sm" className={classes.container}>
       <form onSubmit={doLogin} className={classes.form}>
+        {!regKeyParam && (
+          <TextField
+            label="registration key"
+            name="regKey"
+            type="text"
+            autoFocus
+            fullWidth
+            required
+          />
+        )}
+
         <TextField
-          label="email"
-          name="email"
-          type="text"
-          autoFocus
+          label="password"
+          name="password"
+          type="password"
+          autoFocus={!!regKeyParam}
           fullWidth
           required
         />
         <TextField
-          label="password"
-          name="password"
+          label="password_confirm"
+          name="password_confirm"
           type="password"
           fullWidth
           required
@@ -98,7 +143,7 @@ function Login(props: Props) {
             disabled={props.userService.isFetching}
             className={classes.submit}
           >
-            Login
+            submit
           </Button>
         </div>
 
@@ -143,8 +188,11 @@ const mapDispatchToProps = (
   ownProps: OwnProps
 ): DispatchProps => {
   return {
-    login: (email, password) => dispatch(login(email, password))
+    register: (regKey, password) => dispatch(register(regKey, password))
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(withRouter(Login))
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(withRouter(Register))

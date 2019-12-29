@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react'
-import { makeStyles, Theme, createStyles } from '@material-ui/core/styles'
 import Modal from '@material-ui/core/Modal'
 import Backdrop from '@material-ui/core/Backdrop'
 import Fade from '@material-ui/core/Fade'
 import Button from '@material-ui/core/Button'
 import TextField from '@material-ui/core/TextField'
 import Typography from '@material-ui/core/Typography'
+import MenuItem from '@material-ui/core/MenuItem'
+import FormControl from '@material-ui/core/FormControl'
+import Select from '@material-ui/core/Select'
+import InputLabel from '@material-ui/core/InputLabel'
+import Box from '@material-ui/core/Box'
+import { makeStyles, Theme, createStyles } from '@material-ui/core/styles'
 
 import { API_HOST } from '../constants'
 
@@ -25,14 +30,19 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 )
 
+const ROLES = ['admin', 'member', 'guest']
+
 export default function NewUserModal(props: {
   open: boolean
   handleClose: () => void
   handleRefresh: () => void
 }) {
+  const token = localStorage && localStorage.getItem('token')
+
   const classes = useStyles()
 
   const [email, setEmail] = useState('')
+  const [role, setRole] = useState('guest')
   const [disabled, setDiabled] = useState(false)
   const [error, setError] = useState('')
 
@@ -51,22 +61,27 @@ export default function NewUserModal(props: {
     } else {
       setError('')
     }
-    fetch(`${API_HOST}/register`, {
+    fetch(`${API_HOST}/user/create`, {
       method: 'post',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
       },
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ email, role })
     })
       .then(response => response.json())
       .then(result => {
         // console.log('result', result)
-        props.handleRefresh()
-        props.handleClose()
+        if (result.error) {
+          return setError(result.msg)
+        } else {
+          props.handleRefresh()
+          props.handleClose()
+        }
       })
       .catch(err => {
         console.warn(err)
-        return setError(err)
+        return setError('o noz! there was an error creating user')
       })
       .finally(() => setDiabled(false))
   }
@@ -100,19 +115,40 @@ export default function NewUserModal(props: {
                 fullWidth
               />
 
+              <FormControl fullWidth>
+                <InputLabel id="role-select-label">Role</InputLabel>
+                <Select
+                  labelId="role-select-label"
+                  id="role-select"
+                  margin="dense"
+                  value={role}
+                  onChange={event =>
+                    event.target &&
+                    event.target.value &&
+                    setRole(event.target.value as string)
+                  }
+                >
+                  {ROLES.map(name => (
+                    <MenuItem value={name} key={`role-select${name}`}>
+                      {name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
               <Button
                 variant="contained"
                 color="primary"
                 onClick={createUser}
                 disabled={disabled}
               >
-                Send Invite
+                CREATE
               </Button>
 
               {error && (
-                <Typography component="p" color="primary">
-                  {error}
-                </Typography>
+                <Box color="error.main">
+                  <Typography component="p">{error}</Typography>
+                </Box>
               )}
             </div>
           </div>

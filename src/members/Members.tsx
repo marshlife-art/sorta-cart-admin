@@ -2,26 +2,9 @@ import React, { createRef } from 'react'
 import { withRouter, RouteComponentProps } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import MaterialTable from 'material-table'
-// import Paper from '@material-ui/core/Paper'
-// import Grid from '@material-ui/core/Grid'
-// import List from '@material-ui/core/List'
-// import ListItem from '@material-ui/core/ListItem'
-// import Add from '@material-ui/icons/Add'
-// import ListItemText from '@material-ui/core/ListItemText'
-// import Divider from '@material-ui/core/Divider'
-// import Snackbar from '@material-ui/core/Snackbar'
-// import IconButton from '@material-ui/core/IconButton'
-// import CloseIcon from '@material-ui/icons/Close'
-// import { connect } from 'react-redux'
-// import { Switch } from 'react-router'
-// import ProtectedRoute from '../auth/ProtectedRoute'
-// import { RootState } from '../redux'
-// import { MemberService, MemberServiceProps } from '../redux/session/reducers'
-// import { useAllMembersService } from './useMemberService'
+
 import { MemberRouterProps } from '../types/Member'
 import { Member } from '../types/Member'
-// import NewMemberModal from './NewMemberModal'
-// import MemberRolesMenu from './MemberRolesMenu'
 import { API_HOST } from '../constants'
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -29,7 +12,7 @@ const useStyles = makeStyles((theme: Theme) =>
     root: {
       padding: theme.spacing(2),
       maxWidth: '100vw',
-      minHeight: `calc(100vh - 64px)`
+      minHeight: 'calc(100vh - 64px)'
     }
   })
 )
@@ -39,7 +22,6 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
   const tableRef = createRef<any>()
 
   const token = localStorage && localStorage.getItem('token')
-  // const [newMemberModalOpen, setNewMemberModalOpen] = useState(false)
 
   const newMemberAction = {
     icon: 'add',
@@ -92,19 +74,6 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
       member.id && props.history.push(`/members/${member.id}`)
     }
   }
-
-  /*
-registration_email
-name
-phone
-address
-discount
-discount_type
-fees_paid
-store_credit
-shares
-member_type
-data*/
 
   return (
     <div className={classes.root}>
@@ -181,16 +150,6 @@ data*/
         }}
         actions={[newMemberAction, deleteAction, editAction]}
       />
-
-      {/* <NewMemberModal
-        open={newMemberModalOpen}
-        handleClose={() => {
-          setNewMemberModalOpen(false)
-        }}
-        handleRefresh={() =>
-          tableRef.current && tableRef.current.onQueryChange()
-        }
-      /> */}
     </div>
   )
 }

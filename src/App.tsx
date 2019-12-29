@@ -9,6 +9,7 @@ import Drawer from '@material-ui/core/Drawer'
 import AppBar from '@material-ui/core/AppBar'
 import Toolbar from '@material-ui/core/Toolbar'
 import List from '@material-ui/core/List'
+// import Divider from '@material-ui/core/Divider'
 import Typography from '@material-ui/core/Typography'
 import IconButton from '@material-ui/core/IconButton'
 import MenuIcon from '@material-ui/icons/Menu'
@@ -24,6 +25,7 @@ import { getPreferences } from './redux/preferences/actions'
 import Loading from './Loading'
 import Dashboard from './dashboard/Dashboard'
 import Login from './auth/Login'
+import Register from './auth/Register'
 import ProtectedRoute from './auth/ProtectedRoute'
 import UserMenu from './auth/UserMenu'
 import Pages from './pages/Pages'
@@ -35,6 +37,7 @@ import ImportProducts from './products/ImportProducts'
 import EditOrder from './orders/EditOrder'
 import Members from './members/Members'
 import EditMember from './members/EditMember'
+import { APP_VERSION } from './constants'
 
 const drawerWidth = 240
 
@@ -55,6 +58,15 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     drawerPaper: {
       width: drawerWidth
+    },
+    version: {
+      fontStyle: 'italic',
+      fontSize: '0.8em',
+      flexGrow: 1,
+      alignSelf: 'center',
+      flexDirection: 'column',
+      display: 'flex',
+      justifyContent: 'flex-end'
     },
     content: {
       flexGrow: 1
@@ -143,10 +155,12 @@ const App: React.FC<Props> = (props: Props) => {
             open={open}
           >
             <List onClick={() => setOpen(false)}>{mainListItems}</List>
-            {/* 
-              <Divider />
-              <List>{secondaryListItems}</List> 
-              */}
+
+            {/* <Divider /> */}
+            {/* <List>{secondaryListItems}</List>  */}
+            <div className={classes.version}>
+              <span>{APP_VERSION}</span>
+            </div>
           </Drawer>
         )}
 
@@ -159,6 +173,7 @@ const App: React.FC<Props> = (props: Props) => {
           ) : (
             <Switch>
               <Route path="/login" component={Login} />
+              <Route path="/register" component={Register} />
               <ProtectedRoute
                 userService={userService}
                 path="/products"

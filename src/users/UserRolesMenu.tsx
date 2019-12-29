@@ -95,27 +95,27 @@ export default function UserRolesMenu(props: {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
-        <StyledMenuItem>
+        {/* <StyledMenuItem>
           <ListItemText
             primary="Superuser"
             onClick={() => handleRoleChange(props.user.id, 'superuser')}
           />
-        </StyledMenuItem>
+        </StyledMenuItem> */}
         <StyledMenuItem>
           <ListItemText
-            primary="Admin"
+            primary="admin"
             onClick={() => handleRoleChange(props.user.id, 'admin')}
           />
         </StyledMenuItem>
         <StyledMenuItem>
           <ListItemText
-            primary="Member"
+            primary="member"
             onClick={() => handleRoleChange(props.user.id, 'member')}
           />
         </StyledMenuItem>
         <StyledMenuItem>
           <ListItemText
-            primary="Guest"
+            primary="guest"
             onClick={() => handleRoleChange(props.user.id, 'guest')}
           />
         </StyledMenuItem>

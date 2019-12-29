@@ -276,7 +276,7 @@ export default function ImportProducts() {
           <Typography variant="h6" gutterBottom>
             Helpful Information
           </Typography>
-          <Typography variant="body1" gutterBottom>
+          <Typography variant="body1" gutterBottom component="div">
             <dl>
               <dt>What kind of file should be uploaded?</dt>
               <dd>Comma separated value files with the extension .csv</dd>

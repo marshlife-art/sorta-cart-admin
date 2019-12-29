@@ -1,6 +1,9 @@
 import { OrderStatus, PaymentStatus, ShipmentStatus } from './types/Order'
 
-export const API_HOST = 'http://localhost:3000'
+export const API_HOST =
+  process.env.NODE_ENV === 'production'
+    ? 'https://api.marshcoop.org'
+    : 'http://localhost:3000'
 
 export const TAX_RATE = 0.06175
 export const TAX_RATE_STRING = `${(TAX_RATE * 100).toFixed(3)}%`
@@ -33,3 +36,6 @@ export const SHIPMENT_STATUSES: OrderShipmentStatusLookup = {
   partial: 'partial',
   canceled: 'canceled'
 }
+
+export const APP_VERSION = `v${process.env.npm_package_version ||
+  require('../package.json').version} made with ♥ in NYC`

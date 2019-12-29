@@ -127,8 +127,8 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
               />
             )
           },
-          { title: 'name', field: 'name', type: 'string' },
           { title: 'email', field: 'email', type: 'string' },
+          { title: 'active', field: 'active', type: 'boolean', filtering: false },
           {
             title: 'created',
             field: 'createdAt',

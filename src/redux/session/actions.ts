@@ -29,6 +29,12 @@ export const isFetching = (isFetching: boolean): SetFetcing => {
   return { type: 'SET_FETCHING', isFetching }
 }
 
+const NULL_USER: User = {
+  id: undefined,
+  email: undefined,
+  token: undefined
+}
+
 export const checkSession = (): ThunkAction<
   Promise<void>,
   {},
@@ -58,12 +64,55 @@ export const checkSession = (): ThunkAction<
           if (response.msg === 'ok' && response.user) {
             dispatch(set(response.user))
           } else {
-            dispatch(set({ email: undefined, token: undefined }))
+            dispatch(set(NULL_USER))
           }
         })
         .catch(err => {
           console.warn('check_session caught err:', err)
-          dispatch(set({ email: undefined, token: undefined }))
+          // hmm, maybe the API is just down? ...is it really necessary to NULL the user?
+          dispatch(set(NULL_USER))
+        })
+        .finally(() => {
+          dispatch(isFetching(false))
+          resolve()
+        })
+    })
+  }
+}
+
+export const register = (
+  regKey: string,
+  password: string
+): ThunkAction<Promise<void>, {}, {}, AnyAction> => {
+  return async (dispatch: ThunkDispatch<{}, {}, AnyAction>): Promise<void> => {
+    return new Promise<void>(resolve => {
+      dispatch(isFetching(true))
+
+      fetch(`${API_HOST}/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ regKey, password })
+      })
+        .then(response => response.json())
+        .then(response => {
+          // console.log('[session/actions] user login', response)
+          if (response.msg === 'ok' && response.user && response.user.token) {
+            localStorage && localStorage.setItem('token', response.user.token)
+            dispatch(set(response.user))
+          } else {
+            dispatch(setError({ error: 'error', reason: response.message }))
+          }
+        })
+        .catch(e => {
+          console.log('register error:', e)
+          dispatch(
+            setError({
+              error: 'error',
+              reason: 'unable to register right now :('
+            })
+          )
         })
         .finally(() => {
           dispatch(isFetching(false))
@@ -81,13 +130,12 @@ export const login = (
     return new Promise<void>(resolve => {
       dispatch(isFetching(true))
 
-      const body = { email: email, password: password }
       fetch(`${API_HOST}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify({ email, password })
       })
         .then(response => response.json())
         .then(response => {
@@ -98,6 +146,12 @@ export const login = (
           } else {
             dispatch(setError({ error: 'error', reason: response.message }))
           }
+        })
+        .catch(e => {
+          console.log('login error:', e)
+          dispatch(
+            setError({ error: 'error', reason: 'unable to login right now :(' })
+          )
         })
         .finally(() => {
           dispatch(isFetching(false))
@@ -112,6 +166,7 @@ export const logout = (): ThunkAction<Promise<void>, {}, {}, AnyAction> => {
     return new Promise<void>(resolve => {
       dispatch(isFetching(true))
       localStorage && localStorage.removeItem('token')
+      dispatch(set(NULL_USER))
       dispatch(isFetching(false))
       resolve()
     })
