@@ -2,6 +2,7 @@
   "name": "sorta-cart-admin",
   "version": "0.0.1",
   "private": true,
+  "homepage": "https://marshlife-art.github.io/sorta-cart-admin/",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
