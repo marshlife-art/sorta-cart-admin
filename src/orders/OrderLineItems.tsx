@@ -101,7 +101,8 @@ function OrderLineItems(props: {
   onLineItemUpdated: (idx: number, line_item: LineItem) => void
   removeLineItem: (idx: number) => void
   onTaxesChange: (amount: number) => void
-  onTotalChange: (amount: number) => void
+  onTotalChange: (total: number) => void
+  onSubTotalChange: (subtotal: number) => void
 }) {
   const classes = useStyles()
 
@@ -110,7 +111,7 @@ function OrderLineItems(props: {
   const orderTaxes = TAX_RATE * (orderSubtotal + orderAdjustmentsTotal)
   const orderTotal = orderTaxes + orderSubtotal + orderAdjustmentsTotal
 
-  const { onTaxesChange, onTotalChange } = props
+  const { onTaxesChange, onTotalChange, onSubTotalChange } = props
   useEffect(() => {
     onTaxesChange(orderTaxes)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -120,6 +121,11 @@ function OrderLineItems(props: {
     onTotalChange(orderTotal)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderTotal]) // adding onTotalChange causes infinite loopz :/
+
+  useEffect(() => {
+    onSubTotalChange(orderSubtotal)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderSubtotal])
 
   const handleUnitChange = (line_item: LineItem, unit: string) => {
     line_item.selected_unit = unit

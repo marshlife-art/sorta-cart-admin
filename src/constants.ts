@@ -18,8 +18,8 @@ export const ORDER_STATUSES: OrderStatusLookup = {
 type OrderPaymentStatusLookup = { [key in PaymentStatus]: string }
 export const PAYMENT_STATUSES: OrderPaymentStatusLookup = {
   balance_due: 'balance due',
-  credit_owed: 'credit owed',
   paid: 'paid',
+  credit_owed: 'credit owed',
   failed: 'failed',
   void: 'void'
 }

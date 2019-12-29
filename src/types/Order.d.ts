@@ -34,6 +34,9 @@ export interface Order {
   phone: string
   address?: string
   notes?: string
+  subtotal?: number
+  item_count: number
+  email_sent?: boolean
   history?: object
   createdAt: string
   updatedAt: string

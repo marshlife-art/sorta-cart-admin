@@ -43,7 +43,9 @@ export default function OrderDetailPanel(props: { order: Order }) {
       <Table aria-label="order details table" size="small">
         <TableHead>
           <TableRow>
-            <TableCell component="th">Line Items</TableCell>
+            <TableCell component="th">
+              Line Items ({order.item_count})
+            </TableCell>
             <TableCell component="th" align="right">
               price
             </TableCell>
@@ -74,6 +76,16 @@ export default function OrderDetailPanel(props: { order: Order }) {
                 </TableRow>
               )
           )}
+
+          <TableRow>
+            <TableCell component="td" scope="row" colSpan={3} />
+            <TableCell component="td" scope="row" align="right">
+              <b>Sub Total</b>
+            </TableCell>
+            <TableCell component="td" scope="row" align="right">
+              {order.subtotal}
+            </TableCell>
+          </TableRow>
 
           {adjustments.length > 0 && (
             <TableRow>

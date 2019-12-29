@@ -53,6 +53,8 @@ const blankOrder: Order = {
   payment_status: 'balance_due',
   shipment_status: 'backorder',
   total: 0.0,
+  item_count: 0,
+  subtotal: 0,
   name: '',
   email: '',
   phone: '',
@@ -244,6 +246,8 @@ function EditOrder(
       }
       setOrder(order => ({
         ...order,
+        item_count:
+          order.OrderLineItems.filter(li => li.kind === 'product').length + 1,
         OrderLineItems: [...order.OrderLineItems, lineItem]
       }))
       setNeedToCheckForDiscounts(true)
@@ -273,10 +277,13 @@ function EditOrder(
       }
     }
     setOrder(prevOrder => {
-      let orderLineItems = prevOrder.OrderLineItems
+      const orderLineItems = prevOrder.OrderLineItems
       orderLineItems.splice(idx, 1)
+      const item_count = orderLineItems.filter(li => li.kind === 'product')
+        .length
       return {
         ...prevOrder,
+        item_count,
         OrderLineItems: orderLineItems
       }
     })
@@ -361,6 +368,13 @@ function EditOrder(
         ]
       }
     })
+  }
+
+  function onSubTotalChange(subtotal: number) {
+    setOrder(prevOrder => ({
+      ...prevOrder,
+      subtotal
+    }))
   }
 
   function onTotalChange(total: number) {
@@ -674,6 +688,7 @@ function EditOrder(
               removeLineItem={removeLineItem}
               onTaxesChange={onTaxesChange}
               onTotalChange={onTotalChange}
+              onSubTotalChange={onSubTotalChange}
             />
           </Grid>
         </Grid>

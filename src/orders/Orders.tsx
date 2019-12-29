@@ -137,16 +137,16 @@ function Orders(props: RouteComponentProps) {
           { title: 'email', field: 'email', type: 'string', filtering: false },
           {
             title: 'items',
-            field: 'OrderLineItems',
-            type: 'string',
-            filtering: false,
-            render: (order: Order) =>
-              order.OrderLineItems
-                ? order.OrderLineItems.filter(li => li.kind === 'product')
-                    .length
-                : 0
+            field: 'item_count',
+            type: 'numeric',
+            filtering: false
           },
-          { title: 'total', field: 'total', type: 'numeric', filtering: false },
+          {
+            title: 'total',
+            field: 'total',
+            type: 'currency',
+            filtering: false
+          },
 
           {
             title: 'updated',
