@@ -51,6 +51,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     nav: {
       background: theme.palette.primary.main,
+      zIndex: 0,
       display: 'flex',
       height: '48px',
       alignItems: 'center',
