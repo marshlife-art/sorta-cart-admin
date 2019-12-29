@@ -42,7 +42,9 @@ import {
   API_HOST,
   ORDER_STATUSES,
   PAYMENT_STATUSES,
-  SHIPMENT_STATUSES
+  SHIPMENT_STATUSES,
+  TAX_RATE_STRING,
+  TAX_RATE
 } from '../constants'
 
 const blankOrder: Order = {
@@ -340,6 +342,25 @@ function EditOrder(
 
   function onTaxesChange(tax: number) {
     console.log('onTaxesChange tax:', tax)
+    setOrder(prevOrder => {
+      const notTaxLineItems = prevOrder.OrderLineItems.filter(
+        li => li.kind !== 'tax'
+      )
+
+      return {
+        ...prevOrder,
+        OrderLineItems: [
+          ...notTaxLineItems,
+          {
+            kind: 'tax',
+            description: `tax ${TAX_RATE_STRING}`,
+            price: TAX_RATE,
+            quantity: 1,
+            total: tax
+          }
+        ]
+      }
+    })
   }
 
   function onTotalChange(total: number) {
@@ -529,7 +550,7 @@ function EditOrder(
                 label="notes"
                 className={classes.formInput}
                 multiline
-                rowsMax="4"
+                rowsMax="20"
                 fullWidth
                 value={order.notes}
                 onChange={(event: any) => {
