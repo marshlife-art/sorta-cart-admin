@@ -50,7 +50,7 @@ const useStyles = makeStyles((theme: Theme) =>
     sticky: {
       [theme.breakpoints.up('sm')]: {
         position: 'sticky',
-        top: '64px'
+        top: '0'
       },
       zIndex: 1,
       backgroundColor: theme.palette.background.paper

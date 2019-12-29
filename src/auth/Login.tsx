@@ -22,11 +22,16 @@ type Props = UserServiceProps & OwnProps & DispatchProps & RouteComponentProps
 const useStyles = makeStyles(theme => ({
   form: {
     width: '100%',
-    minHeight: 'calc(100vh - 64px)',
+    minHeight: '100vh',
     marginTop: theme.spacing(1),
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center'
+  },
+  title: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end'
   },
   submit: {
     margin: theme.spacing(3, 0, 2)
@@ -73,6 +78,14 @@ function Login(props: Props) {
   return (
     <Container maxWidth="sm">
       <form onSubmit={doLogin} className={classes.form}>
+        <div className={classes.title}>
+          <Typography variant="h2" display="block">
+            MARSH COOP
+          </Typography>
+          <Typography variant="overline" display="inline">
+            admin
+          </Typography>
+        </div>
         <TextField
           label="email"
           name="email"

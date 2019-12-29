@@ -3,22 +3,25 @@ import { BrowserRouter as Router, Switch, Route } from 'react-router-dom'
 import { connect } from 'react-redux'
 import { ThunkDispatch } from 'redux-thunk'
 import clsx from 'clsx'
-import { createStyles, Theme, makeStyles } from '@material-ui/core/styles'
+
 import CssBaseline from '@material-ui/core/CssBaseline'
 import Drawer from '@material-ui/core/Drawer'
-import AppBar from '@material-ui/core/AppBar'
-import Toolbar from '@material-ui/core/Toolbar'
 import List from '@material-ui/core/List'
-// import Divider from '@material-ui/core/Divider'
-import Typography from '@material-ui/core/Typography'
+import Divider from '@material-ui/core/Divider'
 import IconButton from '@material-ui/core/IconButton'
 import MenuIcon from '@material-ui/icons/Menu'
+import ListItem from '@material-ui/core/ListItem'
+import ListItemIcon from '@material-ui/core/ListItemIcon'
+import ListItemText from '@material-ui/core/ListItemText'
+import TagFaces from '@material-ui/icons/TagFaces'
+import { createStyles, Theme, makeStyles } from '@material-ui/core/styles'
 
 import { mainListItems } from './listItems' // secondaryListItems
 
 import { RootState } from './redux'
 import { UserServiceProps } from './redux/session/reducers'
-import { checkSession } from './redux/session/actions'
+import { checkSession, logout } from './redux/session/actions'
+
 import { PreferencesServiceProps } from './redux/preferences/reducers'
 import { getPreferences } from './redux/preferences/actions'
 
@@ -44,13 +47,17 @@ const drawerWidth = 240
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
-      display: 'flex'
+      minHeight: '100vh'
     },
-    appBar: {
-      zIndex: theme.zIndex.drawer + 1
-    },
-    title: {
-      flexGrow: 1
+    nav: {
+      zIndex: theme.zIndex.drawer + 1,
+      display: 'flex',
+      height: '36px',
+      alignItems: 'center',
+      marginLeft: '2px',
+      position: 'fixed',
+      top: 0,
+      left: 0
     },
     drawer: {
       width: drawerWidth,
@@ -69,15 +76,15 @@ const useStyles = makeStyles((theme: Theme) =>
       justifyContent: 'flex-end'
     },
     content: {
-      flexGrow: 1
-    },
-    toolbar: theme.mixins.toolbar
+      // flexGrow: 1
+    }
   })
 )
 
 interface DispatchProps {
   checkSession: () => void
   getPreferences: () => void
+  logout: () => void
 }
 
 type Props = UserServiceProps & PreferencesServiceProps & DispatchProps
@@ -123,28 +130,19 @@ const App: React.FC<Props> = (props: Props) => {
     <Router>
       <div className={classes.root}>
         <CssBaseline />
-        <AppBar position="fixed" className={classes.appBar}>
-          <Toolbar className={classes.toolbar}>
-            {userService.user && (
-              <IconButton
-                edge="start"
-                aria-label="open drawer"
-                onClick={() => setOpen(true)}
-              >
-                <MenuIcon />
-              </IconButton>
-            )}
-            <Typography
-              component="h1"
-              variant="h6"
-              className={classes.title}
-              noWrap
+        <div className={classes.nav}>
+          {userService.user && userService.user.role === 'admin' ? (
+            <IconButton
+              edge="start"
+              aria-label="open drawer"
+              onClick={() => setOpen(true)}
             >
-              MARSH
-            </Typography>
+              <MenuIcon />
+            </IconButton>
+          ) : (
             <UserMenu />
-          </Toolbar>
-        </AppBar>
+          )}
+        </div>
 
         {userService && userService.user && userService.user.email && (
           <Drawer
@@ -156,7 +154,14 @@ const App: React.FC<Props> = (props: Props) => {
           >
             <List onClick={() => setOpen(false)}>{mainListItems}</List>
 
-            {/* <Divider /> */}
+            <Divider />
+            <ListItem button onClick={() => props.logout()}>
+              <ListItemIcon>
+                <TagFaces />
+              </ListItemIcon>
+              <ListItemText primary="log out" />
+            </ListItem>
+
             {/* <List>{secondaryListItems}</List>  */}
             <div className={classes.version}>
               <span>{APP_VERSION}</span>
@@ -165,7 +170,6 @@ const App: React.FC<Props> = (props: Props) => {
         )}
 
         <main className={classes.content}>
-          <div className={classes.toolbar} />
           {/* ROUTER */}
 
           {loading ? (
@@ -256,7 +260,8 @@ const mapDispatchToProps = (
 ): DispatchProps => {
   return {
     checkSession: () => dispatch(checkSession()),
-    getPreferences: () => dispatch(getPreferences())
+    getPreferences: () => dispatch(getPreferences()),
+    logout: () => dispatch(logout())
   }
 }
 

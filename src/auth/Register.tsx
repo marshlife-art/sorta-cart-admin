@@ -25,7 +25,7 @@ const useStyles = makeStyles(theme => ({
   },
   form: {
     width: '100%',
-    minHeight: 'calc(100vh - 64px)',
+    minHeight: '100vh',
     marginTop: theme.spacing(1),
     display: 'flex',
     flexDirection: 'column',

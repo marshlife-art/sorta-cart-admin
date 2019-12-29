@@ -29,7 +29,7 @@ const useStyles = makeStyles((theme: Theme) =>
     root: {
       padding: theme.spacing(2),
       maxWidth: '100vw',
-      minHeight: `calc(100vh - 64px)`
+      minHeight: `100vh`
     }
   })
 )
@@ -128,7 +128,12 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
             )
           },
           { title: 'email', field: 'email', type: 'string' },
-          { title: 'active', field: 'active', type: 'boolean', filtering: false },
+          {
+            title: 'active',
+            field: 'active',
+            type: 'boolean',
+            filtering: false
+          },
           {
             title: 'created',
             field: 'createdAt',
@@ -168,7 +173,7 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
         title="Users"
         options={{
           headerStyle: { position: 'sticky', top: 0 },
-          maxBodyHeight: 'calc(100vh - 121px - 64px - 28px)',
+          maxBodyHeight: 'calc(100vh - 121px - 28px)',
           pageSize: 50,
           pageSizeOptions: [50, 100, 500],
           debounceInterval: 750,
