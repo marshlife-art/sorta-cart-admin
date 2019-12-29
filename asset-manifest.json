@@ -1,19 +1,19 @@
 {
   "files": {
-    "main.js": "/sorta-cart-admin/static/js/main.cd2ca4a0.chunk.js",
-    "main.js.map": "/sorta-cart-admin/static/js/main.cd2ca4a0.chunk.js.map",
+    "main.js": "/sorta-cart-admin/static/js/main.143c9020.chunk.js",
+    "main.js.map": "/sorta-cart-admin/static/js/main.143c9020.chunk.js.map",
     "runtime-main.js": "/sorta-cart-admin/static/js/runtime-main.ac6caa4e.js",
     "runtime-main.js.map": "/sorta-cart-admin/static/js/runtime-main.ac6caa4e.js.map",
     "static/js/2.4b92d5a0.chunk.js": "/sorta-cart-admin/static/js/2.4b92d5a0.chunk.js",
     "static/js/2.4b92d5a0.chunk.js.map": "/sorta-cart-admin/static/js/2.4b92d5a0.chunk.js.map",
     "index.html": "/sorta-cart-admin/index.html",
-    "precache-manifest.c5ab84f357e9117c5c017ec73b648301.js": "/sorta-cart-admin/precache-manifest.c5ab84f357e9117c5c017ec73b648301.js",
+    "precache-manifest.65174f11a869d495cbb135d506824314.js": "/sorta-cart-admin/precache-manifest.65174f11a869d495cbb135d506824314.js",
     "service-worker.js": "/sorta-cart-admin/service-worker.js",
     "static/js/2.4b92d5a0.chunk.js.LICENSE": "/sorta-cart-admin/static/js/2.4b92d5a0.chunk.js.LICENSE"
   },
   "entrypoints": [
     "static/js/runtime-main.ac6caa4e.js",
     "static/js/2.4b92d5a0.chunk.js",
-    "static/js/main.cd2ca4a0.chunk.js"
+    "static/js/main.143c9020.chunk.js"
   ]
 }
