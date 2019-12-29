@@ -22,7 +22,8 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
       margin: theme.spacing(2),
-      padding: theme.spacing(2)
+      padding: theme.spacing(2),
+      zIndex: 2
     },
     gridItem: {
       margin: theme.spacing(2, 0)

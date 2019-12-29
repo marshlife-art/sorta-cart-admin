@@ -54,13 +54,16 @@ const useStyles = makeStyles((theme: Theme) =>
       zIndex: 0,
       display: 'flex',
       height: '48px',
+      width: '48px',
       alignItems: 'center',
-      paddingLeft: '10px',
       position: 'fixed',
       top: 0,
       left: 0,
       '&:hover': {
         zIndex: theme.zIndex.drawer + 1
+      },
+      '& button': {
+        marginLeft: 0
       }
     },
     drawer: {
@@ -134,8 +137,9 @@ const App: React.FC<Props> = (props: Props) => {
     <Router>
       <div className={classes.root}>
         <CssBaseline />
-        <div className={classes.nav}>
-          {userService.user && userService.user.role === 'admin' ? (
+
+        {userService.user && userService.user.role === 'admin' && (
+          <div className={classes.nav}>
             <IconButton
               edge="start"
               aria-label="open drawer"
@@ -143,12 +147,10 @@ const App: React.FC<Props> = (props: Props) => {
             >
               <MenuIcon />
             </IconButton>
-          ) : (
-            <UserMenu />
-          )}
-        </div>
+          </div>
+        )}
 
-        {userService && userService.user && userService.user.email && (
+        {userService && userService.user && userService.user.role === 'admin' && (
           <Drawer
             classes={{
               paper: clsx(classes.drawerPaper)
