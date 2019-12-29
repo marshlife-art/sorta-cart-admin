@@ -50,11 +50,12 @@ const useStyles = makeStyles((theme: Theme) =>
       minHeight: '100vh'
     },
     nav: {
+      background: theme.palette.primary.main,
       zIndex: theme.zIndex.drawer + 1,
       display: 'flex',
-      height: '36px',
+      height: '48px',
       alignItems: 'center',
-      marginLeft: '2px',
+      paddingLeft: '10px',
       position: 'fixed',
       top: 0,
       left: 0
@@ -76,7 +77,7 @@ const useStyles = makeStyles((theme: Theme) =>
       justifyContent: 'flex-end'
     },
     content: {
-      // flexGrow: 1
+      marginLeft: '16px'
     }
   })
 )
