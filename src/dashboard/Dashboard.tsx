@@ -11,7 +11,7 @@ const useStyles = makeStyles(theme => ({
     padding: theme.spacing(2)
   },
   item: {
-    zIndex: 1
+    // zIndex: 1
   },
   paper: {
     padding: theme.spacing(2),
@@ -33,7 +33,9 @@ export default function Dashboard() {
       <Grid container spacing={3}>
         {/* Chart */}
         <Grid item xs={12} md={8} lg={9} className={classes.item}>
-          <Paper className={fixedHeightPaper}>CHART</Paper>
+          <Paper className={fixedHeightPaper}>
+            <span style={{ marginLeft: '1em' }}>CHART</span>
+          </Paper>
         </Grid>
         {/* Recent Deposits */}
         <Grid item xs={12} md={4} lg={3} className={classes.item}>
