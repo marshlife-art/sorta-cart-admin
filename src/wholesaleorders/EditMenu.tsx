@@ -6,7 +6,6 @@ import Menu, { MenuProps } from '@material-ui/core/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
 import ListItemText from '@material-ui/core/ListItemText'
 import ListItemIcon from '@material-ui/core/ListItemIcon'
-import SaveIcon from '@material-ui/icons/Save'
 import DeleteIcon from '@material-ui/icons/Delete'
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
 import FileIcon from '@material-ui/icons/FileCopy'
@@ -69,7 +68,6 @@ export default function EditMenu(props: EditWholesaleOrderMenuProps) {
         <Button
           variant="contained"
           color="primary"
-          startIcon={<SaveIcon />}
           onClick={props.onSaveBtnClick}
         >
           save

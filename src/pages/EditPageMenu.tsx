@@ -6,9 +6,6 @@ import Menu, { MenuProps } from '@material-ui/core/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
 import ListItemIcon from '@material-ui/core/ListItemIcon'
 import ListItemText from '@material-ui/core/ListItemText'
-
-import SaveIcon from '@material-ui/icons/Save'
-
 import DeleteIcon from '@material-ui/icons/Delete'
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
 import { Page } from '../types/Page'
@@ -67,7 +64,6 @@ export default function EditPageMenu(props: EditPageMenuProps) {
         <Button
           variant="contained"
           color="primary"
-          startIcon={<SaveIcon />}
           onClick={props.onSaveBtnClick}
         >
           save

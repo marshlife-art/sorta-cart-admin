@@ -8,7 +8,7 @@ import CssBaseline from '@material-ui/core/CssBaseline'
 import Drawer from '@material-ui/core/Drawer'
 import List from '@material-ui/core/List'
 import Divider from '@material-ui/core/Divider'
-import IconButton from '@material-ui/core/IconButton'
+import Fab from '@material-ui/core/Fab'
 import MenuIcon from '@material-ui/icons/Menu'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemIcon from '@material-ui/core/ListItemIcon'
@@ -30,7 +30,7 @@ import Dashboard from './dashboard/Dashboard'
 import Login from './auth/Login'
 import Register from './auth/Register'
 import ProtectedRoute from './auth/ProtectedRoute'
-import UserMenu from './auth/UserMenu'
+// import UserMenu from './auth/UserMenu'
 import Pages from './pages/Pages'
 import Orders from './orders/Orders'
 import WholesaleOrders from './wholesaleorders/WholesaleOrders'
@@ -50,20 +50,27 @@ const useStyles = makeStyles((theme: Theme) =>
       minHeight: '100vh'
     },
     nav: {
-      background: theme.palette.primary.main,
-      zIndex: 0,
+      // background: theme.palette.primary.main,
+      zIndex: theme.zIndex.speedDial,
       display: 'flex',
-      height: '48px',
-      width: '48px',
+      // height: '48px',
+      // width: '48px',
       alignItems: 'center',
       position: 'fixed',
-      top: 0,
-      left: 0,
-      '&:hover': {
-        zIndex: theme.zIndex.drawer + 1
+      // bottom: theme.spacing(1),
+      // top: 'calc(50vh  - 28px)',
+      top: '-12px',
+      left: '-24px',
+      transition: '200ms ease-in-out',
+      '& svg': {
+        display: 'none'
       },
-      '& button': {
-        marginLeft: 0
+      '&:hover': {
+        top: -6,
+        left: -12
+      },
+      '&:hover svg': {
+        display: 'inline-block'
       }
     },
     drawer: {
@@ -140,13 +147,21 @@ const App: React.FC<Props> = (props: Props) => {
 
         {userService.user && userService.user.role === 'admin' && (
           <div className={classes.nav}>
-            <IconButton
+            {/* <IconButton
               edge="start"
               aria-label="open drawer"
               onClick={() => setOpen(true)}
             >
+              
+            </IconButton> */}
+
+            <Fab
+              color="secondary"
+              aria-label="menu"
+              onClick={() => setOpen(true)}
+            >
               <MenuIcon />
-            </IconButton>
+            </Fab>
           </div>
         )}
 

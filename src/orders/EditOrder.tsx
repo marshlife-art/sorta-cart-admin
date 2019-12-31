@@ -627,6 +627,7 @@ function EditOrder(
               color="primary"
               onClick={onSaveBtnClick}
               disabled={saving}
+              fullWidth
             >
               Save
             </Button>

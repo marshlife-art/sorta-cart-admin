@@ -251,9 +251,11 @@ export default function ImportProducts() {
                 loading || !importTag || !vendor || formData === undefined
               }
               onClick={() => submitData()}
-              size="large"
+              variant="contained"
+              color="primary"
+              fullWidth
             >
-              UPLOAD
+              IMPORT
             </Button>
           </div>
 

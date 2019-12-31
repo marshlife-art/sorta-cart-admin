@@ -319,7 +319,9 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
               <Button
                 disabled={loading}
                 onClick={() => submitData()}
-                size="large"
+                variant="contained"
+                color="primary"
+                fullWidth
               >
                 {memberId === 'new' ? 'CREATE' : 'SAVE'}
               </Button>
