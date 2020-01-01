@@ -70,7 +70,7 @@ export default function MemberAutocomplete(props: MemberAutocompleteProps) {
   }, [open])
 
   function onInputChnage(value: string) {
-    if (value && value.length > 2) {
+    if (value && value.length > 0) {
       setQ(value)
       setLoading(true)
     }
