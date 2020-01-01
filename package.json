@@ -2,13 +2,13 @@
   "name": "sorta-cart-admin",
   "version": "0.0.2",
   "private": true,
-  "homepage": "https://marshlife-art.github.io/sorta-cart-admin/",
+  "homepage": "https:/admin.marshcoop.org/",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "predeploy": "npm run build",
+    "predeploy": "npm run build && cp CNAME build/",
     "deploy": "gh-pages -d build"
   },
   "dependencies": {
