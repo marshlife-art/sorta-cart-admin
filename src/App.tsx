@@ -240,11 +240,19 @@ export function App(props: Props) {
                     </div>
                   </ListItemText>
                 </ListItem>
+                <Divider />
                 <ListItem button onClick={() => props.logout()}>
                   <ListItemIcon>
                     <FaceIcon />
                   </ListItemIcon>
-                  <ListItemText primary="log out" />
+                  <ListItemText
+                    primary="log out"
+                    secondary={
+                      userService && userService.user
+                        ? userService.user.email
+                        : ''
+                    }
+                  />
                 </ListItem>
 
                 {/* <List>{secondaryListItems}</List>  */}
