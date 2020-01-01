@@ -2,7 +2,7 @@
   "name": "sorta-cart-admin",
   "version": "0.0.2",
   "private": true,
-  "homepage": "https:/admin.marshcoop.org/",
+  "homepage": "https://admin.marshcoop.org/",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
