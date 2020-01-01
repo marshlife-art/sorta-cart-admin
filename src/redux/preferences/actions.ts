@@ -4,7 +4,7 @@ import { AnyAction } from 'redux'
 import { Preferences, PreferencesError } from '../../types/Preferences'
 
 const DEFAULT_PREFERENCES: Preferences = {
-  dark_mode: 'false'
+  dark_mode: 'true'
 }
 
 export interface SetAction {
@@ -48,6 +48,26 @@ export const getPreferences = (): ThunkAction<
         dispatch(set(DEFAULT_PREFERENCES))
       } else {
         dispatch(set(JSON.parse(preferences)))
+      }
+      dispatch(isFetching(false))
+      resolve()
+    })
+  }
+}
+
+export const setPreferences = (
+  preferences: Preferences
+): ThunkAction<Promise<void>, {}, {}, AnyAction> => {
+  return async (dispatch: ThunkDispatch<{}, {}, AnyAction>): Promise<void> => {
+    return new Promise<void>((resolve, rject) => {
+      dispatch(isFetching(true))
+
+      if (!preferences) {
+        dispatch(set(DEFAULT_PREFERENCES))
+      } else {
+        localStorage &&
+          localStorage.setItem('preferences', JSON.stringify(preferences))
+        dispatch(set(preferences))
       }
       dispatch(isFetching(false))
       resolve()

@@ -4,11 +4,14 @@ import { connect } from 'react-redux'
 import { ThunkDispatch } from 'redux-thunk'
 import clsx from 'clsx'
 
+import { ThemeProvider } from '@material-ui/core/styles'
+
 import CssBaseline from '@material-ui/core/CssBaseline'
 import Drawer from '@material-ui/core/Drawer'
 import List from '@material-ui/core/List'
 import Divider from '@material-ui/core/Divider'
 import Fab from '@material-ui/core/Fab'
+import MUISwitch from '@material-ui/core/Switch'
 import MenuIcon from '@material-ui/icons/Menu'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemIcon from '@material-ui/core/ListItemIcon'
@@ -16,14 +19,16 @@ import ListItemText from '@material-ui/core/ListItemText'
 import FaceIcon from '@material-ui/icons/Face'
 import { createStyles, Theme, makeStyles } from '@material-ui/core/styles'
 
+import { darkTheme, lightTheme } from './theme'
 import { mainListItems } from './listItems' // secondaryListItems
 
 import { RootState } from './redux'
 import { UserServiceProps } from './redux/session/reducers'
 import { checkSession, logout } from './redux/session/actions'
 
+import { Preferences } from './types/Preferences'
 import { PreferencesServiceProps } from './redux/preferences/reducers'
-import { getPreferences } from './redux/preferences/actions'
+import { getPreferences, setPreferences } from './redux/preferences/actions'
 
 import Loading from './Loading'
 import Dashboard from './dashboard/Dashboard'
@@ -98,56 +103,91 @@ const useStyles = makeStyles((theme: Theme) =>
 interface DispatchProps {
   checkSession: () => void
   getPreferences: () => void
+  setPreferences: (preferences: Preferences) => void
   logout: () => void
 }
 
 type Props = UserServiceProps & PreferencesServiceProps & DispatchProps
 
-const App: React.FC<Props> = (props: Props) => {
+export function App(props: Props) {
   const [loading, setLoading] = useState(true)
+  const [useDarkTheme, setUseDarkTheme] = useState<null | boolean>(null)
 
   // checkSession is destructured from props and passed into useEffect
   // which is a bit confusing since checkSession is also imported. ah scope.
   const {
     checkSession,
     userService,
-    getPreferences
-    // ,preferencesService
+    getPreferences,
+    preferencesService,
+    setPreferences
   } = props
 
   useEffect(() => {
-    getPreferences()
+    getPreferences && getPreferences()
   }, [getPreferences])
 
   useEffect(() => {
-    checkSession()
+    if (
+      preferencesService &&
+      !preferencesService.isFetching &&
+      preferencesService.preferences
+    ) {
+      if (useDarkTheme === null) {
+        setUseDarkTheme(
+          preferencesService.preferences.dark_mode === 'true' ? true : false
+        )
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preferencesService])
+
+  useEffect(() => {
+    if (
+      preferencesService &&
+      preferencesService.preferences &&
+      (preferencesService.preferences.dark_mode === 'true' ? true : false) !==
+        useDarkTheme
+    ) {
+      setPreferences({ dark_mode: useDarkTheme ? 'true' : 'false' })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [useDarkTheme])
+
+  useEffect(() => {
+    checkSession && checkSession()
   }, [checkSession])
 
   useEffect(() => {
-    // console.log(
-    //   'userService fx.. userService.isFetching:',
-    //   !userService.isFetching && !!userService.user,
-    //   'userService:',
-    //   userService
-    // )
-    !userService.isFetching && userService.user && setLoading(false)
-    setOpen(userService.isFetching && !!userService.user)
+    if (userService) {
+      !userService.isFetching && userService.user && setLoading(false)
+      setOpen(userService.isFetching && !!userService.user)
+    }
   }, [userService])
 
   const classes = useStyles()
   const [open, setOpen] = React.useState(true)
 
-  // #TODO: move this. i guess.
-  // console.log(preferencesService)
+  const theme =
+    preferencesService &&
+    preferencesService.preferences &&
+    preferencesService.preferences.dark_mode === 'true'
+      ? darkTheme
+      : lightTheme
 
   return (
-    <Router>
-      <div className={classes.root}>
-        <CssBaseline />
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
 
-        {userService.user && userService.user.role === 'admin' && (
-          <div className={classes.nav}>
-            {/* <IconButton
+      <Router>
+        <div className={classes.root}>
+          <CssBaseline />
+
+          {userService &&
+            userService.user &&
+            userService.user.role === 'admin' && (
+              <div className={classes.nav}>
+                {/* <IconButton
               edge="start"
               aria-label="open drawer"
               onClick={() => setOpen(true)}
@@ -155,115 +195,140 @@ const App: React.FC<Props> = (props: Props) => {
               
             </IconButton> */}
 
-            <Fab
-              color="secondary"
-              aria-label="menu"
-              onClick={() => setOpen(true)}
-            >
-              <MenuIcon />
-            </Fab>
-          </div>
-        )}
+                <Fab
+                  color="secondary"
+                  aria-label="menu"
+                  onClick={() => setOpen(true)}
+                >
+                  <MenuIcon />
+                </Fab>
+              </div>
+            )}
 
-        {userService && userService.user && userService.user.role === 'admin' && (
-          <Drawer
-            classes={{
-              paper: clsx(classes.drawerPaper)
-            }}
-            onClose={() => setOpen(false)}
-            open={open}
-          >
-            <List onClick={() => setOpen(false)}>{mainListItems}</List>
+          {userService &&
+            userService.user &&
+            userService.user.role === 'admin' && (
+              <Drawer
+                classes={{
+                  paper: clsx(classes.drawerPaper)
+                }}
+                onClose={() => setOpen(false)}
+                open={open}
+              >
+                <List onClick={() => setOpen(false)}>{mainListItems}</List>
 
-            <Divider />
-            <ListItem button onClick={() => props.logout()}>
-              <ListItemIcon>
-                <FaceIcon />
-              </ListItemIcon>
-              <ListItemText primary="log out" />
-            </ListItem>
+                <Divider />
+                <ListItem button onClick={() => setUseDarkTheme(prev => !prev)}>
+                  <ListItemText>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <span>Dark Theme</span>
+                      <MUISwitch
+                        checked={
+                          useDarkTheme === null || useDarkTheme === undefined
+                            ? false
+                            : useDarkTheme
+                        }
+                        value="useDarkTheme"
+                        inputProps={{ 'aria-label': 'secondary checkbox' }}
+                      />
+                    </div>
+                  </ListItemText>
+                </ListItem>
+                <ListItem button onClick={() => props.logout()}>
+                  <ListItemIcon>
+                    <FaceIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="log out" />
+                </ListItem>
 
-            {/* <List>{secondaryListItems}</List>  */}
-            <div className={classes.version}>
-              <span>{APP_VERSION}</span>
-            </div>
-          </Drawer>
-        )}
+                {/* <List>{secondaryListItems}</List>  */}
+                <div className={classes.version}>
+                  <span>{APP_VERSION}</span>
+                </div>
+              </Drawer>
+            )}
 
-        <main className={classes.content}>
-          {/* ROUTER */}
+          <main className={classes.content}>
+            {/* ROUTER */}
 
-          {loading ? (
-            <Loading />
-          ) : (
-            <Switch>
-              <Route path="/login" component={Login} />
-              <Route path="/register" component={Register} />
-              <ProtectedRoute
-                userService={userService}
-                path="/products"
-                component={Products}
-                exact
-              />
-              <ProtectedRoute
-                userService={userService}
-                path="/products/import"
-                component={ImportProducts}
-              />
-              <ProtectedRoute
-                userService={userService}
-                path="/orders"
-                exact
-                component={Orders}
-              />
-              <ProtectedRoute
-                userService={userService}
-                path="/orders/edit/:id"
-                component={EditOrder}
-              />
-              <ProtectedRoute
-                userService={userService}
-                path="/orders/create"
-                component={EditOrder}
-              />
-              <ProtectedRoute
-                userService={userService}
-                path="/wholesaleorders"
-                component={WholesaleOrders}
-              />
-              <ProtectedRoute
-                userService={userService}
-                path="/users"
-                component={Users}
-              />
-              <ProtectedRoute
-                userService={userService}
-                path="/members"
-                component={Members}
-                exact
-              />
-              <ProtectedRoute
-                userService={userService}
-                path="/members/:id"
-                component={EditMember}
-              />
-              <ProtectedRoute
-                userService={userService}
-                path="/pages"
-                component={Pages}
-              />
-              <ProtectedRoute
-                userService={userService}
-                path="/"
-                component={Dashboard}
-              />
-            </Switch>
-          )}
+            {loading ? (
+              <Loading />
+            ) : (
+              <Switch>
+                <Route path="/login" component={Login} />
+                <Route path="/register" component={Register} />
+                <ProtectedRoute
+                  userService={userService}
+                  path="/products"
+                  component={Products}
+                  exact
+                />
+                <ProtectedRoute
+                  userService={userService}
+                  path="/products/import"
+                  component={ImportProducts}
+                />
+                <ProtectedRoute
+                  userService={userService}
+                  path="/orders"
+                  exact
+                  component={Orders}
+                />
+                <ProtectedRoute
+                  userService={userService}
+                  path="/orders/edit/:id"
+                  component={EditOrder}
+                />
+                <ProtectedRoute
+                  userService={userService}
+                  path="/orders/create"
+                  component={EditOrder}
+                />
+                <ProtectedRoute
+                  userService={userService}
+                  path="/wholesaleorders"
+                  component={WholesaleOrders}
+                />
+                <ProtectedRoute
+                  userService={userService}
+                  path="/users"
+                  component={Users}
+                />
+                <ProtectedRoute
+                  userService={userService}
+                  path="/members"
+                  component={Members}
+                  exact
+                />
+                <ProtectedRoute
+                  userService={userService}
+                  path="/members/:id"
+                  component={EditMember}
+                />
+                <ProtectedRoute
+                  userService={userService}
+                  path="/pages"
+                  component={Pages}
+                />
+                <ProtectedRoute
+                  userService={userService}
+                  path="/"
+                  component={Dashboard}
+                />
+              </Switch>
+            )}
 
-          {/* <Box pt={4}>FOOT'r</Box> */}
-        </main>
-      </div>
-    </Router>
+            {/* <Box pt={4}>FOOT'r</Box> */}
+          </main>
+        </div>
+      </Router>
+    </ThemeProvider>
   )
 }
 
@@ -282,6 +347,8 @@ const mapDispatchToProps = (
   return {
     checkSession: () => dispatch(checkSession()),
     getPreferences: () => dispatch(getPreferences()),
+    setPreferences: (preferences: Preferences) =>
+      dispatch(setPreferences(preferences)),
     logout: () => dispatch(logout())
   }
 }
