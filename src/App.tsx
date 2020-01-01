@@ -13,7 +13,7 @@ import MenuIcon from '@material-ui/icons/Menu'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemIcon from '@material-ui/core/ListItemIcon'
 import ListItemText from '@material-ui/core/ListItemText'
-import TagFaces from '@material-ui/icons/TagFaces'
+import FaceIcon from '@material-ui/icons/Face'
 import { createStyles, Theme, makeStyles } from '@material-ui/core/styles'
 
 import { mainListItems } from './listItems' // secondaryListItems
@@ -178,7 +178,7 @@ const App: React.FC<Props> = (props: Props) => {
             <Divider />
             <ListItem button onClick={() => props.logout()}>
               <ListItemIcon>
-                <TagFaces />
+                <FaceIcon />
               </ListItemIcon>
               <ListItemText primary="log out" />
             </ListItem>
