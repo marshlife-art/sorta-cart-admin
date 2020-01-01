@@ -1,19 +1,19 @@
 {
   "files": {
-    "main.js": "/sorta-cart-admin/static/js/main.a12791cf.chunk.js",
-    "main.js.map": "/sorta-cart-admin/static/js/main.a12791cf.chunk.js.map",
-    "runtime-main.js": "/sorta-cart-admin/static/js/runtime-main.ac6caa4e.js",
-    "runtime-main.js.map": "/sorta-cart-admin/static/js/runtime-main.ac6caa4e.js.map",
-    "static/js/2.4e846c6b.chunk.js": "/sorta-cart-admin/static/js/2.4e846c6b.chunk.js",
-    "static/js/2.4e846c6b.chunk.js.map": "/sorta-cart-admin/static/js/2.4e846c6b.chunk.js.map",
-    "index.html": "/sorta-cart-admin/index.html",
-    "precache-manifest.afabd1777c094ef59d2ee04963a5af47.js": "/sorta-cart-admin/precache-manifest.afabd1777c094ef59d2ee04963a5af47.js",
-    "service-worker.js": "/sorta-cart-admin/service-worker.js",
-    "static/js/2.4e846c6b.chunk.js.LICENSE": "/sorta-cart-admin/static/js/2.4e846c6b.chunk.js.LICENSE"
+    "main.js": "/admin.marshcoop.org/static/js/main.f6c30ba3.chunk.js",
+    "main.js.map": "/admin.marshcoop.org/static/js/main.f6c30ba3.chunk.js.map",
+    "runtime-main.js": "/admin.marshcoop.org/static/js/runtime-main.83c9297e.js",
+    "runtime-main.js.map": "/admin.marshcoop.org/static/js/runtime-main.83c9297e.js.map",
+    "static/js/2.4e846c6b.chunk.js": "/admin.marshcoop.org/static/js/2.4e846c6b.chunk.js",
+    "static/js/2.4e846c6b.chunk.js.map": "/admin.marshcoop.org/static/js/2.4e846c6b.chunk.js.map",
+    "index.html": "/admin.marshcoop.org/index.html",
+    "precache-manifest.ce0aa4a38aa7ce5819a28d27e71a352c.js": "/admin.marshcoop.org/precache-manifest.ce0aa4a38aa7ce5819a28d27e71a352c.js",
+    "service-worker.js": "/admin.marshcoop.org/service-worker.js",
+    "static/js/2.4e846c6b.chunk.js.LICENSE": "/admin.marshcoop.org/static/js/2.4e846c6b.chunk.js.LICENSE"
   },
   "entrypoints": [
-    "static/js/runtime-main.ac6caa4e.js",
+    "static/js/runtime-main.83c9297e.js",
     "static/js/2.4e846c6b.chunk.js",
-    "static/js/main.a12791cf.chunk.js"
+    "static/js/main.f6c30ba3.chunk.js"
   ]
 }
