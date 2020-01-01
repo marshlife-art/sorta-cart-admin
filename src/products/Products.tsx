@@ -157,7 +157,13 @@ function Products() {
             field: 'description',
             type: 'string',
             filtering: false,
-            render: row => `${row.name} -- ${row.description}`
+            render: row => {
+              if (row.name) {
+                return `${row.name} -- ${row.description}`
+              } else {
+                return row.description
+              }
+            }
           },
           {
             title: 'pk',

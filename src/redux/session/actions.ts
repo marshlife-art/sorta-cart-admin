@@ -165,10 +165,22 @@ export const logout = (): ThunkAction<Promise<void>, {}, {}, AnyAction> => {
   return async (dispatch: ThunkDispatch<{}, {}, AnyAction>): Promise<void> => {
     return new Promise<void>(resolve => {
       dispatch(isFetching(true))
-      localStorage && localStorage.removeItem('token')
-      dispatch(set(NULL_USER))
-      dispatch(isFetching(false))
-      resolve()
+
+      const token = localStorage && localStorage.getItem('token')
+      fetch(`${API_HOST}/logout`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      })
+        .catch(console.warn)
+        .finally(() => {
+          localStorage && localStorage.removeItem('token')
+          dispatch(set(NULL_USER))
+          dispatch(isFetching(false))
+          resolve()
+        })
     })
   }
 }
