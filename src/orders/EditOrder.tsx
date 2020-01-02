@@ -88,8 +88,14 @@ const useStyles = makeStyles((theme: Theme) =>
     sticky: {
       [theme.breakpoints.up('md')]: {
         position: 'sticky',
-        top: '72px'
-      }
+        top: '0px'
+      },
+      zIndex: 1,
+      backgroundColor: theme.palette.background.paper
+    },
+    saveBtn: {
+      flexGrow: 1,
+      marginLeft: theme.spacing(2)
     }
   })
 )
@@ -441,60 +447,73 @@ function EditOrder(
           justify="center"
           alignItems="flex-start"
         >
-          <Grid item sm={12} md={4} className={classes.sticky}>
-            {showMemberAutocomplete ? (
-              <div style={{ display: 'flex' }}>
-                <Tooltip title="close">
-                  <IconButton
-                    aria-label="close"
-                    onClick={() => setShowMemberAutocomplete(false)}
-                  >
-                    <ClearIcon fontSize="inherit" />
-                  </IconButton>
-                </Tooltip>
-                <MemberAutocomplete onItemSelected={onMembertemSelected} />
-              </div>
-            ) : (
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  minHeight: '54px'
-                }}
-              >
-                <div>
-                  <Tooltip title="BACK TO ORDERS">
+          <Grid item xs={12} md={4}>
+            <div className={classes.sticky}>
+              {showMemberAutocomplete ? (
+                <div style={{ display: 'flex' }}>
+                  <Tooltip title="close">
                     <IconButton
-                      aria-label="back to orders"
-                      onClick={() => props.history.push('/orders')}
+                      aria-label="close"
+                      onClick={() => setShowMemberAutocomplete(false)}
                     >
-                      <ArrowBackIcon />
+                      <ClearIcon fontSize="inherit" />
                     </IconButton>
                   </Tooltip>
+                  <MemberAutocomplete onItemSelected={onMembertemSelected} />
+                </div>
+              ) : (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    minHeight: '54px'
+                  }}
+                >
+                  <div>
+                    <Tooltip title="BACK TO ORDERS">
+                      <IconButton
+                        aria-label="back to orders"
+                        onClick={() => props.history.push('/orders')}
+                      >
+                        <ArrowBackIcon />
+                      </IconButton>
+                    </Tooltip>
 
-                  <h2 style={{ display: 'inline' }}>
-                    {orderId && orderId !== 'new' ? (
-                      <>
-                        EDIT ORDER <i>#{order.id}</i>
-                      </>
-                    ) : (
-                      'CREATE ORDER'
-                    )}
-                  </h2>
-                </div>
-                <div>
-                  <Tooltip title="ADD USER DETAILS">
-                    <IconButton
-                      aria-label="add user details"
-                      onClick={() => setShowMemberAutocomplete(true)}
+                    <h2 style={{ display: 'inline-block' }}>
+                      {orderId && orderId !== 'new' ? (
+                        <>
+                          EDIT ORDER <i>#{order.id}</i>
+                        </>
+                      ) : (
+                        'CREATE ORDER'
+                      )}
+                    </h2>
+                  </div>
+                  <div className={classes.saveBtn}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={onSaveBtnClick}
+                      disabled={saving}
+                      fullWidth
                     >
-                      <PeopleIcon />
-                    </IconButton>
-                  </Tooltip>
+                      Save
+                    </Button>
+                  </div>
+                  <div>
+                    <Tooltip title="ADD USER DETAILS">
+                      <IconButton
+                        aria-label="add user details"
+                        onClick={() => setShowMemberAutocomplete(true)}
+                      >
+                        <PeopleIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {order.status !== 'new' && order.status !== 'needs_review' && (
               <Box color="error.main">
@@ -510,7 +529,15 @@ function EditOrder(
             {order.Member && (
               <Box color="info.main">
                 <Typography variant="overline" display="block" gutterBottom>
-                  Member has discount {order.Member.discount}
+                  Member has discount:{' '}
+                  <b>
+                    {order.Member.discount}{' '}
+                    {order.Member.discount_type &&
+                      `(${order.Member.discount_type})`}
+                  </b>
+                </Typography>
+                <Typography variant="overline" display="block" gutterBottom>
+                  Member has store credit: <b>{order.Member.store_credit}</b>
                 </Typography>
               </Box>
             )}
@@ -622,17 +649,8 @@ function EditOrder(
                 </Select>
               </FormControl>
             </form>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={onSaveBtnClick}
-              disabled={saving}
-              fullWidth
-            >
-              Save
-            </Button>
           </Grid>
-          <Grid item sm={12} md={8}>
+          <Grid item xs={12} md={8}>
             <div>
               {showLiAutocomplete ? (
                 <div style={{ display: 'flex' }}>

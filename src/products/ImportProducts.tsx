@@ -164,7 +164,7 @@ export default function ImportProducts() {
             </div>
 
             <Menu
-              id="simple-menu"
+              id="vendor-menu"
               anchorEl={vendorMenuAnchorEl}
               keepMounted
               open={Boolean(vendorMenuAnchorEl)}
@@ -191,11 +191,10 @@ export default function ImportProducts() {
               id="prev-import-tag-select"
               value={prevImportTag}
               onChange={event =>
-                event.target &&
-                event.target.value &&
-                setPrevImportTag(event.target.value as string)
+                event.target && setPrevImportTag(event.target.value as string)
               }
             >
+              <MenuItem value="">None</MenuItem>
               {importTagsLookup &&
                 Object.keys(importTagsLookup).map(tag => (
                   <MenuItem key={`tag-sel-${tag}`} value={tag}>
