@@ -32,8 +32,6 @@ import {
 import EditMenu from './EditMenu'
 import WholesaleOrderLineItems from './WholesaleOrderLineItems'
 
-const token = localStorage && localStorage.getItem('token')
-
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     vendor: {
@@ -74,6 +72,7 @@ function EditWholesaleOrder(
     RouteComponentProps<WholesaleOrderRouterProps>
 ) {
   const classes = useStyles()
+  const token = localStorage && localStorage.getItem('token')
 
   const [wholesaleOrderId, setWholesaleOrderId] = useState('')
   const [wholesaleOrder, setWholesaleOrder] = useState<WholesaleOrder>()

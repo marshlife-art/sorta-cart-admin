@@ -1,12 +1,10 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import TextField from '@material-ui/core/TextField'
 import Autocomplete from '@material-ui/lab/Autocomplete'
 import CircularProgress from '@material-ui/core/CircularProgress'
 
 import { Member } from '../types/Member'
 import { API_HOST } from '../constants'
-
-const token = localStorage && localStorage.getItem('token')
 
 interface MemberResponse {
   data: Member[]
@@ -22,18 +20,20 @@ interface MemberAutocompleteProps {
 }
 
 export default function MemberAutocomplete(props: MemberAutocompleteProps) {
-  const [open, setOpen] = React.useState(false)
-  const [options, setOptions] = React.useState<MemberOption[]>([])
-  const [q, setQ] = React.useState('')
-  const [loading, setLoading] = React.useState(open && options.length === 0)
+  const [open, setOpen] = useState(false)
+  const [options, setOptions] = useState<MemberOption[]>([])
+  const [q, setQ] = useState('')
+  const [loading, setLoading] = useState(open && options.length === 0)
 
-  React.useEffect(() => {
+  useEffect(() => {
     let active = true
 
     if (!loading) {
       return undefined
     }
 
+    const token = localStorage && localStorage.getItem('token')
+      // this is a little weird
     ;(async () => {
       const response = await fetch(`${API_HOST}/members`, {
         method: 'post',
@@ -63,7 +63,7 @@ export default function MemberAutocomplete(props: MemberAutocompleteProps) {
     }
   }, [loading, q])
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!open) {
       setOptions([])
     }

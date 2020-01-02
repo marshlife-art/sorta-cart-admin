@@ -21,8 +21,6 @@ import { Member, MemberRouterProps } from '../types/Member'
 import Loading from '../Loading'
 import { API_HOST } from '../constants'
 
-const token = localStorage && localStorage.getItem('token')
-
 const blankMember: Member = {
   id: 'new',
   registration_email: '',
@@ -69,6 +67,8 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
 
   const [member, setMember] = useState<Member>(blankMember)
 
+  const token = localStorage && localStorage.getItem('token')
+
   useEffect(() => {
     if (!memberId || memberId === 'undefined') {
       return
@@ -103,7 +103,7 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
         .catch(err => setMember(blankMember))
         .finally(() => setLoadingMember(false))
     }
-  }, [memberId])
+  }, [memberId, token])
 
   function submitData() {
     setError('')

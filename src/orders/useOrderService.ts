@@ -4,8 +4,6 @@ import { Service } from '../types/Service'
 import { Order } from '../types/Order'
 import { API_HOST } from '../constants'
 
-const token = localStorage && localStorage.getItem('token')
-
 const useOrderService = (
   id: string | undefined,
   setLoading: (value: boolean) => void
@@ -19,6 +17,8 @@ const useOrderService = (
       setLoading(false)
       return
     }
+
+    const token = localStorage && localStorage.getItem('token')
 
     fetch(`${API_HOST}/order/edit/${id}`, {
       headers: {

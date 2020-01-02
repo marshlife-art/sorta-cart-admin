@@ -4,8 +4,6 @@ import { Service } from '../types/Service'
 import { Page } from '../types/Page'
 import { API_HOST } from '../constants'
 
-const token = localStorage && localStorage.getItem('token')
-
 const usePageService = (
   slug: string | undefined,
   setLoading: (value: boolean) => void
@@ -47,6 +45,7 @@ const useAllPagesService = (
   })
 
   useEffect(() => {
+    const token = localStorage && localStorage.getItem('token')
     reloadPages &&
       fetch(`${API_HOST}/pages`, {
         headers: {
@@ -84,7 +83,7 @@ const usePageSaveService = (
       setDoSave(false)
       return
     }
-
+    const token = localStorage && localStorage.getItem('token')
     fetch(`${API_HOST}/page`, {
       method: 'POST',
       headers: {

@@ -16,8 +16,6 @@ import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
 import Loading from '../Loading'
 import { API_HOST } from '../constants'
 
-const token = localStorage && localStorage.getItem('token')
-
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
@@ -58,6 +56,8 @@ export default function ImportProducts() {
       .then(response => response.json())
       .then(result => setImportTagsLookup(result))
   })
+
+  const token = localStorage && localStorage.getItem('token')
 
   function submitData() {
     setError('')

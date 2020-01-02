@@ -7,8 +7,6 @@ import ListItemText from '@material-ui/core/ListItemText'
 import { User } from '../types/User'
 import { API_HOST } from '../constants'
 
-const token = localStorage && localStorage.getItem('token')
-
 const StyledMenu = withStyles({
   paper: {
     border: '1px solid #d3d4d5'
@@ -59,6 +57,7 @@ export default function UserRolesMenu(props: {
     if (!id) {
       return
     }
+    const token = localStorage && localStorage.getItem('token')
     fetch(`${API_HOST}/user/role`, {
       method: 'POST',
       headers: {

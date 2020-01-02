@@ -1,6 +1,6 @@
 {
   "name": "sorta-cart-admin",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "private": true,
   "homepage": "https://admin.marshcoop.org/",
   "repository": "github:marshlife-art/sorta-cart-admin",
@@ -13,6 +13,8 @@
     "deploy": "gh-pages -d build"
   },
   "dependencies": {
+    "@bugsnag/js": "^6.5.0",
+    "@bugsnag/plugin-react": "^6.5.0",
     "@material-ui/core": "latest",
     "@material-ui/icons": "^4.5.1",
     "@material-ui/lab": "^4.0.0-alpha.36",

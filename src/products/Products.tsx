@@ -9,8 +9,6 @@ import { Chip } from '@material-ui/core'
 import { Product } from '../types/Product'
 import { API_HOST } from '../constants'
 
-const token = localStorage && localStorage.getItem('token')
-
 const PROPERTY_MAP: { [index: string]: string } = {
   a: 'Artificial ingredients',
   c: 'Low carb',
@@ -73,6 +71,8 @@ function Products() {
     tableRef.current && tableRef.current.onQueryChange()
     setNeedsRefresh(false)
   }, [tableRef, setNeedsRefresh])
+
+  const token = localStorage && localStorage.getItem('token')
 
   const deleteAction = {
     tooltip: 'destroy all selected products',

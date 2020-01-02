@@ -5,8 +5,6 @@ import { WholesaleOrder } from '../types/WholesaleOrder'
 import { API_HOST } from '../constants'
 import { OrderStatus } from '../types/Order'
 
-const token = localStorage && localStorage.getItem('token')
-
 const blankWholesaleOrder: WholesaleOrder = {
   id: '',
   vendor: '',
@@ -27,6 +25,8 @@ const useWholesaleOrderService = (
   const [result, setResult] = useState<Service<WholesaleOrder>>({
     status: 'loading'
   })
+
+  const token = localStorage && localStorage.getItem('token')
 
   useEffect(() => {
     if (!id) {
@@ -59,7 +59,7 @@ const useWholesaleOrderService = (
         setLoading(false)
         setReload(false)
       })
-  }, [id, setLoading, reload, setReload])
+  }, [id, setLoading, reload, setReload, token])
 
   return result
 }
@@ -73,6 +73,8 @@ const useAllWholesaleOrdersService = (
   const [result, setResult] = useState<Service<WholesaleOrder[]>>({
     status: 'loading'
   })
+
+  const token = localStorage && localStorage.getItem('token')
 
   useEffect(() => {
     reloadWholesaleOrders &&
@@ -101,7 +103,13 @@ const useAllWholesaleOrdersService = (
           setReloadWholesaleOrders(false)
           setLoading(false)
         })
-  }, [reloadWholesaleOrders, setReloadWholesaleOrders, status, setLoading])
+  }, [
+    reloadWholesaleOrders,
+    setReloadWholesaleOrders,
+    status,
+    setLoading,
+    token
+  ])
 
   return result
 }
@@ -116,6 +124,8 @@ const useWholesaleOrderSaveService = (
   const [result, setResult] = useState<Service<WholesaleOrder>>({
     status: 'loading'
   })
+
+  const token = localStorage && localStorage.getItem('token')
 
   useEffect(() => {
     if (!doSave || !wholesaleOrder || !wholesaleOrder.id) {
@@ -153,7 +163,7 @@ const useWholesaleOrderSaveService = (
       .finally(() => {
         setDoSave(false)
       })
-  }, [wholesaleOrder, doSave, setDoSave, setSnackMsg, setSnackOpen])
+  }, [wholesaleOrder, doSave, setDoSave, setSnackMsg, setSnackOpen, token])
 
   return result
 }

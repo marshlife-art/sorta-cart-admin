@@ -42,6 +42,7 @@ function WholesaleOrderLineItems(
   } & RouteComponentProps
 ) {
   const classes = useStyles()
+  const token = localStorage && localStorage.getItem('token')
   const lineItems = props?.wholesaleOrder?.OrderLineItems
   const { lineItemData, setLineItemData } = props
 
@@ -131,7 +132,6 @@ function WholesaleOrderLineItems(
   function removeLineItem(item: GroupedItem) {
     const ids = item.line_items.map(li => li.id).filter(a => a)
     if (ids && ids.length && window.confirm('are you sure?')) {
-      const token = localStorage && localStorage.getItem('token')
       fetch(`${API_HOST}/wholesaleorder/removelineitem`, {
         method: 'DELETE',
         headers: {

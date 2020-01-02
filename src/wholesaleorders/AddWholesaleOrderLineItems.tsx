@@ -7,8 +7,6 @@ import MaterialTable from 'material-table'
 import { LineItem } from '../types/Order'
 import { API_HOST } from '../constants'
 
-const token = localStorage && localStorage.getItem('token')
-
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
@@ -23,6 +21,7 @@ interface AddWholesaleOrderLineItemsProps {
 
 function AddWholesaleOrderLineItems(props: AddWholesaleOrderLineItemsProps) {
   const classes = useStyles()
+  const token = localStorage && localStorage.getItem('token')
   let tableRef = createRef<any>()
 
   const [needsRefresh, setNeedsRefresh] = useState(false)
@@ -80,7 +79,7 @@ function AddWholesaleOrderLineItems(props: AddWholesaleOrderLineItemsProps) {
         )
       )
       .catch(console.warn)
-  }, [])
+  }, [token])
   const [
     wholesaleorderMenuAnchorEl,
     setWholesaleOrderMenuAnchorEl
