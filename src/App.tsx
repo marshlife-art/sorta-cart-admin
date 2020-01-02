@@ -248,13 +248,17 @@ export function App(props: Props) {
                   <ListItemText
                     primary="log out"
                     secondary={
-                      <div
-                        style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}
+                      <span
+                        style={{
+                          display: 'block',
+                          textOverflow: 'ellipsis',
+                          overflow: 'hidden'
+                        }}
                       >
                         {userService && userService.user
                           ? userService.user.email
                           : ''}
-                      </div>
+                      </span>
                     }
                   />
                 </ListItem>

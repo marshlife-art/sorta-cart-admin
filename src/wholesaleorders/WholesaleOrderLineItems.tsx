@@ -235,7 +235,7 @@ function WholesaleOrderLineItems(
                       : li.description}{' '}
                     {li.OrderId && (
                       <Link
-                        color="primary"
+                        color="secondary"
                         href=""
                         onClick={(e: any) => {
                           e.preventDefault()

@@ -119,11 +119,11 @@ export default function OrderDetailPanel(props: { order: Order }) {
             </Typography>
             <Typography variant="body1">
               {order.name}{' '}
-              <Link color="primary" href={`mailto:${order.email}`}>
+              <Link color="secondary" href={`mailto:${order.email}`}>
                 {order.email}
               </Link>
               <br />
-              <Link color="primary" href={`tel:${order.phone}`}>
+              <Link color="secondary" href={`tel:${order.phone}`}>
                 {order.phone}
               </Link>
               <br />
@@ -143,7 +143,7 @@ export default function OrderDetailPanel(props: { order: Order }) {
                 created by
               </Typography>
               <Typography variant="body1">
-                <Link color="primary" href={`mailto:${order.User.email}`}>
+                <Link color="secondary" href={`mailto:${order.User.email}`}>
                   {order.User.email}
                 </Link>{' '}
                 {order.User.role && <>({order.User.role}) </>}
