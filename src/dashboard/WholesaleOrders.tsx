@@ -11,10 +11,10 @@ import Title from './Title'
 import { RouteComponentProps, withRouter } from 'react-router-dom'
 
 import { API_HOST } from '../constants'
-import { Order } from '../types/Order'
+import { WholesaleOrder } from '../types/WholesaleOrder'
 
-interface OrderData {
-  data: Order[]
+interface WholesaleOrderData {
+  data: WholesaleOrder[]
   page: number
   totalCount: number
 }
@@ -31,12 +31,12 @@ const useStyles = makeStyles(theme => ({
   }
 }))
 
-function Orders(props: RouteComponentProps) {
+function WholesaleOrders(props: RouteComponentProps) {
   const classes = useStyles()
 
   const token = localStorage && localStorage.getItem('token')
 
-  const [orders, setOrders] = useState<OrderData>({
+  const [orders, setOrders] = useState<WholesaleOrderData>({
     data: [],
     page: 0,
     totalCount: 0
@@ -45,7 +45,7 @@ function Orders(props: RouteComponentProps) {
   useEffect(() => {
     token &&
       setOrders &&
-      fetch(`${API_HOST}/orders`, {
+      fetch(`${API_HOST}/wholesaleorders`, {
         method: 'post',
         headers: {
           'Content-Type': 'application/json',
@@ -63,17 +63,18 @@ function Orders(props: RouteComponentProps) {
 
   return (
     <React.Fragment>
-      <Title>recent orders</Title>
+      <Title>recent wholesale orders</Title>
       <Table size="small">
         <TableHead>
           <TableRow>
             <TableCell>created</TableCell>
+            <TableCell>vendor</TableCell>
             <TableCell>status</TableCell>
-            <TableCell>name</TableCell>
-            <TableCell>email</TableCell>
-            <TableCell>items</TableCell>
+            <TableCell>payment status</TableCell>
+            <TableCell>shipment status</TableCell>
+            {/* <TableCell>items</TableCell>
             <TableCell>subtotal</TableCell>
-            <TableCell align="right">total</TableCell>
+            <TableCell align="right">total</TableCell> */}
           </TableRow>
         </TableHead>
         <TableBody>
@@ -81,17 +82,20 @@ function Orders(props: RouteComponentProps) {
             <TableRow
               key={order.id}
               className={classes.rowHover}
-              onClick={() => props.history.push(`/orders/edit/${order.id}`)}
+              onClick={() =>
+                props.history.push(`/wholesaleorders/edit/${order.id}`)
+              }
             >
               <TableCell>
                 {order.createdAt && new Date(order.createdAt).toLocaleString()}
               </TableCell>
+              <TableCell>{order.vendor}</TableCell>
               <TableCell>{order.status}</TableCell>
-              <TableCell>{order.name}</TableCell>
-              <TableCell>{order.email}</TableCell>
-              <TableCell>{order.item_count}</TableCell>
+              <TableCell>{order.payment_status}</TableCell>
+              <TableCell>{order.shipment_status}</TableCell>
+              {/* <TableCell>{order.item_count}</TableCell>
               <TableCell>{order.subtotal}</TableCell>
-              <TableCell align="right">{order.total}</TableCell>
+              <TableCell align="right">{order.total}</TableCell> */}
             </TableRow>
           ))}
         </TableBody>
@@ -101,14 +105,14 @@ function Orders(props: RouteComponentProps) {
           variant="contained"
           color="primary"
           onClick={(event: any) => {
-            props.history.push('/orders')
+            props.history.push('/wholesaleorders')
           }}
         >
-          SEE MORE ORDERS
+          SEE MORE
         </Button>
       </div>
     </React.Fragment>
   )
 }
 
-export default withRouter(Orders)
+export default withRouter(WholesaleOrders)

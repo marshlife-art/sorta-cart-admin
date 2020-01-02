@@ -11,10 +11,10 @@ import Title from './Title'
 import { RouteComponentProps, withRouter } from 'react-router-dom'
 
 import { API_HOST } from '../constants'
-import { Order } from '../types/Order'
+import { Member } from '../types/Member'
 
-interface OrderData {
-  data: Order[]
+interface MemberData {
+  data: Member[]
   page: number
   totalCount: number
 }
@@ -31,12 +31,12 @@ const useStyles = makeStyles(theme => ({
   }
 }))
 
-function Orders(props: RouteComponentProps) {
+function Members(props: RouteComponentProps) {
   const classes = useStyles()
 
   const token = localStorage && localStorage.getItem('token')
 
-  const [orders, setOrders] = useState<OrderData>({
+  const [members, setMembers] = useState<MemberData>({
     data: [],
     page: 0,
     totalCount: 0
@@ -44,8 +44,8 @@ function Orders(props: RouteComponentProps) {
 
   useEffect(() => {
     token &&
-      setOrders &&
-      fetch(`${API_HOST}/orders`, {
+      setMembers &&
+      fetch(`${API_HOST}/members`, {
         method: 'post',
         headers: {
           'Content-Type': 'application/json',
@@ -54,44 +54,39 @@ function Orders(props: RouteComponentProps) {
         body: JSON.stringify({ pageSize: 10 })
       })
         .then(response => response.json())
-        .then(setOrders)
+        .then(setMembers)
         .catch(err => {
           console.warn(err)
           return { data: [], page: 0, totalCount: 0 }
         })
-  }, [token, setOrders])
+  }, [token, setMembers])
 
   return (
     <React.Fragment>
-      <Title>recent orders</Title>
+      <Title>recent members</Title>
       <Table size="small">
         <TableHead>
           <TableRow>
             <TableCell>created</TableCell>
-            <TableCell>status</TableCell>
             <TableCell>name</TableCell>
             <TableCell>email</TableCell>
-            <TableCell>items</TableCell>
-            <TableCell>subtotal</TableCell>
-            <TableCell align="right">total</TableCell>
+            <TableCell align="right">fees_paid</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {orders.data.map(order => (
+          {members.data.map(member => (
             <TableRow
-              key={order.id}
+              key={member.id}
               className={classes.rowHover}
-              onClick={() => props.history.push(`/orders/edit/${order.id}`)}
+              onClick={() => props.history.push(`/members/${member.id}`)}
             >
               <TableCell>
-                {order.createdAt && new Date(order.createdAt).toLocaleString()}
+                {member.createdAt &&
+                  new Date(member.createdAt).toLocaleString()}
               </TableCell>
-              <TableCell>{order.status}</TableCell>
-              <TableCell>{order.name}</TableCell>
-              <TableCell>{order.email}</TableCell>
-              <TableCell>{order.item_count}</TableCell>
-              <TableCell>{order.subtotal}</TableCell>
-              <TableCell align="right">{order.total}</TableCell>
+              <TableCell>{member.name}</TableCell>
+              <TableCell>{member.registration_email}</TableCell>
+              <TableCell align="right">{member.fees_paid}</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -101,14 +96,14 @@ function Orders(props: RouteComponentProps) {
           variant="contained"
           color="primary"
           onClick={(event: any) => {
-            props.history.push('/orders')
+            props.history.push('/members')
           }}
         >
-          SEE MORE ORDERS
+          SEE ALL MEMBERS
         </Button>
       </div>
     </React.Fragment>
   )
 }
 
-export default withRouter(Orders)
+export default withRouter(Members)

@@ -3,12 +3,15 @@ import clsx from 'clsx'
 import { makeStyles } from '@material-ui/core/styles'
 import Grid from '@material-ui/core/Grid'
 import Paper from '@material-ui/core/Paper'
-// import Link from '@material-ui/core/Link'
+
 import Orders from './Orders'
+import WholesaleOrders from './WholesaleOrders'
+import Members from './Members'
 
 const useStyles = makeStyles(theme => ({
   root: {
-    padding: theme.spacing(2)
+    padding: theme.spacing(2),
+    minHeight: '100vh'
   },
   item: {
     // zIndex: 1
@@ -31,17 +34,16 @@ export default function Dashboard() {
   return (
     <div className={classes.root}>
       <Grid container spacing={3}>
-        {/* Chart */}
-        <Grid item xs={12} md={8} lg={9} className={classes.item}>
+        <Grid item xs={12} md={6} className={classes.item}>
           <Paper className={fixedHeightPaper}>
-            <span style={{ marginLeft: '1em' }}>CHART</span>
+            <WholesaleOrders />
           </Paper>
         </Grid>
-        {/* Recent Deposits */}
-        <Grid item xs={12} md={4} lg={3} className={classes.item}>
-          <Paper className={fixedHeightPaper}>DEPOZ</Paper>
+        <Grid item xs={12} md={6} className={classes.item}>
+          <Paper className={fixedHeightPaper}>
+            <Members />
+          </Paper>
         </Grid>
-        {/* Recent Orders */}
         <Grid item xs={12} className={classes.item}>
           <Paper className={classes.paper}>
             <Orders />
