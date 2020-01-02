@@ -248,9 +248,13 @@ export function App(props: Props) {
                   <ListItemText
                     primary="log out"
                     secondary={
-                      userService && userService.user
-                        ? userService.user.email
-                        : ''
+                      <div
+                        style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}
+                      >
+                        {userService && userService.user
+                          ? userService.user.email
+                          : ''}
+                      </div>
                     }
                   />
                 </ListItem>
