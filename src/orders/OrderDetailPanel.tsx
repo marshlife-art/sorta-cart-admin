@@ -66,8 +66,11 @@ export default function OrderDetailPanel(props: { order: Order }) {
               li.kind === 'product' && (
                 <TableRow key={`orderli${idx}`}>
                   <TableCell component="td" scope="row">
-                    {li.vendor && `[${li.vendor}] ${li.description} `}
-                    {li.data && li.data.product ? `${li.data.product.unf}` : ''}
+                    {li.vendor && `[${li.vendor}] `}
+                    {li.description}
+                    {li.data && li.data.product
+                      ? ` ${li.data.product.unf}`
+                      : ''}
                   </TableCell>
                   <TableCell align="right">{li.price}</TableCell>
                   <TableCell align="right">{li.selected_unit}</TableCell>
