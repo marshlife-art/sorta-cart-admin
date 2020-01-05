@@ -45,12 +45,13 @@ export const checkSession = (): ThunkAction<
     return new Promise<void>(resolve => {
       dispatch(isFetching(true))
 
+      // gonna get weird when there's no localStorage :/
       const token = localStorage && localStorage.getItem('token')
 
       if (!token) {
         // reject('no token')
         dispatch(isFetching(false))
-        dispatch(set({ email: undefined, token: undefined }))
+        dispatch(set(NULL_USER))
         resolve()
         return
       }

@@ -161,12 +161,11 @@ export function App(props: Props) {
   useEffect(() => {
     if (userService) {
       !userService.isFetching && userService.user && setLoading(false)
-      setOpen(userService.isFetching && !!userService.user)
     }
   }, [userService])
 
   const classes = useStyles()
-  const [open, setOpen] = React.useState(true)
+  const [open, setOpen] = React.useState(false)
 
   const theme =
     preferencesService &&
