@@ -8,6 +8,10 @@ import InputLabel from '@material-ui/core/InputLabel'
 import MenuItem from '@material-ui/core/MenuItem'
 import FormControl from '@material-ui/core/FormControl'
 // import FormHelperText from '@material-ui/core/FormHelperText'
+import FormControlLabel from '@material-ui/core/FormControlLabel'
+
+import Checkbox from '@material-ui/core/Checkbox'
+
 import Select from '@material-ui/core/Select'
 import Button from '@material-ui/core/Button'
 import IconButton from '@material-ui/core/IconButton'
@@ -66,6 +70,7 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
   const memberId = props.match.params.id
 
   const [member, setMember] = useState<Member>(blankMember)
+  const [createNewUser, setCreateNewUser] = useState(false)
 
   const token = localStorage && localStorage.getItem('token')
 
@@ -118,7 +123,7 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`
       },
-      body: JSON.stringify({ member })
+      body: JSON.stringify({ member, createNewUser })
     })
       .then(response => response.json())
       .then(response => {
@@ -315,6 +320,23 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
               </Select>
             </FormControl>
 
+            <FormControl fullWidth className={classes.gridItem}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    onChange={(
+                      event: React.ChangeEvent<HTMLInputElement>,
+                      checked: boolean
+                    ) => {
+                      setCreateNewUser(true)
+                    }}
+                    value="createNewUser"
+                  />
+                }
+                label="Create User"
+              />
+            </FormControl>
+
             <div className={classes.gridItem}>
               <Button
                 disabled={loading}
@@ -341,6 +363,17 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
                 <h3>Response</h3>
                 <p>{response}</p>
               </div>
+            )}
+
+            {member && member.data && (
+              <dl>
+                {Object.keys(member.data).map(k => (
+                  <React.Fragment key={`memberdata${k}`}>
+                    <dt>{k}</dt>
+                    <dd>{member.data[k]}</dd>
+                  </React.Fragment>
+                ))}
+              </dl>
             )}
           </Grid>
         </Grid>

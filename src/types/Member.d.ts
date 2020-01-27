@@ -12,7 +12,7 @@ export interface Member {
   store_credit: number
   shares: number
   member_type: string
-  data: object
+  data: { [key: string]: string }
   createdAt?: string
   updatedAt?: string
   User?: User
