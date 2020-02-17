@@ -359,7 +359,58 @@ function OrderLineItems(props: {
                   </IconButton>
                 </Tooltip>
               </TableCell>
-              <TableCell colSpan={4}>{line_item.description}</TableCell>
+              <TableCell colSpan={2}>
+                <TextField
+                  type="text"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  margin="dense"
+                  fullWidth
+                  value={line_item.description}
+                  onChange={(event: any) =>
+                    handleDescriptionChange(line_item, event.target.value)
+                  }
+                />
+              </TableCell>
+              <TableCell>
+                <TextField
+                  type="number"
+                  margin="dense"
+                  fullWidth
+                  value={line_item.price || line_item.total}
+                  onChange={(event: any) =>
+                    handlePriceChange(line_item, event.target.value)
+                  }
+                  inputProps={{
+                    min: '-9999',
+                    max: '-0.01',
+                    step: '0.01'
+                  }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">$</InputAdornment>
+                    )
+                  }}
+                />
+              </TableCell>
+
+              <TableCell align="right">
+                <TextField
+                  className={classes.qtyinput}
+                  type="number"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  margin="dense"
+                  fullWidth
+                  value={line_item.quantity}
+                  onChange={(event: any) =>
+                    handleQtyChange(line_item, event.target.value)
+                  }
+                  inputProps={{ min: '1', step: '1' }}
+                />
+              </TableCell>
               <TableCell align="right">{usdFormat(line_item.total)}</TableCell>
             </TableRow>
           ))}

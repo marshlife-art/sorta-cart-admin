@@ -11,6 +11,7 @@ import Tooltip from '@material-ui/core/Tooltip'
 import Typography from '@material-ui/core/Typography'
 import CloseIcon from '@material-ui/icons/Close'
 import AddIcon from '@material-ui/icons/Add'
+import EmailIcon from '@material-ui/icons/Email'
 import ClearIcon from '@material-ui/icons/Clear'
 import PeopleIcon from '@material-ui/icons/People'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
@@ -96,6 +97,13 @@ const useStyles = makeStyles((theme: Theme) =>
     saveBtn: {
       flexGrow: 1,
       marginLeft: theme.spacing(2)
+    },
+    orderSideHeading: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      minHeight: '54px',
+      marginBottom: theme.spacing(2)
     }
   })
 )
@@ -308,6 +316,44 @@ function EditOrder(
     }))
   }
 
+  function createPayment(event: any) {
+    const price = parseFloat(order.total.toFixed(2)) || -0.0
+    const payment: LineItem = {
+      description: 'payment',
+      quantity: 1,
+      price: -price,
+      total: -price,
+      kind: 'payment'
+    }
+    setOrder(prevOrder => ({
+      ...prevOrder,
+      OrderLineItems: [...prevOrder.OrderLineItems, payment]
+    }))
+  }
+  function emailReceipt(event: any) {
+    fetch(`${API_HOST}/orders/resend_email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ orderId: order.id })
+    })
+      .then(response => response.json())
+      .then(response => {
+        if (response.success) {
+          setSnackMsg(`Re-sent email to ${order.email}`)
+        } else {
+          setSnackMsg(`onoz! could not send email to ${order.email}`)
+        }
+      })
+      .catch(e => {
+        console.warn('onoz! caught error re-sending email:', e)
+        setSnackMsg('onoz! could not re-send email')
+      })
+      .finally(() => setSnackOpen(true))
+  }
+
   function onMembertemSelected(value?: { name: string; member: Member }) {
     if (value && value.member) {
       const { id, name, phone, address } = value.member // email
@@ -462,34 +508,26 @@ function EditOrder(
                   <MemberAutocomplete onItemSelected={onMembertemSelected} />
                 </div>
               ) : (
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    minHeight: '54px'
-                  }}
-                >
-                  <div>
-                    <Tooltip title="BACK TO ORDERS">
-                      <IconButton
-                        aria-label="back to orders"
-                        onClick={() => props.history.push('/orders')}
-                      >
-                        <ArrowBackIcon />
-                      </IconButton>
-                    </Tooltip>
+                <div className={classes.orderSideHeading}>
+                  <Tooltip title="BACK TO ORDERS">
+                    <IconButton
+                      aria-label="back to orders"
+                      onClick={() => props.history.push('/orders')}
+                    >
+                      <ArrowBackIcon />
+                    </IconButton>
+                  </Tooltip>
 
-                    <h2 style={{ display: 'inline-block' }}>
-                      {orderId && orderId !== 'new' ? (
-                        <>
-                          EDIT ORDER <i>#{order.id}</i>
-                        </>
-                      ) : (
-                        'CREATE ORDER'
-                      )}
-                    </h2>
-                  </div>
+                  <h2 style={{ display: 'inline-block' }}>
+                    {orderId && orderId !== 'new' ? (
+                      <>
+                        EDIT ORDER <i>#{order.id}</i>
+                      </>
+                    ) : (
+                      'CREATE ORDER'
+                    )}
+                  </h2>
+
                   <div className={classes.saveBtn}>
                     <Button
                       variant="contained"
@@ -697,6 +735,24 @@ function EditOrder(
                       MEMBER DISCOUNT
                     </Button>
                   )}
+
+                  <Button
+                    aria-label="add payment"
+                    size="large"
+                    onClick={createPayment}
+                  >
+                    <AddIcon />
+                    PAYMENT
+                  </Button>
+
+                  <Button
+                    aria-label="email receipt"
+                    size="large"
+                    onClick={emailReceipt}
+                  >
+                    <EmailIcon />
+                    email receipt
+                  </Button>
                 </>
               )}
             </div>
