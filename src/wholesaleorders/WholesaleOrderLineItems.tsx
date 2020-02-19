@@ -59,7 +59,10 @@ function WholesaleOrderLineItems(
     }))
 
     lineItems?.forEach(li => {
-      const id = li.data && li.data.product && li.data.product.id
+      const id =
+        li.data &&
+        li.data.product &&
+        `${li.data.product.unf}${li.data.product.upc_code}`
       const key = id ? id : li.description
 
       let acc = groupedLineItems[key]
