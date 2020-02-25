@@ -43,7 +43,6 @@ interface EditWholesaleOrderMenuProps {
   wholesaleOrder: WholesaleOrder
   onSaveBtnClick: () => void
   onDeleteBtnClick: () => void
-  onExportToCsv: () => void
   onProductsExportToCsv: () => void
 }
 
@@ -105,19 +104,6 @@ export default function EditMenu(props: EditWholesaleOrderMenuProps) {
           </ListItemIcon>
           <ListItemText primary="delete wholesale order" />
         </StyledMenuItem>
-
-        {/* <StyledMenuItem
-          onClick={() => {
-            props.onExportToCsv()
-            handleClose()
-          }}
-          disabled={!props.wholesaleOrder.id}
-        >
-          <ListItemIcon>
-            <FileIcon />
-          </ListItemIcon>
-          <ListItemText primary="Export to .csv" />
-        </StyledMenuItem> */}
 
         <StyledMenuItem
           onClick={() => {

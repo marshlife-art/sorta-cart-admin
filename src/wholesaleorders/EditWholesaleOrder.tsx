@@ -32,6 +32,8 @@ import {
 import EditMenu from './EditMenu'
 import WholesaleOrderLineItems from './WholesaleOrderLineItems'
 
+const { Parser } = require('json2csv')
+
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     vendor: {
@@ -277,32 +279,34 @@ function EditWholesaleOrder(
     }
   }
 
-  const onExportToCsv = (): void => {
-    console.log('handle onExportToCsv wholesaleOrder:', lineItemData)
-  }
   const onProductsExportToCsv = (): void => {
     const vendor = wholesaleOrder && wholesaleOrder.vendor
     if (!vendor) {
       return
     }
-    fetch(`${API_HOST}/whosaleorder/exportcsv`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'text/csv',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        lineItemData
-      })
+    const json2csvParser = new Parser({
+      fields: [
+        'product.unf',
+        'product.upc_code',
+        'vendor',
+        'description',
+        'qtySum',
+        'totalSum',
+        'product.ws_price_cost',
+        'product.u_price_cost',
+        'product.pk',
+        'product.size',
+        'product.unit_type',
+        'product.category',
+        'product.sub_category',
+        'product.name',
+        'product.description'
+      ]
     })
-      .then(response => response.text())
-      .then(responseText => saveStreamCSV(`${vendor}.csv`, responseText))
-      .catch(error => {
-        console.warn('wholesaleOrder onExportToCsv fetch caught err:', error)
-        setSnackMsg(`o noz! ran into a problem ;(`)
-        setSnackOpen(true)
-      })
+    const csvout = json2csvParser.parse(
+      Object.values(lineItemData.groupedLineItems)
+    )
+    saveStreamCSV(`${vendor}.csv`, csvout)
   }
 
   function valueFor(field: keyof WholesaleOrder) {
@@ -395,7 +399,6 @@ function EditWholesaleOrder(
                   wholesaleOrder={wholesaleOrder}
                   onSaveBtnClick={onSaveBtnClick}
                   onDeleteBtnClick={onDeleteBtnClick}
-                  onExportToCsv={onExportToCsv}
                   onProductsExportToCsv={onProductsExportToCsv}
                 />
               </div>
