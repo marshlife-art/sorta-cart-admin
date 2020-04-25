@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback, createRef } from 'react'
+import { withRouter, RouteComponentProps } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import { Menu, MenuItem } from '@material-ui/core'
 import Divider from '@material-ui/core/Divider'
 import MaterialTable from 'material-table'
+import Link from '@material-ui/core/Link'
 
 import { LineItem } from '../types/Order'
 import { API_HOST } from '../constants'
@@ -19,7 +21,9 @@ interface AddWholesaleOrderLineItemsProps {
   setReloadOrders: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-function AddWholesaleOrderLineItems(props: AddWholesaleOrderLineItemsProps) {
+function AddWholesaleOrderLineItems(
+  props: AddWholesaleOrderLineItemsProps & RouteComponentProps
+) {
   const classes = useStyles()
   const token = localStorage && localStorage.getItem('token')
   let tableRef = createRef<any>()
@@ -42,7 +46,7 @@ function AddWholesaleOrderLineItems(props: AddWholesaleOrderLineItemsProps) {
       handleWholesaleOrderMenuOpen(event)
       if (Array.isArray(data)) {
         // ain't nobody (tsc) tell me nothin
-        setSelectedLineItems(data.map(li => li.id) as string[])
+        setSelectedLineItems(data.map((li) => li.id) as string[])
       }
     }
   }
@@ -65,8 +69,8 @@ function AddWholesaleOrderLineItems(props: AddWholesaleOrderLineItemsProps) {
       },
       body: JSON.stringify({ status: ['new', 'needs_review'] })
     })
-      .then(response => response.json())
-      .then(result =>
+      .then((response) => response.json())
+      .then((result) =>
         setWholesaleOrderLookup(
           result.data.map(
             (order: { id: string; vendor: string; createdAt: string }) => ({
@@ -105,8 +109,8 @@ function AddWholesaleOrderLineItems(props: AddWholesaleOrderLineItemsProps) {
       },
       body: JSON.stringify({ id, selectedLineItems })
     })
-      .then(response => response.json())
-      .then(result => {
+      .then((response) => response.json())
+      .then((result) => {
         // console.log('update line items result:', result)
       })
       .catch(console.warn)
@@ -129,6 +133,24 @@ function AddWholesaleOrderLineItems(props: AddWholesaleOrderLineItemsProps) {
             filterPlaceholder: 'filter'
           },
           {
+            title: 'OrderId',
+            field: 'OrderId',
+            type: 'string',
+            filtering: true,
+            render: (row) => (
+              <Link
+                color="secondary"
+                href={`/orders/edit/${row.OrderId}`}
+                onClick={(e: any) => {
+                  e.preventDefault()
+                  props.history.push(`/orders/edit/${row.OrderId}`)
+                }}
+              >
+                Order #{row.OrderId}
+              </Link>
+            )
+          },
+          {
             title: 'qty',
             field: 'quantity',
             type: 'string',
@@ -139,13 +161,12 @@ function AddWholesaleOrderLineItems(props: AddWholesaleOrderLineItemsProps) {
             title: 'product',
             field: 'data',
             type: 'string',
-            render: row =>
+            render: (row) =>
               row.data && row.data.product
                 ? `${row.data.product.name} ${row.data.product.description}`
                 : null
           },
           { title: 'id', field: 'id', type: 'string', hidden: true },
-          { title: 'OrderId', field: 'OrderId', type: 'string', hidden: true },
           {
             title: 'WholesaleOrderId',
             field: 'WholesaleOrderId',
@@ -153,7 +174,7 @@ function AddWholesaleOrderLineItems(props: AddWholesaleOrderLineItemsProps) {
             hidden: true
           }
         ]}
-        data={query =>
+        data={(query) =>
           new Promise((resolve, reject) => {
             fetch(`${API_HOST}/wholesaleorders/lineitems`, {
               method: 'post',
@@ -163,11 +184,11 @@ function AddWholesaleOrderLineItems(props: AddWholesaleOrderLineItemsProps) {
               },
               body: JSON.stringify(query)
             })
-              .then(response => response.json())
-              .then(result => {
+              .then((response) => response.json())
+              .then((result) => {
                 resolve(result)
               })
-              .catch(err => {
+              .catch((err) => {
                 console.warn('onoz, caught err:', err)
                 return resolve({ data: [], page: 0, totalCount: 0 })
               })
@@ -215,4 +236,4 @@ function AddWholesaleOrderLineItems(props: AddWholesaleOrderLineItemsProps) {
   )
 }
 
-export default AddWholesaleOrderLineItems
+export default withRouter(AddWholesaleOrderLineItems)

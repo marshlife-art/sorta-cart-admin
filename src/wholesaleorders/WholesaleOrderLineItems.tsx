@@ -51,14 +51,14 @@ function WholesaleOrderLineItems(
       [key: string]: GroupedItem
     } = {}
 
-    setLineItemData(prevData => ({
+    setLineItemData((prevData) => ({
       ...prevData,
       productTotal: 0,
       adjustmentTotal: 0,
       orderTotal: 0
     }))
 
-    lineItems?.forEach(li => {
+    lineItems?.forEach((li) => {
       const id =
         li.data &&
         li.data.product &&
@@ -86,14 +86,14 @@ function WholesaleOrderLineItems(
         line_items: acc ? [...acc.line_items, li] : [li]
       }
 
-      setLineItemData(prevData => ({
+      setLineItemData((prevData) => ({
         ...prevData,
         productTotal: prevData.productTotal + parseFloat(`${liTotal}`),
         orderTotal: prevData.orderTotal + liTotal
       }))
     })
 
-    Object.values(groupedLineItems).forEach(item => {
+    Object.values(groupedLineItems).forEach((item) => {
       // check if qtySum is not a round number (i.e. a partial case)
       if (item.qtySum % 1 !== 0 && item.product) {
         const pk = item.product.pk
@@ -116,7 +116,7 @@ function WholesaleOrderLineItems(
         item.totalSum = item.totalSum + total
         item.qtySum = Math.round(item.qtySum + quantity / pk)
 
-        setLineItemData(prevData => ({
+        setLineItemData((prevData) => ({
           ...prevData,
           adjustmentTotal: prevData.adjustmentTotal + +total,
           orderTotal: prevData.orderTotal + total
@@ -124,7 +124,7 @@ function WholesaleOrderLineItems(
       }
     })
 
-    setLineItemData(prevData => ({
+    setLineItemData((prevData) => ({
       ...prevData,
       groupedLineItems
     }))
@@ -133,7 +133,7 @@ function WholesaleOrderLineItems(
   useEffect(calc, [lineItems])
 
   function removeLineItem(item: GroupedItem) {
-    const ids = item.line_items.map(li => li.id).filter(a => a)
+    const ids = item.line_items.map((li) => li.id).filter((a) => a)
     if (ids && ids.length && window.confirm('are you sure?')) {
       fetch(`${API_HOST}/wholesaleorder/removelineitem`, {
         method: 'DELETE',
@@ -143,9 +143,9 @@ function WholesaleOrderLineItems(
         },
         body: JSON.stringify({ ids })
       })
-        .then(response => response.json())
-        .then(response => !response.error && props.setReload(true))
-        .catch(err => console.warn('members removelineitem caught err', err))
+        .then((response) => response.json())
+        .then((response) => !response.error && props.setReload(true))
+        .catch((err) => console.warn('members removelineitem caught err', err))
     }
   }
 
@@ -228,7 +228,7 @@ function WholesaleOrderLineItems(
                   {item.totalSum.toFixed(2)}
                 </TableCell>
               </TableRow>
-              {item.line_items.map(li => (
+              {item.line_items.map((li) => (
                 <TableRow key={`wsli${li.id}`}>
                   <TableCell colSpan={2} />
                   <TableCell>
@@ -239,7 +239,7 @@ function WholesaleOrderLineItems(
                     {li.OrderId && (
                       <Link
                         color="secondary"
-                        href=""
+                        href={`/orders/edit/${li.OrderId}`}
                         onClick={(e: any) => {
                           e.preventDefault()
                           props.history.push(`/orders/edit/${li.OrderId}`)
