@@ -51,11 +51,11 @@ function EditPage(props: RouteComponentProps<PageRouterProps>) {
   const handlePageContentChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    setPage(prevPage => ({ ...prevPage, content: event.target.value }))
+    setPage((prevPage) => ({ ...prevPage, content: event.target.value }))
   }
 
   const handlePageNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPage(prevPage => ({ ...prevPage, slug: event.target.value }))
+    setPage((prevPage) => ({ ...prevPage, slug: event.target.value }))
   }
 
   const handleSnackClose = (
@@ -92,8 +92,8 @@ function EditPage(props: RouteComponentProps<PageRouterProps>) {
       },
       body: JSON.stringify(page)
     })
-      .then(response => response.json())
-      .then(response => {
+      .then((response) => response.json())
+      .then((response) => {
         if (response.error) {
           setSnackMsg(response.msg)
           setSnackOpen(true)
@@ -101,7 +101,7 @@ function EditPage(props: RouteComponentProps<PageRouterProps>) {
           props.history.replace('/pages')
         }
       })
-      .catch(error => {
+      .catch((error) => {
         console.warn('delete page fetch caught err:', error)
         setSnackMsg(`o noz! ${error}`)
         setSnackOpen(true)

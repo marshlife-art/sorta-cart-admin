@@ -37,5 +37,6 @@ export const SHIPMENT_STATUSES: OrderShipmentStatusLookup = {
   canceled: 'canceled'
 }
 
-export const APP_VERSION = `v${process.env.npm_package_version ||
-  require('../package.json').version} made with ♥ in NYC`
+export const APP_VERSION = `v${
+  process.env.npm_package_version || require('../package.json').version
+} made with ♥ in NYC`

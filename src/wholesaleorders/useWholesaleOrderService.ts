@@ -47,11 +47,11 @@ const useWholesaleOrderService = (
         Authorization: `Bearer ${token}`
       }
     })
-      .then(response => response.json())
-      .then(response => {
+      .then((response) => response.json())
+      .then((response) => {
         setResult({ status: 'loaded', payload: response as WholesaleOrder })
       })
-      .catch(error => {
+      .catch((error) => {
         console.warn('useWholesaleOrderService fetch caught err:', error)
         setResult({ ...error })
       })
@@ -88,14 +88,14 @@ const useAllWholesaleOrdersService = (
           status
         })
       })
-        .then(response => response.json())
-        .then(response => {
+        .then((response) => response.json())
+        .then((response) => {
           setResult({
             status: 'loaded',
             payload: response.data as WholesaleOrder[]
           })
         })
-        .catch(error => {
+        .catch((error) => {
           console.warn('useWholesaleOrderService fetch caught err:', error)
           setResult({ ...error })
         })
@@ -145,8 +145,8 @@ const useWholesaleOrderSaveService = (
       },
       body: JSON.stringify(wholesaleOrder)
     })
-      .then(response => response.json())
-      .then(response => {
+      .then((response) => response.json())
+      .then((response) => {
         setResult({
           status: 'loaded',
           payload: response.order as WholesaleOrder
@@ -154,7 +154,7 @@ const useWholesaleOrderSaveService = (
         setSnackMsg(response.msg)
         setSnackOpen(true)
       })
-      .catch(error => {
+      .catch((error) => {
         console.warn('useWholesaleOrderSaveService fetch caught err:', error)
         setResult({ ...error })
         setSnackMsg(`o noz! ${error}`)

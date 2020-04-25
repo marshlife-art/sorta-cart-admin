@@ -36,7 +36,7 @@ export default function OrderDetailPanel(props: { order: Order }) {
   const classes = useStyles()
   const order = props.order
   const line_items = props.order.OrderLineItems || []
-  const adjustments = line_items.filter(li => li.kind !== 'product')
+  const adjustments = line_items.filter((li) => li.kind !== 'product')
 
   return (
     <div className={classes.root}>

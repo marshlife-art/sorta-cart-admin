@@ -28,7 +28,7 @@ const StyledMenu = (props: MenuProps) => (
   />
 )
 
-const StyledMenuItem = withStyles(theme => ({
+const StyledMenuItem = withStyles((theme) => ({
   root: {
     '&:focus': {
       backgroundColor: theme.palette.primary.main,

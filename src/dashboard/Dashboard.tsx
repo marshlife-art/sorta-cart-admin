@@ -7,7 +7,7 @@ import Orders from './Orders'
 import WholesaleOrders from './WholesaleOrders'
 import Members from './Members'
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   root: {
     padding: theme.spacing(2),
     minHeight: '100vh'

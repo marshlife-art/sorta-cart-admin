@@ -217,7 +217,10 @@ export function App(props: Props) {
                 <List onClick={() => setOpen(false)}>{mainListItems}</List>
 
                 <Divider />
-                <ListItem button onClick={() => setUseDarkTheme(prev => !prev)}>
+                <ListItem
+                  button
+                  onClick={() => setUseDarkTheme((prev) => !prev)}
+                >
                   <ListItemText>
                     <div
                       style={{

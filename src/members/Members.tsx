@@ -54,9 +54,9 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
           },
           body: JSON.stringify({ id })
         })
-          .then(response => response.json())
+          .then((response) => response.json())
           .then(() => tableRef.current && tableRef.current.onQueryChange())
-          .catch(err => console.warn('members deleteAction caught err', err))
+          .catch((err) => console.warn('members deleteAction caught err', err))
       }
     }
   }
@@ -85,7 +85,7 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
             field: 'createdAt',
             type: 'datetime',
             filtering: false,
-            render: row =>
+            render: (row) =>
               row.createdAt && new Date(row.createdAt).toLocaleString()
           },
           {
@@ -117,7 +117,7 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
           },
           { title: 'id', field: 'id', type: 'string', hidden: true }
         ]}
-        data={query =>
+        data={(query) =>
           new Promise((resolve, reject) => {
             fetch(`${API_HOST}/members`, {
               method: 'post',
@@ -127,11 +127,11 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
               },
               body: JSON.stringify(query)
             })
-              .then(response => response.json())
-              .then(result => {
+              .then((response) => response.json())
+              .then((result) => {
                 resolve(result)
               })
-              .catch(err => {
+              .catch((err) => {
                 console.warn(err)
                 return resolve({ data: [], page: 0, totalCount: 0 })
               })

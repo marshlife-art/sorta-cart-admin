@@ -18,7 +18,7 @@
  *
  */
 
-;(function(l, projectPages) {
+;(function (l, projectPages) {
   var repo = projectPages ? '/' + l.pathname.split('/')[1] : ''
 
   /* redirect all 404 trafic to index.html */
@@ -45,12 +45,9 @@
       l.search
         .slice(1)
         .split('&')
-        .forEach(function(v) {
+        .forEach(function (v) {
           var a = v.split('=')
-          q[a[0]] = a
-            .slice(1)
-            .join('=')
-            .replace(/~and~/g, '&')
+          q[a[0]] = a.slice(1).join('=').replace(/~and~/g, '&')
         })
       if (q.p !== undefined) {
         window.history.replaceState(

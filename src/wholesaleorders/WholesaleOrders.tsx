@@ -67,7 +67,7 @@ const ExpansionPanelSummary = withStyles({
   expanded: {}
 })(MuiExpansionPanelSummary)
 
-const ExpansionPanelDetails = withStyles(theme => ({
+const ExpansionPanelDetails = withStyles((theme) => ({
   root: {
     padding: 0 //theme.spacing(2)
   }
@@ -207,7 +207,7 @@ function WholesaleOrders(
               </IconButton>
             </div>
 
-            {Object.keys(ORDER_STATUSES).map(status => (
+            {Object.keys(ORDER_STATUSES).map((status) => (
               <ExpansionPanel
                 square
                 key={`EP${status}`}

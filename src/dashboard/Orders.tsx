@@ -19,7 +19,7 @@ interface OrderData {
   totalCount: number
 }
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   seeMore: {
     marginTop: theme.spacing(3)
   },
@@ -53,9 +53,9 @@ function Orders(props: RouteComponentProps) {
         },
         body: JSON.stringify({ pageSize: 10 })
       })
-        .then(response => response.json())
+        .then((response) => response.json())
         .then(setOrders)
-        .catch(err => {
+        .catch((err) => {
           console.warn(err)
           return { data: [], page: 0, totalCount: 0 }
         })
@@ -77,7 +77,7 @@ function Orders(props: RouteComponentProps) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {orders.data.map(order => (
+          {orders.data.map((order) => (
             <TableRow
               key={order.id}
               className={classes.rowHover}

@@ -165,7 +165,7 @@ function EditOrder(
     ) {
       const UserId = props.userService.user.id
       UserId &&
-        setOrder(prevOrder => ({
+        setOrder((prevOrder) => ({
           ...prevOrder,
           UserId
         }))
@@ -178,7 +178,7 @@ function EditOrder(
       return
     }
     if (order && order.OrderLineItems && canApplyMemberDiscount) {
-      const discountAmt = order.OrderLineItems.map(li => {
+      const discountAmt = order.OrderLineItems.map((li) => {
         let canDiscount = false
         if (li.data && li.data.product && li.selected_unit === 'CS') {
           canDiscount =
@@ -201,7 +201,8 @@ function EditOrder(
       if (discountAmt > 0) {
         const discountPrice = -discountAmt.toFixed(2)
         const discounts = order.OrderLineItems.filter(
-          li => li.kind === 'adjustment' && li.description === 'member discount'
+          (li) =>
+            li.kind === 'adjustment' && li.description === 'member discount'
         )
         if (discounts[0]) {
           if (discounts[0].total !== discountPrice) {
@@ -220,7 +221,7 @@ function EditOrder(
             total: discountPrice,
             kind: 'adjustment'
           }
-          setOrder(prevOrder => ({
+          setOrder((prevOrder) => ({
             ...prevOrder,
             OrderLineItems: [...prevOrder.OrderLineItems, adjustment]
           }))
@@ -257,10 +258,10 @@ function EditOrder(
         vendor: product.vendor,
         data: { product }
       }
-      setOrder(order => ({
+      setOrder((order) => ({
         ...order,
         item_count:
-          order.OrderLineItems.filter(li => li.kind === 'product').length + 1,
+          order.OrderLineItems.filter((li) => li.kind === 'product').length + 1,
         OrderLineItems: [...order.OrderLineItems, lineItem]
       }))
       setNeedToCheckForDiscounts(true)
@@ -268,7 +269,7 @@ function EditOrder(
   }
 
   function updateLineItem(idx: number, line_item: LineItem) {
-    setOrder(prevOrder => {
+    setOrder((prevOrder) => {
       let orderLineItems = prevOrder.OrderLineItems
       orderLineItems.splice(idx, 1, line_item)
 
@@ -289,10 +290,10 @@ function EditOrder(
         setCanApplyMemberDiscount(false)
       }
     }
-    setOrder(prevOrder => {
+    setOrder((prevOrder) => {
       const orderLineItems = prevOrder.OrderLineItems
       orderLineItems.splice(idx, 1)
-      const item_count = orderLineItems.filter(li => li.kind === 'product')
+      const item_count = orderLineItems.filter((li) => li.kind === 'product')
         .length
       return {
         ...prevOrder,
@@ -310,7 +311,7 @@ function EditOrder(
       total: 0.0,
       kind: 'adjustment'
     }
-    setOrder(prevOrder => ({
+    setOrder((prevOrder) => ({
       ...prevOrder,
       OrderLineItems: [...prevOrder.OrderLineItems, adjustment]
     }))
@@ -325,7 +326,7 @@ function EditOrder(
       total: -price,
       kind: 'payment'
     }
-    setOrder(prevOrder => ({
+    setOrder((prevOrder) => ({
       ...prevOrder,
       OrderLineItems: [...prevOrder.OrderLineItems, payment]
     }))
@@ -339,15 +340,15 @@ function EditOrder(
       },
       body: JSON.stringify({ orderId: order.id })
     })
-      .then(response => response.json())
-      .then(response => {
+      .then((response) => response.json())
+      .then((response) => {
         if (response.success) {
           setSnackMsg(`Re-sent email to ${order.email}`)
         } else {
           setSnackMsg(`onoz! could not send email to ${order.email}`)
         }
       })
-      .catch(e => {
+      .catch((e) => {
         console.warn('onoz! caught error re-sending email:', e)
         setSnackMsg('onoz! could not re-send email')
       })
@@ -361,7 +362,7 @@ function EditOrder(
         value.member.User && value.member.User.email
           ? value.member.User.email
           : value.member.registration_email
-      setOrder(prevOrder => ({
+      setOrder((prevOrder) => ({
         ...prevOrder,
         name: name || '',
         email: email || '',
@@ -385,8 +386,8 @@ function EditOrder(
       },
       body: JSON.stringify(order)
     })
-      .then(response => response.json())
-      .then(response => {
+      .then((response) => response.json())
+      .then((response) => {
         if (response.success) {
           setSnackOpen(true)
           setSnackMsg('Saved order!')
@@ -400,9 +401,9 @@ function EditOrder(
 
   function onTaxesChange(tax: number) {
     console.log('onTaxesChange tax:', tax)
-    setOrder(prevOrder => {
+    setOrder((prevOrder) => {
       const notTaxLineItems = prevOrder.OrderLineItems.filter(
-        li => li.kind !== 'tax'
+        (li) => li.kind !== 'tax'
       )
 
       return {
@@ -422,14 +423,14 @@ function EditOrder(
   }
 
   function onSubTotalChange(subtotal: number) {
-    setOrder(prevOrder => ({
+    setOrder((prevOrder) => ({
       ...prevOrder,
       subtotal
     }))
   }
 
   function onTotalChange(total: number) {
-    setOrder(prevOrder => ({
+    setOrder((prevOrder) => ({
       ...prevOrder,
       total
     }))
@@ -445,7 +446,7 @@ function EditOrder(
       value: unknown
     }>
   ) => {
-    setOrder(prevOrder => ({
+    setOrder((prevOrder) => ({
       ...prevOrder,
       status: event.target.value as OrderStatus
     }))
@@ -457,7 +458,7 @@ function EditOrder(
       value: unknown
     }>
   ) => {
-    setOrder(prevOrder => ({
+    setOrder((prevOrder) => ({
       ...prevOrder,
       payment_status: event.target.value as PaymentStatus
     }))
@@ -469,7 +470,7 @@ function EditOrder(
       value: unknown
     }>
   ) => {
-    setOrder(prevOrder => ({
+    setOrder((prevOrder) => ({
       ...prevOrder,
       shipment_status: event.target.value as ShipmentStatus
     }))
@@ -478,7 +479,7 @@ function EditOrder(
   const shouldShowAddMemberDiscount =
     !canApplyMemberDiscount ||
     (order &&
-      order.OrderLineItems.filter(li => li.description === 'member discount')
+      order.OrderLineItems.filter((li) => li.description === 'member discount')
         .length === 0)
 
   return (
@@ -588,7 +589,7 @@ function EditOrder(
                 value={order.name}
                 onChange={(event: any) => {
                   event.persist()
-                  setOrder(order => ({ ...order, name: event.target.value }))
+                  setOrder((order) => ({ ...order, name: event.target.value }))
                 }}
               />
               <TextField
@@ -599,7 +600,7 @@ function EditOrder(
                 value={order.email}
                 onChange={(event: any) => {
                   event.persist()
-                  setOrder(order => ({ ...order, email: event.target.value }))
+                  setOrder((order) => ({ ...order, email: event.target.value }))
                 }}
               />
               <TextField
@@ -610,7 +611,7 @@ function EditOrder(
                 value={order.phone}
                 onChange={(event: any) => {
                   event.persist()
-                  setOrder(order => ({ ...order, phone: event.target.value }))
+                  setOrder((order) => ({ ...order, phone: event.target.value }))
                 }}
               />
               <TextField
@@ -621,7 +622,10 @@ function EditOrder(
                 value={order.address}
                 onChange={(event: any) => {
                   event.persist()
-                  setOrder(order => ({ ...order, address: event.target.value }))
+                  setOrder((order) => ({
+                    ...order,
+                    address: event.target.value
+                  }))
                 }}
               />
               <TextField
@@ -633,7 +637,7 @@ function EditOrder(
                 value={order.notes}
                 onChange={(event: any) => {
                   event.persist()
-                  setOrder(order => ({ ...order, notes: event.target.value }))
+                  setOrder((order) => ({ ...order, notes: event.target.value }))
                 }}
               />
 
@@ -645,7 +649,7 @@ function EditOrder(
                   value={valueFor('status')}
                   onChange={handleStatusChange}
                 >
-                  {Object.keys(ORDER_STATUSES).map(status => (
+                  {Object.keys(ORDER_STATUSES).map((status) => (
                     <MenuItem key={`os-sel-${status}`} value={status}>
                       {ORDER_STATUSES[status as OrderStatus]}
                     </MenuItem>
@@ -662,7 +666,7 @@ function EditOrder(
                   value={valueFor('payment_status')}
                   onChange={handlePaymentStatusChange}
                 >
-                  {Object.keys(PAYMENT_STATUSES).map(status => (
+                  {Object.keys(PAYMENT_STATUSES).map((status) => (
                     <MenuItem key={`ps-sel-${status}`} value={status}>
                       {PAYMENT_STATUSES[status as PaymentStatus]}
                     </MenuItem>
@@ -679,7 +683,7 @@ function EditOrder(
                   value={valueFor('shipment_status')}
                   onChange={handleShipmentStatusChange}
                 >
-                  {Object.keys(SHIPMENT_STATUSES).map(status => (
+                  {Object.keys(SHIPMENT_STATUSES).map((status) => (
                     <MenuItem key={`ship-sel-${status}`} value={status}>
                       {SHIPMENT_STATUSES[status as ShipmentStatus]}
                     </MenuItem>

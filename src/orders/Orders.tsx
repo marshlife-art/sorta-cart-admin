@@ -48,7 +48,7 @@ function Orders(props: RouteComponentProps) {
     tooltip: 'PRINT',
     icon: 'print',
     onClick: (e: any, data: Order[]) => {
-      const orderIds = data.map(order => order.id)
+      const orderIds = data.map((order) => order.id)
       console.log('printAction orderIds:', orderIds, ' data:', data)
 
       fetch(`${API_HOST}/orders/print`, {
@@ -59,8 +59,8 @@ function Orders(props: RouteComponentProps) {
         },
         body: JSON.stringify({ orderIds })
       })
-        .then(response => response.text())
-        .then(result => {
+        .then((response) => response.text())
+        .then((result) => {
           try {
             // eslint-disable-next-line
             const wOpen = window.open('about:blank')
@@ -71,7 +71,7 @@ function Orders(props: RouteComponentProps) {
             console.warn('caught error doing this razzle dazze shit e:', e)
           }
         })
-        .catch(err => {
+        .catch((err) => {
           console.warn(err)
         })
     }
@@ -176,7 +176,7 @@ function Orders(props: RouteComponentProps) {
           { title: 'history', field: 'history', type: 'string', hidden: true },
           { title: 'id', field: 'id', type: 'string', hidden: true }
         ]}
-        data={query =>
+        data={(query) =>
           new Promise((resolve, reject) => {
             // console.log('query:', query)
             fetch(`${API_HOST}/orders`, {
@@ -187,18 +187,18 @@ function Orders(props: RouteComponentProps) {
               },
               body: JSON.stringify(query)
             })
-              .then(response => response.json())
-              .then(result => {
+              .then((response) => response.json())
+              .then((result) => {
                 // console.log('result', result)
                 resolve(result)
               })
-              .catch(err => {
+              .catch((err) => {
                 console.warn(err)
                 return resolve({ data: [], page: 0, totalCount: 0 })
               })
           })
         }
-        detailPanel={order => <OrderDetailPanel order={order} />}
+        detailPanel={(order) => <OrderDetailPanel order={order} />}
         onRowClick={(event, rowData, togglePanel) =>
           togglePanel && togglePanel()
         }

@@ -33,7 +33,7 @@ export default function MemberAutocomplete(props: MemberAutocompleteProps) {
     }
 
     const token = localStorage && localStorage.getItem('token')
-      // this is a little weird
+    // this is a little weird
     ;(async () => {
       const response = await fetch(`${API_HOST}/members`, {
         method: 'post',
@@ -47,7 +47,7 @@ export default function MemberAutocomplete(props: MemberAutocompleteProps) {
       const members = (await response.json()) as MemberResponse
       if (active) {
         setOptions(
-          members.data.map(p => ({
+          members.data.map((p) => ({
             name: `${p.name} ${
               p.User && p.User.email ? p.User.email : p.registration_email
             }`,
@@ -88,12 +88,12 @@ export default function MemberAutocomplete(props: MemberAutocompleteProps) {
         setOpen(false)
       }}
       getOptionSelected={(option, value) => option.name === value.name}
-      getOptionLabel={option => option.name}
+      getOptionLabel={(option) => option.name}
       onChange={(event, value) => props.onItemSelected(value)}
       options={options}
       loading={loading}
       freeSolo
-      renderInput={params => (
+      renderInput={(params) => (
         <TextField
           {...params}
           label="Member search"
@@ -101,7 +101,7 @@ export default function MemberAutocomplete(props: MemberAutocompleteProps) {
           autoFocus
           variant="outlined"
           value={q}
-          onChange={event => onInputChnage(event.target.value)}
+          onChange={(event) => onInputChnage(event.target.value)}
           InputProps={{
             ...params.InputProps,
             endAdornment: (

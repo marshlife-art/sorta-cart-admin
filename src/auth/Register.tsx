@@ -19,7 +19,7 @@ interface DispatchProps {
 
 type Props = UserServiceProps & OwnProps & DispatchProps & RouteComponentProps
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   container: {
     // minHeight: 'calc(100vh - 64px)'
   },

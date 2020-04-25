@@ -47,14 +47,14 @@ export default function ImportProducts() {
 
   const [vendorLookup, setVendorLookup] = useState<object>(() => {
     fetch(`${API_HOST}/products/vendors`)
-      .then(response => response.json())
-      .then(result => setVendorLookup(result))
+      .then((response) => response.json())
+      .then((result) => setVendorLookup(result))
   })
 
   const [importTagsLookup, setImportTagsLookup] = useState<object>(() => {
     fetch(`${API_HOST}/products/import_tags`)
-      .then(response => response.json())
-      .then(result => setImportTagsLookup(result))
+      .then((response) => response.json())
+      .then((result) => setImportTagsLookup(result))
   })
 
   const token = localStorage && localStorage.getItem('token')
@@ -83,15 +83,15 @@ export default function ImportProducts() {
       },
       body: formData
     })
-      .then(response => response.json())
-      .then(response => {
+      .then((response) => response.json())
+      .then((response) => {
         if (response.error) {
           setError(response.msg)
         } else {
           setResponse(response.msg)
         }
       })
-      .catch(err => {
+      .catch((err) => {
         console.warn('fetch caugher err:', err)
         setError(err.toString())
       })
@@ -147,7 +147,7 @@ export default function ImportProducts() {
               helperText="Required."
               fullWidth
               value={vendor}
-              onChange={event => setVendor(event.target.value)}
+              onChange={(event) => setVendor(event.target.value)}
             />
 
             <div>
@@ -171,7 +171,7 @@ export default function ImportProducts() {
               onClose={handleVendorMenuClose}
             >
               {vendorLookup &&
-                Object.keys(vendorLookup).map(vendor => (
+                Object.keys(vendorLookup).map((vendor) => (
                   <MenuItem
                     key={`vendor-sel-${vendor}`}
                     onClick={() => handleVendorSelect(vendor)}
@@ -190,13 +190,13 @@ export default function ImportProducts() {
               labelId="prev-import-tag-select-label"
               id="prev-import-tag-select"
               value={prevImportTag}
-              onChange={event =>
+              onChange={(event) =>
                 event.target && setPrevImportTag(event.target.value as string)
               }
             >
               <MenuItem value="">None</MenuItem>
               {importTagsLookup &&
-                Object.keys(importTagsLookup).map(tag => (
+                Object.keys(importTagsLookup).map((tag) => (
                   <MenuItem key={`tag-sel-${tag}`} value={tag}>
                     {tag}
                   </MenuItem>
@@ -212,7 +212,7 @@ export default function ImportProducts() {
             helperText="Required. This should be unique."
             fullWidth
             value={importTag}
-            onChange={event => setImportTag(event.target.value)}
+            onChange={(event) => setImportTag(event.target.value)}
             className={classes.gridItem}
           />
           <TextField
@@ -226,7 +226,7 @@ export default function ImportProducts() {
             }}
             fullWidth
             value={markup}
-            onChange={event =>
+            onChange={(event) =>
               setMarkup(
                 isNaN(parseFloat(event.target.value))
                   ? 0.0

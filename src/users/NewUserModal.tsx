@@ -69,8 +69,8 @@ export default function NewUserModal(props: {
       },
       body: JSON.stringify({ email, role })
     })
-      .then(response => response.json())
-      .then(result => {
+      .then((response) => response.json())
+      .then((result) => {
         // console.log('result', result)
         if (result.error) {
           return setError(result.msg)
@@ -79,7 +79,7 @@ export default function NewUserModal(props: {
           props.handleClose()
         }
       })
-      .catch(err => {
+      .catch((err) => {
         console.warn(err)
         return setError('o noz! there was an error creating user')
       })
@@ -122,13 +122,13 @@ export default function NewUserModal(props: {
                   id="role-select"
                   margin="dense"
                   value={role}
-                  onChange={event =>
+                  onChange={(event) =>
                     event.target &&
                     event.target.value &&
                     setRole(event.target.value as string)
                   }
                 >
-                  {ROLES.map(name => (
+                  {ROLES.map((name) => (
                     <MenuItem value={name} key={`role-select${name}`}>
                       {name}
                     </MenuItem>

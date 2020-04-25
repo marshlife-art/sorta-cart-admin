@@ -51,14 +51,14 @@ function usdFormat(num: number | string) {
 
 function subtotal(items: LineItem[]) {
   return items
-    .filter(li => li.kind === 'product')
+    .filter((li) => li.kind === 'product')
     .map(({ total }) => (typeof total === 'string' ? parseFloat(total) : total))
     .reduce((sum, i) => sum + i, 0)
 }
 
 function adjustmentsTotal(items: LineItem[]) {
   return items
-    .filter(li => li.kind === 'adjustment')
+    .filter((li) => li.kind === 'adjustment')
     .map(({ total }) => (typeof total === 'string' ? parseFloat(total) : total))
     .reduce((sum, i) => sum + i, 0)
 }
@@ -168,8 +168,8 @@ function OrderLineItems(props: {
     props.removeLineItem(idx)
   }
 
-  const adjustments = props.line_items.filter(li => li.kind === 'adjustment')
-  const payments = props.line_items.filter(li => li.kind === 'payment')
+  const adjustments = props.line_items.filter((li) => li.kind === 'adjustment')
+  const payments = props.line_items.filter((li) => li.kind === 'payment')
 
   return (
     <Paper className={classes.root}>

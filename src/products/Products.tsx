@@ -78,7 +78,7 @@ function Products() {
     tooltip: 'destroy all selected products',
     icon: 'delete',
     onClick: (e: any, data: Product | Product[]) => {
-      const ids = Array.isArray(data) ? data.map(p => p.id) : [data.id]
+      const ids = Array.isArray(data) ? data.map((p) => p.id) : [data.id]
       if (ids.length === 0) {
         return
       }
@@ -95,7 +95,7 @@ function Products() {
           },
           body: JSON.stringify({ ids })
         })
-          .catch(err => console.warn('destroy products caught err:', err))
+          .catch((err) => console.warn('destroy products caught err:', err))
           .finally(() => setNeedsRefresh(true))
       }
     }
@@ -109,20 +109,20 @@ function Products() {
 
   const [categoryLookup, setCategoryLookup] = useState<object>(() => {
     fetch(`${API_HOST}/categories`)
-      .then(response => response.json())
-      .then(result => setCategoryLookup(result))
+      .then((response) => response.json())
+      .then((result) => setCategoryLookup(result))
   })
 
   const [subCategoryLookup, setSubCategoryLookup] = useState<object>(() => {
     fetch(`${API_HOST}/sub_categories`)
-      .then(response => response.json())
-      .then(result => setSubCategoryLookup(result))
+      .then((response) => response.json())
+      .then((result) => setSubCategoryLookup(result))
   })
 
   const [vendorLookup, setVendorLookup] = useState<object>(() => {
     fetch(`${API_HOST}/products/vendors`)
-      .then(response => response.json())
-      .then(result => setVendorLookup(result))
+      .then((response) => response.json())
+      .then((result) => setVendorLookup(result))
   })
 
   return (
@@ -157,7 +157,7 @@ function Products() {
             field: 'description',
             type: 'string',
             filtering: false,
-            render: row => {
+            render: (row) => {
               if (row.name) {
                 return `${row.name} -- ${row.description}`
               } else {
@@ -197,13 +197,13 @@ function Products() {
             type: 'string',
             lookup: PROPERTY_MAP,
             filterPlaceholder: 'filter',
-            render: row => renderCodes(row.codes)
+            render: (row) => renderCodes(row.codes)
           },
           { title: 'upc', field: 'upc_code', type: 'string', hidden: true },
           // { title: 'unf', field: 'unf', type: 'string' },
           { title: 'id', field: 'id', type: 'string', hidden: true }
         ]}
-        data={query =>
+        data={(query) =>
           new Promise((resolve, reject) => {
             fetch(`${API_HOST}/products`, {
               method: 'post',
@@ -212,11 +212,11 @@ function Products() {
               },
               body: JSON.stringify(query)
             })
-              .then(response => response.json())
-              .then(result => {
+              .then((response) => response.json())
+              .then((result) => {
                 resolve(result)
               })
-              .catch(err => {
+              .catch((err) => {
                 console.warn('onoz, caught err:', err)
                 return resolve({ data: [], page: 0, totalCount: 0 })
               })

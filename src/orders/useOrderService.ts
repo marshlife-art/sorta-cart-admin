@@ -26,12 +26,12 @@ const useOrderService = (
         Authorization: `Bearer ${token}`
       }
     })
-      .then(response => response.json())
-      .then(response => {
+      .then((response) => response.json())
+      .then((response) => {
         // console.log('page', response)
         setResult({ status: 'loaded', payload: response as Order })
       })
-      .catch(error => {
+      .catch((error) => {
         console.warn('useOrderService fetch caught err:', error)
         setResult({ ...error })
       })

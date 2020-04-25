@@ -19,12 +19,12 @@ const usePageService = (
     }
 
     fetch(`${API_HOST}/page?slug=${slug}`)
-      .then(response => response.json())
-      .then(response => {
+      .then((response) => response.json())
+      .then((response) => {
         // console.log('page', response)
         setResult({ status: 'loaded', payload: response as Page })
       })
-      .catch(error => {
+      .catch((error) => {
         console.warn('usePageService fetch caught err:', error)
         setResult({ ...error })
       })
@@ -52,12 +52,12 @@ const useAllPagesService = (
           Authorization: `Bearer ${token}`
         }
       })
-        .then(response => response.json())
-        .then(response => {
+        .then((response) => response.json())
+        .then((response) => {
           // console.log('page', response)
           setResult({ status: 'loaded', payload: response.rows as Page[] })
         })
-        .catch(error => {
+        .catch((error) => {
           console.warn('usePageService fetch caught err:', error)
           setResult({ ...error })
         })
@@ -92,14 +92,14 @@ const usePageSaveService = (
       },
       body: JSON.stringify(page)
     })
-      .then(response => response.json())
-      .then(response => {
+      .then((response) => response.json())
+      .then((response) => {
         // console.log('usePageSaveService response:', response)
         setResult({ status: 'loaded', payload: response as Page })
         setSnackMsg(response.msg)
         setSnackOpen(true)
       })
-      .catch(error => {
+      .catch((error) => {
         console.warn('usePageSaveService fetch caught err:', error)
         setResult({ ...error })
         setSnackMsg(`o noz! ${error}`)

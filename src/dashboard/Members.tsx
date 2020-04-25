@@ -19,7 +19,7 @@ interface MemberData {
   totalCount: number
 }
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   seeMore: {
     marginTop: theme.spacing(3)
   },
@@ -53,9 +53,9 @@ function Members(props: RouteComponentProps) {
         },
         body: JSON.stringify({ pageSize: 10 })
       })
-        .then(response => response.json())
+        .then((response) => response.json())
         .then(setMembers)
-        .catch(err => {
+        .catch((err) => {
           console.warn(err)
           return { data: [], page: 0, totalCount: 0 }
         })
@@ -74,7 +74,7 @@ function Members(props: RouteComponentProps) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {members.data.map(member => (
+          {members.data.map((member) => (
             <TableRow
               key={member.id}
               className={classes.rowHover}

@@ -20,7 +20,7 @@ const ProtectedRoute = ({
 }: ProtectedRouteProps & RouteProps & UserServiceProps) => (
   <Route
     {...rest}
-    render={props =>
+    render={(props) =>
       isAdmin(userService) ? (
         Component ? (
           <Component {...props} />

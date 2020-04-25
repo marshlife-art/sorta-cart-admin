@@ -110,7 +110,7 @@ function EditWholesaleOrder(
   const handleOrderNotesChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    setWholesaleOrder(prevOrder => {
+    setWholesaleOrder((prevOrder) => {
       if (prevOrder) {
         return {
           ...prevOrder,
@@ -123,7 +123,7 @@ function EditWholesaleOrder(
   const handleOrderVendorChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    setWholesaleOrder(prevOrder => {
+    setWholesaleOrder((prevOrder) => {
       if (prevOrder) {
         return {
           ...prevOrder,
@@ -139,7 +139,7 @@ function EditWholesaleOrder(
       value: unknown
     }>
   ) => {
-    setWholesaleOrder(prevOrder => {
+    setWholesaleOrder((prevOrder) => {
       if (prevOrder) {
         return {
           ...prevOrder,
@@ -155,7 +155,7 @@ function EditWholesaleOrder(
       value: unknown
     }>
   ) => {
-    setWholesaleOrder(prevOrder => {
+    setWholesaleOrder((prevOrder) => {
       if (prevOrder) {
         return {
           ...prevOrder,
@@ -171,7 +171,7 @@ function EditWholesaleOrder(
       value: unknown
     }>
   ) => {
-    setWholesaleOrder(prevOrder => {
+    setWholesaleOrder((prevOrder) => {
       if (prevOrder) {
         return {
           ...prevOrder,
@@ -201,7 +201,7 @@ function EditWholesaleOrder(
 
   const onSaveBtnClick = (): void => {
     if (wholesaleOrderId === 'new') {
-      setWholesaleOrder(prevOrder => {
+      setWholesaleOrder((prevOrder) => {
         if (prevOrder) {
           return {
             ...prevOrder,
@@ -232,8 +232,8 @@ function EditWholesaleOrder(
         },
         body: JSON.stringify({ id: wholesaleOrder.id })
       })
-        .then(response => response.json())
-        .then(response => {
+        .then((response) => response.json())
+        .then((response) => {
           if (response.error) {
             setSnackMsg(response.msg)
             setSnackOpen(true)
@@ -241,7 +241,7 @@ function EditWholesaleOrder(
             props.history.replace('/wholesaleorders')
           }
         })
-        .catch(error => {
+        .catch((error) => {
           console.warn('delete wholesaleOrder fetch caught err:', error)
           setSnackMsg(`o noz! ${error}`)
           setSnackOpen(true)
@@ -342,7 +342,7 @@ function EditWholesaleOrder(
                   value={valueFor('status')}
                   onChange={handleStatusChange}
                 >
-                  {Object.keys(ORDER_STATUSES).map(status => (
+                  {Object.keys(ORDER_STATUSES).map((status) => (
                     <MenuItem key={`os-sel-${status}`} value={status}>
                       {ORDER_STATUSES[status as OrderStatus]}
                     </MenuItem>
@@ -359,7 +359,7 @@ function EditWholesaleOrder(
                   value={valueFor('payment_status')}
                   onChange={handlePaymentStatusChange}
                 >
-                  {Object.keys(PAYMENT_STATUSES).map(status => (
+                  {Object.keys(PAYMENT_STATUSES).map((status) => (
                     <MenuItem key={`ps-sel-${status}`} value={status}>
                       {PAYMENT_STATUSES[status as PaymentStatus]}
                     </MenuItem>
@@ -376,7 +376,7 @@ function EditWholesaleOrder(
                   value={valueFor('shipment_status')}
                   onChange={handleShipmentStatusChange}
                 >
-                  {Object.keys(SHIPMENT_STATUSES).map(status => (
+                  {Object.keys(SHIPMENT_STATUSES).map((status) => (
                     <MenuItem key={`ship-sel-${status}`} value={status}>
                       {SHIPMENT_STATUSES[status as ShipmentStatus]}
                     </MenuItem>

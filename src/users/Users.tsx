@@ -86,9 +86,9 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
             },
             body: JSON.stringify({ id: user.id })
           })
-            .then(response => response.json())
+            .then((response) => response.json())
             .then(() => tableRef.current && tableRef.current.onQueryChange())
-            .catch(err => console.warn('user deleteAction caught err', err))
+            .catch((err) => console.warn('user deleteAction caught err', err))
         }
       }
     }
@@ -114,7 +114,7 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
             title: 'role',
             field: 'role',
             type: 'string',
-            render: row => (
+            render: (row) => (
               <UserRolesMenu
                 user={row as User}
                 disabled={
@@ -139,18 +139,18 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
             field: 'createdAt',
             type: 'datetime',
             filtering: false,
-            render: row => new Date(row.createdAt).toLocaleString()
+            render: (row) => new Date(row.createdAt).toLocaleString()
           },
           {
             title: 'updated',
             field: 'updatedAt',
             type: 'datetime',
             filtering: false,
-            render: row => new Date(row.updatedAt).toLocaleString()
+            render: (row) => new Date(row.updatedAt).toLocaleString()
           },
           { title: 'id', field: 'id', type: 'string', hidden: true }
         ]}
-        data={query =>
+        data={(query) =>
           new Promise((resolve, reject) => {
             fetch(`${API_HOST}/users`, {
               method: 'post',
@@ -160,11 +160,11 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
               },
               body: JSON.stringify(query)
             })
-              .then(response => response.json())
-              .then(result => {
+              .then((response) => response.json())
+              .then((result) => {
                 resolve(result)
               })
-              .catch(err => {
+              .catch((err) => {
                 console.warn(err)
                 return resolve({ data: [], page: 0, totalCount: 0 })
               })

@@ -100,12 +100,12 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
           ]
         })
       })
-        .then(response => response.json())
-        .then(response => {
+        .then((response) => response.json())
+        .then((response) => {
           // console.log('zomfg response:', response)
           setMember(response.data[0] as Member)
         })
-        .catch(err => setMember(blankMember))
+        .catch((err) => setMember(blankMember))
         .finally(() => setLoadingMember(false))
     }
   }, [memberId, token])
@@ -125,15 +125,15 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
       },
       body: JSON.stringify({ member, createNewUser })
     })
-      .then(response => response.json())
-      .then(response => {
+      .then((response) => response.json())
+      .then((response) => {
         if (response.error) {
           setError(response.msg)
         } else {
           setResponse(response.msg)
         }
       })
-      .catch(err => {
+      .catch((err) => {
         console.warn('fetch caugher err:', err)
         setError(err.toString())
       })
@@ -182,7 +182,7 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
                 event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
               ) => {
                 event.persist()
-                setMember(prevMember => ({
+                setMember((prevMember) => ({
                   ...prevMember,
                   registration_email: event.target.value
                 }))
@@ -193,9 +193,9 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
               fullWidth
               value={member.name}
               className={classes.gridItem}
-              onChange={event => {
+              onChange={(event) => {
                 event.persist()
-                setMember(prevMember => ({
+                setMember((prevMember) => ({
                   ...prevMember,
                   name: event.target.value
                 }))
@@ -206,9 +206,9 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
               fullWidth
               value={member.phone}
               className={classes.gridItem}
-              onChange={event => {
+              onChange={(event) => {
                 event.persist()
-                setMember(prevMember => ({
+                setMember((prevMember) => ({
                   ...prevMember,
                   phone: event.target.value
                 }))
@@ -219,9 +219,9 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
               fullWidth
               value={member.address}
               className={classes.gridItem}
-              onChange={event => {
+              onChange={(event) => {
                 event.persist()
-                setMember(prevMember => ({
+                setMember((prevMember) => ({
                   ...prevMember,
                   address: event.target.value
                 }))
@@ -233,9 +233,9 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
               value={member.discount}
               type="number"
               className={classes.gridItem}
-              onChange={event => {
+              onChange={(event) => {
                 event.persist()
-                setMember(prevMember => ({
+                setMember((prevMember) => ({
                   ...prevMember,
                   discount: parseFloat(event.target.value)
                 }))
@@ -246,9 +246,9 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
               fullWidth
               value={member.discount_type}
               className={classes.gridItem}
-              onChange={event => {
+              onChange={(event) => {
                 event.persist()
-                setMember(prevMember => ({
+                setMember((prevMember) => ({
                   ...prevMember,
                   discount_type: event.target.value
                 }))
@@ -261,9 +261,9 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
               value={member.fees_paid}
               type="number"
               className={classes.gridItem}
-              onChange={event => {
+              onChange={(event) => {
                 event.persist()
-                setMember(prevMember => ({
+                setMember((prevMember) => ({
                   ...prevMember,
                   fees_paid: parseFloat(event.target.value)
                 }))
@@ -276,9 +276,9 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
               value={member.store_credit}
               className={classes.gridItem}
               type="number"
-              onChange={event => {
+              onChange={(event) => {
                 event.persist()
-                setMember(prevMember => ({
+                setMember((prevMember) => ({
                   ...prevMember,
                   store_credit: parseFloat(event.target.value)
                 }))
@@ -290,9 +290,9 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
               value={member.shares}
               className={classes.gridItem}
               type="number"
-              onChange={event => {
+              onChange={(event) => {
                 event.persist()
-                setMember(prevMember => ({
+                setMember((prevMember) => ({
                   ...prevMember,
                   shares: parseFloat(event.target.value)
                 }))
@@ -305,10 +305,10 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
                 labelId="prev-import-tag-select-label"
                 id="prev-import-tag-select"
                 value={member.member_type}
-                onChange={event =>
+                onChange={(event) =>
                   event.target &&
                   event.target.value &&
-                  setMember(prevMember => ({
+                  setMember((prevMember) => ({
                     ...prevMember,
                     member_type: event.target.value as string
                   }))
@@ -367,7 +367,7 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
 
             {member && member.data && (
               <dl>
-                {Object.keys(member.data).map(k => (
+                {Object.keys(member.data).map((k) => (
                   <React.Fragment key={`memberdata${k}`}>
                     <dt>{k}</dt>
                     <dd>{member.data[k]}</dd>

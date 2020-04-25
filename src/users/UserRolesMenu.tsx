@@ -27,7 +27,7 @@ const StyledMenu = withStyles({
   />
 ))
 
-const StyledMenuItem = withStyles(theme => ({
+const StyledMenuItem = withStyles((theme) => ({
   root: {
     '&:focus': {
       backgroundColor: theme.palette.primary.main,
@@ -66,13 +66,13 @@ export default function UserRolesMenu(props: {
       },
       body: JSON.stringify({ id, role })
     })
-      .then(response => response.json())
-      .then(resp => {
+      .then((response) => response.json())
+      .then((resp) => {
         // console.log('resp success!?', resp)
         handleClose()
         setRole(role)
       })
-      .catch(err => console.warn('handleRoleChange caught err:', err))
+      .catch((err) => console.warn('handleRoleChange caught err:', err))
   }
 
   return (

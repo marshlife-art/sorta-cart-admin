@@ -19,7 +19,7 @@ interface DispatchProps {
 
 type Props = UserServiceProps & OwnProps & DispatchProps & RouteComponentProps
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   form: {
     width: '100%',
     minHeight: '100vh',

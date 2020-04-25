@@ -45,7 +45,7 @@ export default function LineItemAutocomplete(props: LineItemAutocompleteProps) {
 
       if (active) {
         setOptions(
-          products.data.map(p => ({
+          products.data.map((p) => ({
             name: `${p.name} ${p.description} ${p.pk} ${p.size} $${
               p.ws_price
             } ${p.u_price !== p.ws_price ? `($${p.u_price} EA)` : ''}`,
@@ -86,19 +86,19 @@ export default function LineItemAutocomplete(props: LineItemAutocompleteProps) {
         setOpen(false)
       }}
       getOptionSelected={(option, value) => option.name === value.name}
-      getOptionLabel={option => option.name}
+      getOptionLabel={(option) => option.name}
       onChange={(event, value) => props.onItemSelected(value)}
       options={options}
       loading={loading}
       freeSolo
-      renderInput={params => (
+      renderInput={(params) => (
         <TextField
           {...params}
           label="Product search"
           fullWidth
           variant="outlined"
           value={q}
-          onChange={event => onInputChnage(event.target.value)}
+          onChange={(event) => onInputChnage(event.target.value)}
           InputProps={{
             ...params.InputProps,
             endAdornment: (
