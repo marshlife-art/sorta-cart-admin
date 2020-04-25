@@ -5,7 +5,7 @@ export const API_HOST =
     ? 'https://api.marshcoop.org'
     : 'http://localhost:3000'
 
-export const TAX_RATE = 0.06175
+export const TAX_RATE = 0.06391
 export const TAX_RATE_STRING = `${(TAX_RATE * 100).toFixed(3)}%`
 
 type OrderStatusLookup = { [key in OrderStatus]: string }
