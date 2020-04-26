@@ -97,7 +97,10 @@ function WholesaleOrderLineItems(
       // check if qtySum is not a round number (i.e. a partial case)
       if (item.qtySum % 1 !== 0 && item.product) {
         const pk = item.product.pk
-        const qty = item.line_items.reduce((acc, v) => acc + v.quantity, 0)
+        const qty = item.line_items.reduce(
+          (acc, v) => acc + (v.selected_unit === 'EA' ? v.quantity : 0),
+          0
+        )
         // quantity needed to complete a case
         const quantity = Math.abs((qty % pk) - pk)
         const price = +(
