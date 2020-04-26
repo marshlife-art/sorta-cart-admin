@@ -108,6 +108,7 @@ function Orders(props: RouteComponentProps) {
       <MaterialTable
         tableRef={tableRef}
         columns={[
+          { title: '#', field: 'id', type: 'string', filtering: false },
           {
             title: 'created',
             field: 'createdAt',
@@ -173,8 +174,7 @@ function Orders(props: RouteComponentProps) {
             type: 'string',
             hidden: true
           },
-          { title: 'history', field: 'history', type: 'string', hidden: true },
-          { title: 'id', field: 'id', type: 'string', hidden: true }
+          { title: 'history', field: 'history', type: 'string', hidden: true }
         ]}
         data={(query) =>
           new Promise((resolve, reject) => {
