@@ -7,23 +7,25 @@ import TextField from '@material-ui/core/TextField'
 import InputLabel from '@material-ui/core/InputLabel'
 import MenuItem from '@material-ui/core/MenuItem'
 import FormControl from '@material-ui/core/FormControl'
-// import FormHelperText from '@material-ui/core/FormHelperText'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
-
+import Typography from '@material-ui/core/Typography'
+import Box from '@material-ui/core/Box'
 import Checkbox from '@material-ui/core/Checkbox'
-
 import Select from '@material-ui/core/Select'
 import Button from '@material-ui/core/Button'
 import IconButton from '@material-ui/core/IconButton'
 import Tooltip from '@material-ui/core/Tooltip'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
+import List from '@material-ui/core/List'
+import ListItem from '@material-ui/core/ListItem'
+import ListSubheader from '@material-ui/core/ListSubheader'
+import ListItemText from '@material-ui/core/ListItemText'
 
-// import Menu from '@material-ui/core/Menu'
-// import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
 import { Member, MemberRouterProps } from '../types/Member'
-
 import Loading from '../Loading'
 import { API_HOST } from '../constants'
+import { fetchStoreCredit } from '../orders/EditOrder'
+import { Order } from '../types/Order'
 
 const blankMember: Member = {
   id: 'new',
@@ -55,10 +57,36 @@ const useStyles = makeStyles((theme: Theme) =>
         top: '0'
       },
       zIndex: 1,
+      backgroundColor: theme.palette.background.paper,
+      width: '100%'
+    },
+    ordersHeader: {
+      fontSize: '1.25em',
       backgroundColor: theme.palette.background.paper
     }
   })
 )
+
+async function fetchMemberOrders(
+  MemberId: string,
+  token: string | null,
+  setOrders: React.Dispatch<React.SetStateAction<Order[]>>
+) {
+  if (!token) {
+    return
+  }
+  const orders = await fetch(`${API_HOST}/admin/member_orders`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ MemberId })
+  })
+    .then((response: any) => response.json())
+    .catch((err: any) => [])
+  setOrders(orders)
+}
 
 function EditMember(props: RouteComponentProps<MemberRouterProps>) {
   const classes = useStyles()
@@ -71,6 +99,8 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
 
   const [member, setMember] = useState<Member>(blankMember)
   const [createNewUser, setCreateNewUser] = useState(false)
+  const [storeCredit, setStoreCredit] = useState(0)
+  const [orders, setOrders] = useState<Order[]>([])
 
   const token = localStorage && localStorage.getItem('token')
 
@@ -107,6 +137,8 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
         })
         .catch((err) => setMember(blankMember))
         .finally(() => setLoadingMember(false))
+      fetchStoreCredit(memberId, token, setStoreCredit)
+      fetchMemberOrders(memberId, token, setOrders)
     }
   }, [memberId, token])
 
@@ -276,13 +308,7 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
               value={member.store_credit}
               className={classes.gridItem}
               type="number"
-              onChange={(event) => {
-                event.persist()
-                setMember((prevMember) => ({
-                  ...prevMember,
-                  store_credit: parseFloat(event.target.value)
-                }))
-              }}
+              helperText="note: depreciated, don't use this store_credit field anymore."
             />
             <TextField
               label="shares"
@@ -328,7 +354,7 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
                       event: React.ChangeEvent<HTMLInputElement>,
                       checked: boolean
                     ) => {
-                      setCreateNewUser(true)
+                      setCreateNewUser(checked)
                     }}
                     value="createNewUser"
                   />
@@ -350,7 +376,7 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
             </div>
           </Grid>
 
-          <Grid item sm={6} className={classes.sticky}>
+          <Grid item sm={6} className={classes.sticky} zeroMinWidth>
             {loading && <Loading />}
             {error && (
               <div className={classes.gridItem}>
@@ -374,6 +400,48 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
                   </React.Fragment>
                 ))}
               </dl>
+            )}
+
+            {storeCredit !== 0 && (
+              <Box color="info.main">
+                <Typography variant="overline" display="block" gutterBottom>
+                  Member has store credit: {storeCredit}
+                </Typography>
+              </Box>
+            )}
+
+            {orders.length > 0 && (
+              <List
+                component="nav"
+                aria-label="member orders"
+                subheader={
+                  <ListSubheader
+                    component="h2"
+                    className={classes.ordersHeader}
+                  >
+                    Orders ({orders.length})
+                  </ListSubheader>
+                }
+              >
+                {orders.map((order) => (
+                  <ListItem
+                    key={order.id}
+                    button
+                    href={`/orders/edit/${order.id}`}
+                    onClick={() =>
+                      props.history.push(`/orders/edit/${order.id}`)
+                    }
+                  >
+                    <ListItemText
+                      primary={`#${order.id} $${order.total} (${order.item_count})`}
+                      secondary={
+                        order.createdAt &&
+                        new Date(order.createdAt).toLocaleString()
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
             )}
           </Grid>
         </Grid>

@@ -36,7 +36,7 @@ import Login from './auth/Login'
 import Register from './auth/Register'
 import ProtectedRoute from './auth/ProtectedRoute'
 // import UserMenu from './auth/UserMenu'
-import Pages from './pages/Pages'
+import StoreCredits from './members/StoreCredits'
 import Orders from './orders/Orders'
 import WholesaleOrders from './wholesaleorders/WholesaleOrders'
 import Users from './users/Users'
@@ -331,8 +331,8 @@ export function App(props: Props) {
                 />
                 <ProtectedRoute
                   userService={userService}
-                  path="/pages"
-                  component={Pages}
+                  path="/storecredits"
+                  component={StoreCredits}
                 />
                 <ProtectedRoute
                   userService={userService}

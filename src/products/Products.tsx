@@ -156,7 +156,10 @@ function Products() {
             title: 'description',
             field: 'description',
             type: 'string',
-            filtering: false,
+            filterPlaceholder: 'filter',
+            filterCellStyle: {
+              paddingTop: '32px'
+            },
             render: (row) => {
               if (row.name) {
                 return `${row.name} -- ${row.description}`

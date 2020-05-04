@@ -44,7 +44,8 @@ import {
   ORDER_STATUSES,
   PAYMENT_STATUSES,
   SHIPMENT_STATUSES,
-  TAX_RATE_STRING
+  TAX_RATE_STRING,
+  TAX_RATE
 } from '../constants'
 
 const blankOrder: Order = {
@@ -104,9 +105,37 @@ const useStyles = makeStyles((theme: Theme) =>
       alignItems: 'center',
       minHeight: '54px',
       marginBottom: theme.spacing(2)
+    },
+    emailIcon: {
+      marginRight: '5px'
     }
   })
 )
+
+export async function fetchStoreCredit(
+  MemberId: string,
+  token: string | null,
+  setStoreCredit: React.Dispatch<React.SetStateAction<number>>
+) {
+  if (!token) {
+    return
+  }
+  const store_credit = await fetch(`${API_HOST}/admin/store_credit`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ MemberId })
+  })
+    .then((response: any) => response.json())
+    .then((response) =>
+      response && response.store_credit ? response.store_credit : 0
+    )
+    .catch((err: any) => 0)
+
+  setStoreCredit(store_credit)
+}
 
 interface EditOrderProps {
   userService?: UserService
@@ -131,6 +160,8 @@ function EditOrder(
   const [canApplyMemberDiscount, setCanApplyMemberDiscount] = useState(false)
   const orderService = useOrderService(orderId, setLoading)
 
+  const [storeCredit, setStoreCredit] = useState<number>(0)
+
   useEffect(() => {
     if (orderService.status === 'loaded') {
       if (orderService.payload) {
@@ -142,10 +173,13 @@ function EditOrder(
         ) {
           setCanApplyMemberDiscount(true)
         }
+        if (_order.Member && _order.Member.id) {
+          fetchStoreCredit(_order.Member.id, token, setStoreCredit)
+        }
         setOrder(_order)
       }
     }
-  }, [orderService])
+  }, [orderService, token])
 
   const pOrderId = props.match.params.id
 
@@ -331,6 +365,49 @@ function EditOrder(
       OrderLineItems: [...prevOrder.OrderLineItems, payment]
     }))
   }
+
+  function createCreditClick(event: any) {
+    createCredit(-1, 'credit')
+  }
+
+  function createCredit(li_total: number, description: string) {
+    const absPrice = Math.abs(parseFloat(`${li_total}`))
+    const price = -absPrice
+    const total = -(absPrice + absPrice * TAX_RATE)
+    const credit: LineItem = {
+      description,
+      quantity: 1,
+      price: -parseFloat(Math.abs(price).toFixed(2)),
+      total: -parseFloat(Math.abs(total).toFixed(2)),
+      kind: 'credit'
+    }
+    setOrder((prevOrder) => ({
+      ...prevOrder,
+      OrderLineItems: [...prevOrder.OrderLineItems, credit]
+    }))
+  }
+
+  function createCreditFromLineItem(line_item: LineItem) {
+    createCredit(line_item.total, `STORE CREDIT (${line_item.description})`)
+  }
+
+  function applyStoreCredit() {
+    const subtotal =
+      order && order.subtotal ? order.subtotal : Math.abs(storeCredit)
+    const amt = Math.abs(storeCredit) >= subtotal ? -subtotal : storeCredit
+    const adjustment: LineItem = {
+      description: 'STORE CREDIT',
+      quantity: 1,
+      price: amt,
+      total: amt,
+      kind: 'adjustment'
+    }
+    setOrder((prevOrder) => ({
+      ...prevOrder,
+      OrderLineItems: [...prevOrder.OrderLineItems, adjustment]
+    }))
+  }
+
   function emailReceipt(event: any) {
     fetch(`${API_HOST}/orders/resend_email`, {
       method: 'POST',
@@ -371,6 +448,7 @@ function EditOrder(
         MemberId: id
       }))
       setShowMemberAutocomplete(false)
+      fetchStoreCredit(id, token, setStoreCredit)
     }
   }
 
@@ -389,6 +467,10 @@ function EditOrder(
       .then((response) => response.json())
       .then((response) => {
         if (response.success) {
+          order &&
+            order.Member &&
+            order.Member.id &&
+            fetchStoreCredit(order.Member.id, token, setStoreCredit)
           setSnackOpen(true)
           setSnackMsg('Saved order!')
           if (response.order.id && (!orderId || orderId === 'new')) {
@@ -565,7 +647,7 @@ function EditOrder(
                 </Typography>
               </Box>
             )}
-            {order.Member && (
+            {order.Member && order.Member.discount && (
               <Box color="info.main">
                 <Typography variant="overline" display="block" gutterBottom>
                   Member has discount:{' '}
@@ -575,8 +657,21 @@ function EditOrder(
                       `(${order.Member.discount_type})`}
                   </b>
                 </Typography>
+              </Box>
+            )}
+            {storeCredit !== 0 && (
+              <Box color="info.main">
                 <Typography variant="overline" display="block" gutterBottom>
-                  Member has store credit: <b>{order.Member.store_credit}</b>
+                  Member has store credit:
+                  <Tooltip title="apply store credit">
+                    <Button
+                      aria-label="apply store credit"
+                      size="large"
+                      onClick={() => applyStoreCredit()}
+                    >
+                      {storeCredit}
+                    </Button>
+                  </Tooltip>
                 </Typography>
               </Box>
             )}
@@ -750,11 +845,20 @@ function EditOrder(
                   </Button>
 
                   <Button
+                    aria-label="add credit"
+                    size="large"
+                    onClick={createCreditClick}
+                  >
+                    <AddIcon />
+                    CREDIT
+                  </Button>
+
+                  <Button
                     aria-label="email receipt"
                     size="large"
                     onClick={emailReceipt}
                   >
-                    <EmailIcon />
+                    <EmailIcon className={classes.emailIcon} />
                     email receipt
                   </Button>
                 </>
@@ -767,6 +871,7 @@ function EditOrder(
               onTaxesChange={onTaxesChange}
               onTotalChange={onTotalChange}
               onSubTotalChange={onSubTotalChange}
+              createCreditFromLineItem={createCreditFromLineItem}
             />
           </Grid>
         </Grid>

@@ -105,7 +105,6 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
           { title: 'discount', field: 'discount', type: 'string' },
           { title: 'discount type', field: 'discount_type', type: 'string' },
           { title: 'fees paid', field: 'fees_paid', type: 'string' },
-          { title: 'store credit', field: 'store_credit', type: 'string' },
           { title: 'shares', field: 'shares', type: 'string' },
           { title: 'type', field: 'member_type', type: 'string' },
 

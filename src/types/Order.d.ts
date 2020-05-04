@@ -54,6 +54,8 @@ export interface OrderRouterProps {
 
 export interface LineItem {
   id?: string
+  createdAt?: string
+  updatedAt?: string
   description: string
   quantity: number
   selected_unit?: string
@@ -63,5 +65,8 @@ export interface LineItem {
   vendor?: string
   WholesaleOrderId?: number
   OrderId?: number
-  data?: { product?: Product }
+  data?: {
+    product?: Product
+    payment?: { receipt_url: string; receipt_number: string }
+  }
 }

@@ -13,6 +13,8 @@ import MenuItem from '@material-ui/core/MenuItem'
 import Tooltip from '@material-ui/core/Tooltip'
 import IconButton from '@material-ui/core/IconButton'
 import ClearIcon from '@material-ui/icons/Clear'
+import CreditIcon from '@material-ui/icons/LocalAtm'
+import Link from '@material-ui/core/Link'
 
 import { LineItem } from '../types/Order'
 import { TAX_RATE, TAX_RATE_STRING } from '../constants'
@@ -59,7 +61,7 @@ function subtotal(items: LineItem[]) {
 function adjustmentsTotal(items: LineItem[]) {
   return items
     .filter((li) => li.kind === 'adjustment')
-    .map(({ total }) => (typeof total === 'string' ? parseFloat(total) : total))
+    .map(({ total }) => parseFloat(`${total}`))
     .reduce((sum, i) => sum + i, 0)
 }
 
@@ -103,6 +105,7 @@ function OrderLineItems(props: {
   onTaxesChange: (amount: number) => void
   onTotalChange: (total: number) => void
   onSubTotalChange: (subtotal: number) => void
+  createCreditFromLineItem: (line_item: LineItem) => void
 }) {
   const classes = useStyles()
 
@@ -115,12 +118,12 @@ function OrderLineItems(props: {
   useEffect(() => {
     onTaxesChange(orderTaxes)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderTaxes]) // adding onTaxesChange here causes infinite loopz
+  }, [orderTaxes])
 
   useEffect(() => {
     onTotalChange(orderTotal)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderTotal]) // adding onTotalChange causes infinite loopz :/
+  }, [orderTotal])
 
   useEffect(() => {
     onSubTotalChange(orderSubtotal)
@@ -168,8 +171,26 @@ function OrderLineItems(props: {
     props.removeLineItem(idx)
   }
 
+  const createLineItemCredit = (line_item: LineItem) => {
+    console.log('createLineItemCredit line_item:', line_item)
+    props.createCreditFromLineItem(line_item)
+  }
+
   const adjustments = props.line_items.filter((li) => li.kind === 'adjustment')
   const payments = props.line_items.filter((li) => li.kind === 'payment')
+  const paymentsTotal = payments.reduce(
+    (acc, v) => acc + parseFloat(`${v.total}`),
+    0
+  )
+  const credits = props.line_items.filter((li) => li.kind === 'credit')
+  const creditsTotal = credits.reduce(
+    (acc, v) => acc + parseFloat(`${v.total}`),
+    0
+  )
+  const balance =
+    parseFloat(`${orderTotal}`) +
+    parseFloat(`${creditsTotal}`) +
+    parseFloat(`${paymentsTotal}`)
 
   return (
     <Paper className={classes.root}>
@@ -199,8 +220,18 @@ function OrderLineItems(props: {
                         <ClearIcon fontSize="inherit" />
                       </IconButton>
                     </Tooltip>
+                    <Tooltip title="give order credits">
+                      <IconButton
+                        aria-label="issue order credits for this item"
+                        onClick={() => createLineItemCredit(line_item)}
+                      >
+                        <CreditIcon />
+                      </IconButton>
+                    </Tooltip>
                   </TableCell>
-                  <TableCell>{line_item.description}</TableCell>
+                  <TableCell>
+                    [{line_item.vendor}] {line_item.description}
+                  </TableCell>
                   <TableCell align="right">
                     <div>
                       {line_item.data &&
@@ -346,10 +377,107 @@ function OrderLineItems(props: {
             <TableCell align="right">{usdFormat(orderTaxes)}</TableCell>
           </TableRow>
 
+          {payments.length > 0 && (
+            <TableRow>
+              <TableCell component="td" scope="row">
+                <b>Payments</b>
+              </TableCell>
+            </TableRow>
+          )}
+
           {payments.map((line_item, idx) => (
             <TableRow key={`li${idx}`}>
               <TableCell align="center">
-                <Tooltip title="remove adjustment">
+                <Tooltip title="remove payment">
+                  <IconButton
+                    aria-label="delete"
+                    size="small"
+                    onClick={(event: any) => removeLineItem(line_item)}
+                  >
+                    <ClearIcon fontSize="inherit" />
+                  </IconButton>
+                </Tooltip>
+              </TableCell>
+              <TableCell colSpan={2}>
+                <TextField
+                  type="text"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  margin="dense"
+                  fullWidth
+                  value={line_item.description}
+                  onChange={(event: any) =>
+                    handleDescriptionChange(line_item, event.target.value)
+                  }
+                />
+                {line_item.data &&
+                  line_item.data.payment &&
+                  line_item.data.payment.receipt_number && (
+                    <Link
+                      color="secondary"
+                      href={line_item.data.payment.receipt_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {line_item.data.payment.receipt_number}
+                    </Link>
+                  )}
+              </TableCell>
+              <TableCell>
+                <TextField
+                  type="number"
+                  margin="dense"
+                  fullWidth
+                  value={line_item.price || line_item.total}
+                  onChange={(event: any) =>
+                    handlePriceChange(line_item, event.target.value)
+                  }
+                  inputProps={{
+                    min: '-9999',
+                    max: '-0.01',
+                    step: '0.01'
+                  }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">$</InputAdornment>
+                    )
+                  }}
+                />
+              </TableCell>
+
+              <TableCell align="right">
+                <TextField
+                  className={classes.qtyinput}
+                  type="number"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  margin="dense"
+                  fullWidth
+                  value={line_item.quantity}
+                  onChange={(event: any) =>
+                    handleQtyChange(line_item, event.target.value)
+                  }
+                  inputProps={{ min: '1', step: '1' }}
+                />
+              </TableCell>
+              <TableCell align="right">{usdFormat(line_item.total)}</TableCell>
+            </TableRow>
+          ))}
+
+          {credits.length > 0 && (
+            <TableRow>
+              <TableCell component="td" scope="row">
+                <b>Credits</b>
+              </TableCell>
+            </TableRow>
+          )}
+
+          {credits.map((line_item, idx) => (
+            <TableRow key={`li${idx}`}>
+              <TableCell align="center">
+                <Tooltip title="remove credit">
                   <IconButton
                     aria-label="delete"
                     size="small"
@@ -419,9 +547,33 @@ function OrderLineItems(props: {
             <TableCell rowSpan={1} colSpan={3} />
             <TableCell align="right">Total</TableCell>
             <TableCell align="right" colSpan={2}>
-              <b>{usdFormat(orderTotal)}</b>
+              {usdFormat(orderTotal)}
             </TableCell>
           </TableRow>
+
+          {balance > 0 && (
+            <TableRow>
+              <TableCell component="td" scope="row" colSpan={3} />
+              <TableCell component="td" scope="row" align="right">
+                <b>Balance Due</b>
+              </TableCell>
+              <TableCell component="td" scope="row" align="right" colSpan={2}>
+                <b>${balance.toFixed(2)}</b>
+              </TableCell>
+            </TableRow>
+          )}
+
+          {balance < 0 && (
+            <TableRow>
+              <TableCell component="td" scope="row" colSpan={3} />
+              <TableCell component="td" scope="row" align="right">
+                <b>Credit Owed</b>
+              </TableCell>
+              <TableCell component="td" scope="row" align="right" colSpan={2}>
+                <b>${Math.abs(balance).toFixed(2)}</b>
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </Paper>

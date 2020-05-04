@@ -9,10 +9,10 @@ import ViewListIcon from '@material-ui/icons/ViewList'
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart'
 import TagFacesIcon from '@material-ui/icons/TagFaces'
 import PeopleIcon from '@material-ui/icons/People'
-import LayersIcon from '@material-ui/icons/Layers'
 import AssignmentIcon from '@material-ui/icons/Assignment'
 import LocalShippingIcon from '@material-ui/icons/LocalShipping'
 import OpenInBrowserIcon from '@material-ui/icons/OpenInBrowser'
+import CreditIcon from '@material-ui/icons/LocalAtm'
 
 export const mainListItems = (
   <div>
@@ -58,11 +58,11 @@ export const mainListItems = (
       </ListItemIcon>
       <ListItemText primary="Members" />
     </ListItem>
-    <ListItem button component={Link} to="/pages">
+    <ListItem button component={Link} to="/storecredits">
       <ListItemIcon>
-        <LayersIcon />
+        <CreditIcon />
       </ListItemIcon>
-      <ListItemText primary="Pages" />
+      <ListItemText primary="Store Credits" />
     </ListItem>
   </div>
 )

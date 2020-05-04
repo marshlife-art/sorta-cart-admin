@@ -409,6 +409,8 @@ function EditWholesaleOrder(
             setReload={setReload}
             lineItemData={lineItemData}
             setLineItemData={setLineItemData}
+            setSnackMsg={setSnackMsg}
+            setSnackOpen={setSnackOpen}
           />
         </>
       )}

@@ -8,6 +8,7 @@ import TableRow from '@material-ui/core/TableRow'
 import Tooltip from '@material-ui/core/Tooltip'
 import IconButton from '@material-ui/core/IconButton'
 import CloseIcon from '@material-ui/icons/Close'
+import CreditIcon from '@material-ui/icons/LocalAtm'
 import Link from '@material-ui/core/Link'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 
@@ -39,12 +40,14 @@ function WholesaleOrderLineItems(
     setReload: React.Dispatch<React.SetStateAction<boolean>>
     lineItemData: LineItemData
     setLineItemData: React.Dispatch<React.SetStateAction<LineItemData>>
+    setSnackMsg: (value: React.SetStateAction<string>) => void
+    setSnackOpen: React.Dispatch<React.SetStateAction<boolean>>
   } & RouteComponentProps
 ) {
   const classes = useStyles()
   const token = localStorage && localStorage.getItem('token')
   const lineItems = props?.wholesaleOrder?.OrderLineItems
-  const { lineItemData, setLineItemData } = props
+  const { lineItemData, setLineItemData, setSnackMsg, setSnackOpen } = props
 
   function calc() {
     let groupedLineItems: {
@@ -152,6 +155,47 @@ function WholesaleOrderLineItems(
     }
   }
 
+  function issueOrderCredits(item: GroupedItem) {
+    const items = item.line_items
+      .map((li) =>
+        li.OrderId
+          ? {
+              OrderId: li.OrderId,
+              total: li.total,
+              description: item.description
+            }
+          : undefined
+      )
+      .filter((o) => o)
+    console.log('issueOrderCredits item:', item, ' orderIds:', items)
+
+    if (window.confirm('will issue order credits. are you sure?')) {
+      fetch(`${API_HOST}/wholesaleorder/issuecredits`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(items)
+      })
+        .then((response) => response.json())
+        .then((response) => {
+          if (!response.error) {
+            setSnackMsg('Store credits created!')
+            setSnackOpen(true)
+          } else {
+            setSnackMsg('Unable to create credits!')
+            setSnackOpen(true)
+          }
+        })
+        .catch((err) => {
+          setSnackMsg(`onoz! error creating credits: ${err}`)
+          setSnackOpen(true)
+          console.warn('issueOrderCredits caught err', err)
+        })
+    }
+  }
+
   return (
     <Table size="small" className={classes.liTable}>
       <TableHead>
@@ -173,12 +217,21 @@ function WholesaleOrderLineItems(
             <React.Fragment key={`wsgli${idx}`}>
               <TableRow className={classes.groupedRow}>
                 <TableCell className={classes.deleteBtn}>
-                  <Tooltip title="remove these line item(s)">
+                  <Tooltip title="remove line item">
                     <IconButton
-                      aria-label="remove these line item(s)"
+                      aria-label="remove line item"
                       onClick={() => removeLineItem(item)}
                     >
                       <CloseIcon />
+                    </IconButton>
+                  </Tooltip>
+
+                  <Tooltip title="give order credits">
+                    <IconButton
+                      aria-label="issue order credits for this item"
+                      onClick={() => issueOrderCredits(item)}
+                    >
+                      <CreditIcon />
                     </IconButton>
                   </Tooltip>
                 </TableCell>
