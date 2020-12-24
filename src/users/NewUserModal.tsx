@@ -37,8 +37,6 @@ export default function NewUserModal(props: {
   handleClose: () => void
   handleRefresh: () => void
 }) {
-  const token = localStorage && localStorage.getItem('token')
-
   const classes = useStyles()
 
   const [email, setEmail] = useState('')
@@ -64,9 +62,9 @@ export default function NewUserModal(props: {
     fetch(`${API_HOST}/user/create`, {
       method: 'post',
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify({ email, role })
     })
       .then((response) => response.json())

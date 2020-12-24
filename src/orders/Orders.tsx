@@ -28,8 +28,6 @@ function Orders(props: RouteComponentProps) {
   const [searchExpanded, setSearchExpanded] = useState(false)
   const [isSelecting, setIsSelecting] = useState(false)
 
-  const token = localStorage && localStorage.getItem('token')
-
   const searchAction = {
     icon: searchExpanded ? 'zoom_out' : 'search',
     tooltip: searchExpanded ? 'CLOSE SEARCH' : 'SEARCH',
@@ -54,9 +52,9 @@ function Orders(props: RouteComponentProps) {
       fetch(`${API_HOST}/orders/print`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({ orderIds })
       })
         .then((response) => response.text())
@@ -182,9 +180,9 @@ function Orders(props: RouteComponentProps) {
             fetch(`${API_HOST}/orders`, {
               method: 'post',
               headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
+                'Content-Type': 'application/json'
               },
+              credentials: 'include',
               body: JSON.stringify(query)
             })
               .then((response) => response.json())

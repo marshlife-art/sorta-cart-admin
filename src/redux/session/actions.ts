@@ -45,19 +45,8 @@ export const checkSession = (): ThunkAction<
     return new Promise<void>((resolve) => {
       dispatch(isFetching(true))
 
-      // gonna get weird when there's no localStorage :/
-      const token = localStorage && localStorage.getItem('token')
-
-      if (!token) {
-        // reject('no token')
-        dispatch(isFetching(false))
-        dispatch(set(NULL_USER))
-        resolve()
-        return
-      }
-
       fetch(`${API_HOST}/check_session`, {
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: 'include'
       })
         .then((response) => response.json())
         .then((response) => {
@@ -94,13 +83,13 @@ export const register = (
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({ regKey, password })
       })
         .then((response) => response.json())
         .then((response) => {
           // console.log('[session/actions] user login', response)
-          if (response.msg === 'ok' && response.user && response.user.token) {
-            localStorage && localStorage.setItem('token', response.user.token)
+          if (response.msg === 'ok' && response.user && response.user.id) {
             dispatch(set(response.user))
           } else {
             dispatch(setError({ error: 'error', reason: response.message }))
@@ -136,13 +125,13 @@ export const login = (
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({ email, password })
       })
         .then((response) => response.json())
         .then((response) => {
           // console.log('[session/actions] user login', response)
-          if (response.msg === 'ok' && response.user && response.user.token) {
-            localStorage && localStorage.setItem('token', response.user.token)
+          if (response.msg === 'ok' && response.user && response.user.id) {
             dispatch(set(response.user))
           } else {
             dispatch(setError({ error: 'error', reason: response.message }))
@@ -167,17 +156,15 @@ export const logout = (): ThunkAction<Promise<void>, {}, {}, AnyAction> => {
     return new Promise<void>((resolve) => {
       dispatch(isFetching(true))
 
-      const token = localStorage && localStorage.getItem('token')
       fetch(`${API_HOST}/logout`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        }
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
       })
         .catch(console.warn)
         .finally(() => {
-          localStorage && localStorage.removeItem('token')
           dispatch(set(NULL_USER))
           dispatch(isFetching(false))
           resolve()

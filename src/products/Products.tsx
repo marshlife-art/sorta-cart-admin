@@ -72,8 +72,6 @@ function Products() {
     setNeedsRefresh(false)
   }, [tableRef, setNeedsRefresh])
 
-  const token = localStorage && localStorage.getItem('token')
-
   const deleteAction = {
     tooltip: 'destroy all selected products',
     icon: 'delete',
@@ -90,9 +88,9 @@ function Products() {
         fetch(`${API_HOST}/products/destroy`, {
           method: 'post',
           headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
+            'Content-Type': 'application/json'
           },
+          credentials: 'include',
           body: JSON.stringify({ ids })
         })
           .catch((err) => console.warn('destroy products caught err:', err))

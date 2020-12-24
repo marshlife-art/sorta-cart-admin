@@ -25,7 +25,6 @@ function AddWholesaleOrderLineItems(
   props: AddWholesaleOrderLineItemsProps & RouteComponentProps
 ) {
   const classes = useStyles()
-  const token = localStorage && localStorage.getItem('token')
   let tableRef = createRef<any>()
 
   const [needsRefresh, setNeedsRefresh] = useState(false)
@@ -64,9 +63,9 @@ function AddWholesaleOrderLineItems(
     fetch(`${API_HOST}/wholesaleorders`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify({ status: ['new', 'needs_review'] })
     })
       .then((response) => response.json())
@@ -83,7 +82,7 @@ function AddWholesaleOrderLineItems(
         )
       )
       .catch(console.warn)
-  }, [token])
+  }, [])
   const [
     wholesaleorderMenuAnchorEl,
     setWholesaleOrderMenuAnchorEl
@@ -104,9 +103,9 @@ function AddWholesaleOrderLineItems(
     fetch(`${API_HOST}/wholesaleorder/addlineitems`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify({ id, selectedLineItems })
     })
       .then((response) => response.json())
@@ -179,9 +178,9 @@ function AddWholesaleOrderLineItems(
             fetch(`${API_HOST}/wholesaleorders/lineitems`, {
               method: 'post',
               headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
+                'Content-Type': 'application/json'
               },
+              credentials: 'include',
               body: JSON.stringify(query)
             })
               .then((response) => response.json())

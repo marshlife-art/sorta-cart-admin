@@ -21,8 +21,6 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
   const classes = useStyles()
   const tableRef = createRef<any>()
 
-  const token = localStorage && localStorage.getItem('token')
-
   const newMemberAction = {
     icon: 'add',
     tooltip: 'add new member',
@@ -49,9 +47,9 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
         fetch(`${API_HOST}/member`, {
           method: 'DELETE',
           headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
+            'Content-Type': 'application/json'
           },
+          credentials: 'include',
           body: JSON.stringify({ id })
         })
           .then((response) => response.json())
@@ -121,9 +119,9 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
             fetch(`${API_HOST}/members`, {
               method: 'post',
               headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
+                'Content-Type': 'application/json'
               },
+              credentials: 'include',
               body: JSON.stringify(query)
             })
               .then((response) => response.json())

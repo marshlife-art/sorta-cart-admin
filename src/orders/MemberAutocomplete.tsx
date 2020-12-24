@@ -32,15 +32,14 @@ export default function MemberAutocomplete(props: MemberAutocompleteProps) {
       return undefined
     }
 
-    const token = localStorage && localStorage.getItem('token')
     // this is a little weird
     ;(async () => {
       const response = await fetch(`${API_HOST}/members`, {
         method: 'post',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({ search: q })
       })
 

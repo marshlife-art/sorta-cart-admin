@@ -34,8 +34,6 @@ const useStyles = makeStyles((theme) => ({
 function WholesaleOrders(props: RouteComponentProps) {
   const classes = useStyles()
 
-  const token = localStorage && localStorage.getItem('token')
-
   const [orders, setOrders] = useState<WholesaleOrderData>({
     data: [],
     page: 0,
@@ -43,23 +41,21 @@ function WholesaleOrders(props: RouteComponentProps) {
   })
 
   useEffect(() => {
-    token &&
-      setOrders &&
-      fetch(`${API_HOST}/wholesaleorders`, {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ pageSize: 10 })
+    fetch(`${API_HOST}/wholesaleorders`, {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({ pageSize: 10 })
+    })
+      .then((response) => response.json())
+      .then(setOrders)
+      .catch((err) => {
+        console.warn(err)
+        return { data: [], page: 0, totalCount: 0 }
       })
-        .then((response) => response.json())
-        .then(setOrders)
-        .catch((err) => {
-          console.warn(err)
-          return { data: [], page: 0, totalCount: 0 }
-        })
-  }, [token, setOrders])
+  }, [])
 
   return (
     <React.Fragment>

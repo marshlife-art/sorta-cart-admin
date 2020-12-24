@@ -57,8 +57,6 @@ export default function ImportProducts() {
       .then((result) => setImportTagsLookup(result))
   })
 
-  const token = localStorage && localStorage.getItem('token')
-
   function submitData() {
     setError('')
     setResponse('')
@@ -78,9 +76,7 @@ export default function ImportProducts() {
 
     fetch(`${API_HOST}/products/upload`, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
+      credentials: 'include',
       body: formData
     })
       .then((response) => response.json())

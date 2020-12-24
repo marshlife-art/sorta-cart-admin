@@ -46,7 +46,6 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
   console.log('#TODO: deal with userService:', userService)
 
   const [searchExpanded, setSearchExpanded] = useState(false)
-  const token = localStorage && localStorage.getItem('token')
   const [newUserModalOpen, setNewUserModalOpen] = useState(false)
 
   const searchAction = {
@@ -81,9 +80,9 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
           fetch(`${API_HOST}/user`, {
             method: 'DELETE',
             headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`
+              'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify({ id: user.id })
           })
             .then((response) => response.json())
@@ -155,9 +154,9 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
             fetch(`${API_HOST}/users`, {
               method: 'post',
               headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
+                'Content-Type': 'application/json'
               },
+              credentials: 'include',
               body: JSON.stringify(query)
             })
               .then((response) => response.json())

@@ -74,7 +74,6 @@ function EditWholesaleOrder(
     RouteComponentProps<WholesaleOrderRouterProps>
 ) {
   const classes = useStyles()
-  const token = localStorage && localStorage.getItem('token')
 
   const [wholesaleOrderId, setWholesaleOrderId] = useState('')
   const [wholesaleOrder, setWholesaleOrder] = useState<WholesaleOrder>()
@@ -227,9 +226,9 @@ function EditWholesaleOrder(
       fetch(`${API_HOST}/wholesaleorder`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({ id: wholesaleOrder.id })
       })
         .then((response) => response.json())

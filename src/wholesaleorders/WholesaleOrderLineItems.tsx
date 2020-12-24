@@ -45,7 +45,6 @@ function WholesaleOrderLineItems(
   } & RouteComponentProps
 ) {
   const classes = useStyles()
-  const token = localStorage && localStorage.getItem('token')
   const lineItems = props?.wholesaleOrder?.OrderLineItems
   const { lineItemData, setLineItemData, setSnackMsg, setSnackOpen } = props
 
@@ -144,9 +143,9 @@ function WholesaleOrderLineItems(
       fetch(`${API_HOST}/wholesaleorder/removelineitem`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({ ids })
       })
         .then((response) => response.json())
@@ -173,9 +172,9 @@ function WholesaleOrderLineItems(
       fetch(`${API_HOST}/wholesaleorder/issuecredits`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify(items)
       })
         .then((response) => response.json())

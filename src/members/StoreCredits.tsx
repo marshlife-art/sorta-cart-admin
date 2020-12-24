@@ -108,16 +108,14 @@ function StoreCredits(props: RouteComponentProps) {
   const classes = useStyles()
   // const tableRef = createRef<any>()
 
-  const token = localStorage && localStorage.getItem('token')
-
   const [members, setMembers] = useState<StoreCreditRow[]>([])
   useEffect(() => {
     fetch(`${API_HOST}/admin/store_credit_report`, {
       method: 'get',
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      }
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
     })
       .then((response) => response.json())
       .then((result) => {
@@ -128,7 +126,7 @@ function StoreCredits(props: RouteComponentProps) {
         console.warn(err)
         setMembers([])
       })
-  }, [token])
+  }, [])
 
   console.log('members:', members)
   return (
