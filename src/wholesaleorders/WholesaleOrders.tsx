@@ -104,7 +104,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     list: {
       padding: 0,
-      width: '100%'
+      width: '90%'
     },
     selectedListItem: {
       borderLeft: `${theme.spacing(2)}px solid ${theme.palette.divider}`

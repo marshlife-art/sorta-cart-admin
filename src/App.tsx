@@ -95,7 +95,8 @@ const useStyles = makeStyles((theme: Theme) =>
       justifyContent: 'flex-end'
     },
     content: {
-      marginLeft: '16px'
+      marginLeft: '16px',
+      maxWidth: '98%'
     }
   })
 )
