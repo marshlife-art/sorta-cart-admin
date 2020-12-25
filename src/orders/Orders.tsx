@@ -10,6 +10,7 @@ import {
   PAYMENT_STATUSES,
   SHIPMENT_STATUSES
 } from '../constants'
+import { formatRelative } from 'date-fns'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -112,7 +113,16 @@ function Orders(props: RouteComponentProps) {
             field: 'createdAt',
             type: 'datetime',
             filtering: false,
-            render: (order: Order) => new Date(order.createdAt).toLocaleString()
+            render: (order: Order) => (
+              <div
+                title={
+                  order.createdAt && new Date(order.createdAt).toLocaleString()
+                }
+              >
+                {order.createdAt &&
+                  formatRelative(new Date(order.createdAt), Date.now())}
+              </div>
+            )
           },
           {
             title: 'status',

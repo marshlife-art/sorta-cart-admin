@@ -9,6 +9,7 @@ import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 import Title from './Title'
 import { RouteComponentProps, withRouter } from 'react-router-dom'
+import { formatDistance } from 'date-fns'
 
 import { API_HOST } from '../constants'
 import { WholesaleOrder } from '../types/WholesaleOrder'
@@ -66,9 +67,9 @@ function WholesaleOrders(props: RouteComponentProps) {
             <TableCell>created</TableCell>
             <TableCell>vendor</TableCell>
             <TableCell>status</TableCell>
-            <TableCell>payment status</TableCell>
+            {/* <TableCell>payment status</TableCell>
             <TableCell>shipment status</TableCell>
-            {/* <TableCell>items</TableCell>
+           <TableCell>items</TableCell>
             <TableCell>subtotal</TableCell>
             <TableCell align="right">total</TableCell> */}
           </TableRow>
@@ -82,14 +83,21 @@ function WholesaleOrders(props: RouteComponentProps) {
                 props.history.push(`/wholesaleorders/edit/${order.id}`)
               }
             >
-              <TableCell>
-                {order.createdAt && new Date(order.createdAt).toLocaleString()}
+              <TableCell
+                title={
+                  order.createdAt && new Date(order.createdAt).toLocaleString()
+                }
+              >
+                {order.createdAt &&
+                  formatDistance(new Date(order.createdAt), Date.now(), {
+                    addSuffix: true
+                  })}
               </TableCell>
               <TableCell>{order.vendor}</TableCell>
               <TableCell>{order.status}</TableCell>
-              <TableCell>{order.payment_status}</TableCell>
+              {/*<TableCell>{order.payment_status}</TableCell>
               <TableCell>{order.shipment_status}</TableCell>
-              {/* <TableCell>{order.item_count}</TableCell>
+               <TableCell>{order.item_count}</TableCell>
               <TableCell>{order.subtotal}</TableCell>
               <TableCell align="right">{order.total}</TableCell> */}
             </TableRow>

@@ -1,55 +1,9 @@
 import React, { useState, useEffect, useCallback, createRef } from 'react'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import MaterialTable from 'material-table'
-import { Chip } from '@material-ui/core'
-// import MoreVertIcon from '@material-ui/icons/MoreVert'
-// import IconButton from '@material-ui/core/IconButton'
-// import Tooltip from '@material-ui/core/Tooltip'
 
 import { Product } from '../types/Product'
 import { API_HOST } from '../constants'
-
-const PROPERTY_MAP: { [index: string]: string } = {
-  a: 'Artificial ingredients',
-  c: 'Low carb',
-  d: 'Dairy free',
-  f: 'Food Service items',
-  g: 'Gluten free',
-  k: 'Kosher',
-  l: 'Low sodium/no salt',
-  m: 'Non-GMO Project Verified',
-  og: 'Organic',
-  r: 'Refined sugar',
-  v: 'Vegan',
-  w: 'Wheat free',
-  ft: 'Fair Trade',
-  n: 'Natural',
-  s: 'Specialty Only',
-  y: 'Yeast free',
-  1: '100% organic',
-  2: '95%+ organic',
-  3: '70%+ organic'
-}
-
-function renderCodes(codes: string | undefined) {
-  return (
-    codes &&
-    codes
-      .split(', ')
-      .map((code, idx) =>
-        PROPERTY_MAP[code] ? (
-          <Chip
-            label={PROPERTY_MAP[code]}
-            style={{ margin: 5 }}
-            size="small"
-            key={`pprop${idx}`}
-          />
-        ) : (
-          ''
-        )
-      )
-  )
-}
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -149,9 +103,18 @@ function Products() {
             lookup: vendorLookup,
             filterPlaceholder: 'filter'
           },
+          {
+            title: 'import tag',
+            field: 'import_tag',
+            type: 'string',
+            filterPlaceholder: 'filter',
+            filterCellStyle: {
+              paddingTop: '32px'
+            }
+          },
           { title: 'name', field: 'name', type: 'string', hidden: true },
           {
-            title: 'description',
+            title: 'name -- description',
             field: 'description',
             type: 'string',
             filterPlaceholder: 'filter',
@@ -191,14 +154,6 @@ function Products() {
             field: 'u_price',
             type: 'currency',
             filtering: false
-          },
-          {
-            title: 'properties',
-            field: 'codes',
-            type: 'string',
-            lookup: PROPERTY_MAP,
-            filterPlaceholder: 'filter',
-            render: (row) => renderCodes(row.codes)
           },
           { title: 'upc', field: 'upc_code', type: 'string', hidden: true },
           // { title: 'unf', field: 'unf', type: 'string' },

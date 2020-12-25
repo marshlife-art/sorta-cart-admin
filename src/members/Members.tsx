@@ -6,6 +6,7 @@ import MaterialTable from 'material-table'
 import { MemberRouterProps } from '../types/Member'
 import { Member } from '../types/Member'
 import { API_HOST } from '../constants'
+import { formatRelative } from 'date-fns'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -83,8 +84,16 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
             field: 'createdAt',
             type: 'datetime',
             filtering: false,
-            render: (row) =>
-              row.createdAt && new Date(row.createdAt).toLocaleString()
+            render: (row) => (
+              <div
+                title={
+                  row.createdAt && new Date(row.createdAt).toLocaleString()
+                }
+              >
+                {row.createdAt &&
+                  formatRelative(new Date(row.createdAt), Date.now())}
+              </div>
+            )
           },
           {
             title: 'registration email',

@@ -12,6 +12,7 @@ import { RouteComponentProps, withRouter } from 'react-router-dom'
 
 import { API_HOST } from '../constants'
 import { Order } from '../types/Order'
+import { formatDistance } from 'date-fns/esm'
 
 interface OrderData {
   data: Order[]
@@ -41,13 +42,12 @@ function Orders(props: RouteComponentProps) {
   })
 
   useEffect(() => {
-    fetch(`${API_HOST}/orders`, {
-      method: 'post',
+    fetch(`${API_HOST}/orders/recent`, {
+      method: 'get',
       headers: {
         'Content-Type': 'application/json'
       },
-      credentials: 'include',
-      body: JSON.stringify({ pageSize: 10 })
+      credentials: 'include'
     })
       .then((response) => response.json())
       .then(setOrders)
@@ -59,7 +59,7 @@ function Orders(props: RouteComponentProps) {
 
   return (
     <React.Fragment>
-      <Title>recent orders</Title>
+      <Title>orders in the last 14 days</Title>
       <Table size="small">
         <TableHead>
           <TableRow>
@@ -79,8 +79,15 @@ function Orders(props: RouteComponentProps) {
               className={classes.rowHover}
               onClick={() => props.history.push(`/orders/edit/${order.id}`)}
             >
-              <TableCell>
-                {order.createdAt && new Date(order.createdAt).toLocaleString()}
+              <TableCell
+                title={
+                  order.createdAt && new Date(order.createdAt).toLocaleString()
+                }
+              >
+                {order.createdAt &&
+                  formatDistance(new Date(order.createdAt), Date.now(), {
+                    addSuffix: true
+                  })}
               </TableCell>
               <TableCell>{order.status}</TableCell>
               <TableCell>{order.name}</TableCell>
@@ -100,7 +107,7 @@ function Orders(props: RouteComponentProps) {
             props.history.push('/orders')
           }}
         >
-          SEE MORE ORDERS
+          ALL ORDERS
         </Button>
       </div>
     </React.Fragment>
