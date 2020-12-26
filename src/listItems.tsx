@@ -13,6 +13,8 @@ import AssignmentIcon from '@material-ui/icons/Assignment'
 import LocalShippingIcon from '@material-ui/icons/LocalShipping'
 import OpenInBrowserIcon from '@material-ui/icons/OpenInBrowser'
 import CreditIcon from '@material-ui/icons/LocalAtm'
+import OnHandIcon from '@material-ui/icons/PanTool'
+import AddStockIcon from '@material-ui/icons/LibraryAdd'
 
 export const mainListItems = (
   <div>
@@ -33,6 +35,18 @@ export const mainListItems = (
         <OpenInBrowserIcon />
       </ListItemIcon>
       <ListItemText primary="Import Products" />
+    </ListItem>
+    <ListItem button component={Link} to="/products/onhand">
+      <ListItemIcon>
+        <OnHandIcon />
+      </ListItemIcon>
+      <ListItemText primary="Stock On Hand" />
+    </ListItem>
+    <ListItem button component={Link} to="/products/addstock">
+      <ListItemIcon>
+        <AddStockIcon />
+      </ListItemIcon>
+      <ListItemText primary="Add Stock" />
     </ListItem>
     <ListItem button component={Link} to="/orders">
       <ListItemIcon>

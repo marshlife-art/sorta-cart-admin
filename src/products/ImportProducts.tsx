@@ -284,19 +284,21 @@ export default function ImportProducts() {
                 <b>unf</b>, <b>upc_code</b>, <b>name</b>, <b>description</b>,{' '}
                 <b>pk</b>, <b>size</b>, <b>unit_type</b>, <b>ws_price</b>,{' '}
                 <b>u_price</b>, <b>ws_price_markup</b>, <b>u_price_markup</b>,{' '}
-                <b>category</b>, <b>sub_category</b>, <b>codes</b>, <b>a</b>,{' '}
-                <b>r</b>, <b>c</b>, <b>l</b>, <b>d</b>, <b>f</b>, <b>g</b>,{' '}
-                <b>v</b>, <b>w</b>, <b>y</b>, <b>k</b>, <b>ft</b>, <b>m</b>,{' '}
-                <b>s</b>, <b>n</b>, <b>og</b>.
+                <b>category</b>, <b>sub_category</b>, <b>count_on_hand</b>,{' '}
+                <b>no_backorder</b>, <b>codes</b>, <b>a</b>, <b>r</b>, <b>c</b>,{' '}
+                <b>l</b>, <b>d</b>, <b>f</b>, <b>g</b>, <b>v</b>, <b>w</b>,{' '}
+                <b>y</b>, <b>k</b>, <b>ft</b>, <b>m</b>, <b>s</b>, <b>n</b>,{' '}
+                <b>og</b>.
               </dd>
 
               <dt>Are any of these optional?</dt>
               <dd>
                 <b>unf</b>, <b>ws_price_markup</b>, <b>u_price_markup</b>,{' '}
-                <b>category</b>, <b>sub_category</b>, <b>codes</b>, <b>a</b>,{' '}
-                <b>r</b>, <b>c</b>, <b>l</b>, <b>d</b>, <b>f</b>, <b>g</b>,{' '}
-                <b>v</b>, <b>w</b>, <b>y</b>, <b>k</b>, <b>ft</b>, <b>m</b>,{' '}
-                <b>s</b>, <b>n</b>, <b>og</b>.
+                <b>category</b>, <b>sub_category</b>, <b>count_on_hand</b>,{' '}
+                <b>no_backorder</b>, <b>codes</b>, <b>a</b>, <b>r</b>, <b>c</b>,{' '}
+                <b>l</b>, <b>d</b>, <b>f</b>, <b>g</b>, <b>v</b>, <b>w</b>,{' '}
+                <b>y</b>, <b>k</b>, <b>ft</b>, <b>m</b>, <b>s</b>, <b>n</b>,{' '}
+                <b>og</b>.
               </dd>
 
               <dt>

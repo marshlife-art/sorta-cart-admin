@@ -65,6 +65,7 @@ export interface LineItem {
   vendor?: string
   WholesaleOrderId?: number
   OrderId?: number
+  invalid?: string
   data?: {
     product?: Product
     payment?: { receipt_url: string; receipt_number: string }

@@ -15,7 +15,7 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 )
 
-function Products() {
+function OnHand() {
   const classes = useStyles()
   let tableRef = createRef<any>()
 
@@ -129,8 +129,49 @@ function Products() {
               }
             }
           },
+          // {
+          //   title: 'pk size unit',
+          //   field: 'pk',
+          //   type: 'numeric',
+          //   filtering: false,
+          //   render: (row) => {
+          //     return `${row.pk} ${row.size} ${row.unit_type}`
+          //   }
+          // },
+          // {
+          //   title: 'size',
+          //   field: 'size',
+          //   type: 'string',
+          //   filtering: false,
+          //   hidden: true
+          // },
+          // {
+          //   title: 'ws u price',
+          //   field: 'ws_price',
+          //   type: 'currency',
+          //   filtering: false,
+          //   render: (row) => {
+          //     return `${row.ws_price} ${row.u_price}`
+          //   }
+          // },
+          // {
+          //   title: 'unit price',
+          //   field: 'u_price',
+          //   type: 'currency',
+          //   filtering: false,
+          //   hidden: true
+          // },
           {
-            title: 'pk size unit',
+            title: 'count',
+            field: 'count_on_hand',
+            type: 'numeric',
+            filterPlaceholder: 'filter',
+            filterCellStyle: {
+              paddingTop: '32px'
+            }
+          },
+          {
+            title: 'pk',
             field: 'pk',
             type: 'numeric',
             filtering: false,
@@ -139,49 +180,17 @@ function Products() {
             }
           },
           {
-            title: 'size',
-            field: 'size',
-            type: 'string',
-            filtering: false,
-            hidden: true
+            title: 'no_backorder',
+            field: 'no_backorder',
+            type: 'boolean'
           },
-          {
-            title: 'unit type',
-            field: 'unit_type',
-            type: 'string',
-            filtering: false,
-            hidden: true
-          },
-          {
-            title: 'price',
-            field: 'ws_price',
-            type: 'currency',
-            filtering: false
-          },
-          {
-            title: '',
-            field: 'u_price',
-            type: 'currency',
-            filtering: false
-          },
-          // {
-          //   title: 'count',
-          //   field: 'count_on_hand',
-          //   type: 'numeric',
-          //   filtering: false
-          // },
-          // {
-          //   title: 'no_backorder',
-          //   field: 'no_backorder',
-          //   type: 'boolean'
-          // },
           { title: 'upc', field: 'upc_code', type: 'string', hidden: true },
           // { title: 'unf', field: 'unf', type: 'string' },
           { title: 'id', field: 'id', type: 'string', hidden: true }
         ]}
         data={(query) =>
           new Promise((resolve, reject) => {
-            fetch(`${API_HOST}/products`, {
+            fetch(`${API_HOST}/products/stock`, {
               method: 'post',
               headers: {
                 'Content-Type': 'application/json'
@@ -198,7 +207,7 @@ function Products() {
               })
           })
         }
-        title="Products"
+        title="Stock On Hand"
         options={{
           headerStyle: { position: 'sticky', top: 0 },
           maxBodyHeight: 'calc(100vh - 121px - 28px)',
@@ -216,4 +225,4 @@ function Products() {
   )
 }
 
-export default Products
+export default OnHand
