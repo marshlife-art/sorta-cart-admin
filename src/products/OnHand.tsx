@@ -53,6 +53,16 @@ function OnHand() {
     }
   }
 
+  const exportCsvAction = {
+    tooltip: 'Export .csv',
+    icon: 'file_copy',
+    isFreeAction: true,
+    onClick: () => {
+      console.log('export this to csv!')
+      window.location.assign(`${API_HOST}/products/stock_csv`)
+    }
+  }
+
   useEffect(() => {
     if (needsRefresh) {
       refreshTable()
@@ -219,7 +229,7 @@ function OnHand() {
           emptyRowsWhenPaging: false,
           selection: true
         }}
-        actions={[deleteAction]}
+        actions={[exportCsvAction, deleteAction]}
       />
     </div>
   )

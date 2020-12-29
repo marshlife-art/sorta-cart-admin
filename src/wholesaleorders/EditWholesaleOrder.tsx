@@ -299,7 +299,9 @@ function EditWholesaleOrder(
         'product.category',
         'product.sub_category',
         'product.name',
-        'product.description'
+        'product.description',
+        'product.count_on_hand',
+        'on_hand_change'
       ]
     })
     const csvout = json2csvParser.parse(
