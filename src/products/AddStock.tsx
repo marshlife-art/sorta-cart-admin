@@ -25,6 +25,9 @@ const useStyles = makeStyles((theme: Theme) =>
       display: 'flex',
       alignItems: 'center',
       margin: theme.spacing(2, 0)
+    },
+    preFormat: {
+      whiteSpace: 'pre-wrap'
     }
   })
 )
@@ -146,13 +149,13 @@ export default function AddStock() {
             {error && (
               <div className={classes.gridItem}>
                 <h3>Response Error!</h3>
-                <p>{error}</p>
+                <p className={classes.preFormat}>{error}</p>
               </div>
             )}
             {response && (
               <div className={classes.gridItem}>
                 <h3>Response</h3>
-                <p>{response}</p>
+                <p className={classes.preFormat}>{response}</p>
               </div>
             )}
           </div>
@@ -177,7 +180,7 @@ export default function AddStock() {
                 <p>
                   if a product is found (and not a dry run) each product will
                   add the value of <b>on_hand_change</b> to the product{' '}
-                  <b>on_hand_count</b> (note: whole integer numbers only (so 0.4
+                  <b>count_on_hand</b> (note: whole integer numbers only (so 0.4
                   would turn into 0), negative numbers would subtract.)
                 </p>
               </dd>
