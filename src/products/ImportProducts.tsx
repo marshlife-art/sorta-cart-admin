@@ -7,6 +7,8 @@ import InputLabel from '@material-ui/core/InputLabel'
 import MenuItem from '@material-ui/core/MenuItem'
 import FormControl from '@material-ui/core/FormControl'
 import FormHelperText from '@material-ui/core/FormHelperText'
+import FormControlLabel from '@material-ui/core/FormControlLabel'
+import Checkbox from '@material-ui/core/Checkbox'
 import Select from '@material-ui/core/Select'
 import Button from '@material-ui/core/Button'
 import Menu from '@material-ui/core/Menu'
@@ -30,6 +32,9 @@ const useStyles = makeStyles((theme: Theme) =>
       display: 'flex',
       alignItems: 'center',
       margin: theme.spacing(2, 0)
+    },
+    preFormat: {
+      whiteSpace: 'pre-wrap'
     }
   })
 )
@@ -41,6 +46,7 @@ export default function ImportProducts() {
   const [importTag, setImportTag] = useState('')
   const [prevImportTag, setPrevImportTag] = useState('')
   const [markup, setMarkup] = useState(0.0)
+  const [forceCheck, setForceCheck] = useState(false)
   const [formData, setFormData] = useState<FormData>()
   const [error, setError] = useState('')
   const [response, setResponse] = useState('')
@@ -69,10 +75,12 @@ export default function ImportProducts() {
     formData.delete('import_tag')
     formData.delete('prev_import_tag')
     formData.delete('markup')
+    formData.delete('force_check')
     formData.append('vendor', vendor)
     formData.append('import_tag', importTag)
     formData.append('prev_import_tag', prevImportTag)
     formData.append('markup', `${markup}`)
+    formData.append('force_check', `${forceCheck}`)
 
     fetch(`${API_HOST}/products/upload`, {
       method: 'POST',
@@ -232,6 +240,24 @@ export default function ImportProducts() {
             className={classes.gridItem}
           />
 
+          <FormControl fullWidth className={classes.gridItem}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  onChange={(
+                    event: React.ChangeEvent<HTMLInputElement>,
+                    checked: boolean
+                  ) => {
+                    setForceCheck(checked)
+                  }}
+                  checked={forceCheck}
+                  value="force_check"
+                />
+              }
+              label="Force duplicate check. (only check this if you absolutly need to!)"
+            />
+          </FormControl>
+
           <input
             type="file"
             accept=".csv"
@@ -259,7 +285,7 @@ export default function ImportProducts() {
             {error && (
               <div className={classes.gridItem}>
                 <h3>Response Error!</h3>
-                <p>{error}</p>
+                <p className={classes.preFormat}>{error}</p>
               </div>
             )}
             {response && (
@@ -284,21 +310,19 @@ export default function ImportProducts() {
                 <b>unf</b>, <b>upc_code</b>, <b>name</b>, <b>description</b>,{' '}
                 <b>pk</b>, <b>size</b>, <b>unit_type</b>, <b>ws_price</b>,{' '}
                 <b>u_price</b>, <b>ws_price_markup</b>, <b>u_price_markup</b>,{' '}
-                <b>category</b>, <b>sub_category</b>, <b>count_on_hand</b>,{' '}
-                <b>no_backorder</b>, <b>codes</b>, <b>a</b>, <b>r</b>, <b>c</b>,{' '}
-                <b>l</b>, <b>d</b>, <b>f</b>, <b>g</b>, <b>v</b>, <b>w</b>,{' '}
-                <b>y</b>, <b>k</b>, <b>ft</b>, <b>m</b>, <b>s</b>, <b>n</b>,{' '}
-                <b>og</b>.
+                <b>category</b>, <b>sub_category</b>, <b>no_backorder</b>,{' '}
+                <b>codes</b>, <b>a</b>, <b>r</b>, <b>c</b>, <b>l</b>, <b>d</b>,{' '}
+                <b>f</b>, <b>g</b>, <b>v</b>, <b>w</b>, <b>y</b>, <b>k</b>,{' '}
+                <b>ft</b>, <b>m</b>, <b>s</b>, <b>n</b>, <b>og</b>.
               </dd>
 
               <dt>Are any of these optional?</dt>
               <dd>
                 <b>unf</b>, <b>ws_price_markup</b>, <b>u_price_markup</b>,{' '}
-                <b>category</b>, <b>sub_category</b>, <b>count_on_hand</b>,{' '}
-                <b>no_backorder</b>, <b>codes</b>, <b>a</b>, <b>r</b>, <b>c</b>,{' '}
-                <b>l</b>, <b>d</b>, <b>f</b>, <b>g</b>, <b>v</b>, <b>w</b>,{' '}
-                <b>y</b>, <b>k</b>, <b>ft</b>, <b>m</b>, <b>s</b>, <b>n</b>,{' '}
-                <b>og</b>.
+                <b>category</b>, <b>sub_category</b>, <b>no_backorder</b>,{' '}
+                <b>codes</b>, <b>a</b>, <b>r</b>, <b>c</b>, <b>l</b>, <b>d</b>,{' '}
+                <b>f</b>, <b>g</b>, <b>v</b>, <b>w</b>, <b>y</b>, <b>k</b>,{' '}
+                <b>ft</b>, <b>m</b>, <b>s</b>, <b>n</b>, <b>og</b>.
               </dd>
 
               <dt>
