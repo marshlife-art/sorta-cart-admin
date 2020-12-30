@@ -95,7 +95,7 @@ export default function AddStock() {
 
   return (
     <Paper className={classes.root}>
-      <h3>Add Stock</h3>
+      <h3>Add Stock Changes</h3>
 
       <Grid
         container
@@ -168,27 +168,32 @@ export default function AddStock() {
             <dl>
               <dt>Product Identifier</dt>
               <dd>
-                the first column (col <b>A</b>) is used to identify the product
-                and should be either: <b>id</b>, <b>unf</b>, or <b>upc_code</b>.
+                <b>unf</b> and <b>upc_code</b> columns are used to identify a
+                unique product.
               </dd>
 
               <dt>Columns</dt>
               <dd>
-                the two columns that are used here are the first column (
-                <b>A</b>) and <b>on_hand_change</b>; any other columns will be
-                ignored.
+                <b>unf</b>, <b>upc_code</b>, <b>count_on_hand</b>,{' '}
+                <b>count_on_hand_change</b>, and <b>no_backorder</b>; any other
+                columns will be ignored.
                 <p>
-                  if a product is found (and not a dry run) each product will
-                  add the value of <b>on_hand_change</b> to the product{' '}
-                  <b>count_on_hand</b> (note: whole integer numbers only (so 0.4
-                  would turn into 0), negative numbers would subtract.)
+                  precedence: first will check if <b>count_on_hand</b> is a
+                  number, and if so, will do a hard count set for the value
+                  specified. if <b>count_on_hand</b> is not a number, then will
+                  look for a number in <b>count_on_hand_change</b> (and add that
+                  to the product <b>count_on_hand</b> value).
+                </p>
+                <p>
+                  <i>note:</i> use whole integer numbers only (so 0.4 would turn
+                  into 0), negative numbers would subtract.
                 </p>
               </dd>
 
               <dt>Dry Run</dt>
               <dd>
-                when checked, this will not modify a product{' '}
-                <b>count_on_hand</b> (useful for debugging .csv files).
+                when checked, this will not modify inventory (useful for
+                debugging .csv files).
               </dd>
             </dl>
           </Typography>
