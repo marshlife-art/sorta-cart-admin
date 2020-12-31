@@ -303,7 +303,9 @@ function OrderLineItems(props: {
         <TableBody>
           {onHandProducts.length > 0 && (
             <TableRow>
-              <TableCell align="left">On Hand</TableCell>
+              <TableCell align="left" colSpan={3}>
+                On Hand
+              </TableCell>
             </TableRow>
           )}
           {onHandProducts.map((line_item, idx) =>
@@ -312,7 +314,9 @@ function OrderLineItems(props: {
 
           {backorderProducts.length > 0 && (
             <TableRow>
-              <TableCell align="left">Backorder</TableCell>
+              <TableCell align="left" colSpan={3}>
+                Backorder
+              </TableCell>
             </TableRow>
           )}
           {backorderProducts.map((line_item, idx) =>
