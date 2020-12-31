@@ -301,7 +301,7 @@ function OrderLineItems(props: {
           </TableRow>
         </TableHead>
         <TableBody>
-          {onHandProducts.length && (
+          {onHandProducts.length > 0 && (
             <TableRow>
               <TableCell align="left">On Hand</TableCell>
             </TableRow>
@@ -310,7 +310,7 @@ function OrderLineItems(props: {
             renderLineItemRow(line_item, idx, 'on_hand')
           )}
 
-          {backorderProducts.length && (
+          {backorderProducts.length > 0 && (
             <TableRow>
               <TableCell align="left">Backorder</TableCell>
             </TableRow>
