@@ -49,6 +49,8 @@ const useStyles = makeStyles((theme: Theme) =>
 
 export interface GroupedItem {
   qtySum: number
+  qtyUnits: number
+  qtyAdjustments: number
   totalSum: number
   product: Product | undefined
   vendor: string | undefined
@@ -285,23 +287,24 @@ function EditWholesaleOrder(
     }
     const json2csvParser = new Parser({
       fields: [
-        'product.unf',
-        'product.upc_code',
-        'vendor',
-        'description',
-        'qtySum',
-        'totalSum',
-        'product.ws_price_cost',
-        'product.u_price_cost',
-        'product.pk',
-        'product.size',
-        'product.unit_type',
-        'product.category',
-        'product.sub_category',
-        'product.name',
-        'product.description',
-        'product.count_on_hand',
-        'on_hand_change'
+        { value: 'product.unf', label: 'unf' },
+        { value: 'product.upc_code', label: 'upc_code' },
+        { value: 'vendor', label: 'vendor' },
+        { value: 'description', label: 'description' },
+        { value: 'qtySum', label: 'qtySum' },
+        { value: 'qtyUnits', label: 'units ordered' },
+        { value: 'qtyAdjustments', label: 'on_hand_count_change' },
+        { value: 'totalSum', label: 'totalSum' },
+        { value: 'product.ws_price_cost', label: 'ws_price_cost' },
+        { value: 'product.u_price_cost', label: 'u_price_cost' },
+        { value: 'product.pk', label: 'pk' },
+        { value: 'product.size', label: 'size' },
+        { value: 'product.unit_type', label: 'unit_type' },
+        { value: 'product.category', label: 'category' },
+        { value: 'product.sub_category', label: 'sub_category' },
+        { value: 'product.name', label: 'name' },
+        { value: 'product.description', label: 'description' },
+        { value: 'product.count_on_hand', label: 'count_on_hand' }
       ]
     })
     const csvout = json2csvParser.parse(

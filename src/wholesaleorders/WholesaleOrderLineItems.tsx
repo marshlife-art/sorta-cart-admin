@@ -74,6 +74,11 @@ function WholesaleOrderLineItems(
           ? li.quantity / li.data.product.pk
           : li.quantity
 
+      const qtyUnits =
+        li.data && li.data.product && li.selected_unit === 'CS'
+          ? li.quantity * li.data.product.pk
+          : li.quantity
+
       const liTotal =
         li.data && li.data.product
           ? +(parseFloat(li.data.product.ws_price_cost) * qty).toFixed(2)
@@ -81,6 +86,8 @@ function WholesaleOrderLineItems(
 
       groupedLineItems[key] = {
         qtySum: acc ? acc.qtySum + qty : qty,
+        qtyUnits: acc ? acc.qtyUnits + qtyUnits : qtyUnits,
+        qtyAdjustments: 0,
         totalSum: acc ? acc.totalSum + liTotal : liTotal,
         product: li && li.data && li.data.product,
         vendor: li.vendor,
@@ -120,6 +127,7 @@ function WholesaleOrderLineItems(
         // also add to the sums when creating this adjustment.
         item.totalSum = item.totalSum + total
         item.qtySum = Math.round(item.qtySum + quantity / pk)
+        item.qtyAdjustments = quantity
 
         setLineItemData((prevData) => ({
           ...prevData,
