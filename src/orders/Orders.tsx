@@ -10,6 +10,7 @@ import {
   PAYMENT_STATUSES,
   SHIPMENT_STATUSES
 } from '../constants'
+import { formatRelative } from 'date-fns'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -27,8 +28,6 @@ function Orders(props: RouteComponentProps) {
 
   const [searchExpanded, setSearchExpanded] = useState(false)
   const [isSelecting, setIsSelecting] = useState(false)
-
-  const token = localStorage && localStorage.getItem('token')
 
   const searchAction = {
     icon: searchExpanded ? 'zoom_out' : 'search',
@@ -49,14 +48,13 @@ function Orders(props: RouteComponentProps) {
     icon: 'print',
     onClick: (e: any, data: Order[]) => {
       const orderIds = data.map((order) => order.id)
-      console.log('printAction orderIds:', orderIds, ' data:', data)
 
       fetch(`${API_HOST}/orders/print`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({ orderIds })
       })
         .then((response) => response.text())
@@ -114,7 +112,16 @@ function Orders(props: RouteComponentProps) {
             field: 'createdAt',
             type: 'datetime',
             filtering: false,
-            render: (order: Order) => new Date(order.createdAt).toLocaleString()
+            render: (order: Order) => (
+              <div
+                title={
+                  order.createdAt && new Date(order.createdAt).toLocaleString()
+                }
+              >
+                {order.createdAt &&
+                  formatRelative(new Date(order.createdAt), Date.now())}
+              </div>
+            )
           },
           {
             title: 'status',
@@ -182,9 +189,9 @@ function Orders(props: RouteComponentProps) {
             fetch(`${API_HOST}/orders`, {
               method: 'post',
               headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
+                'Content-Type': 'application/json'
               },
+              credentials: 'include',
               body: JSON.stringify(query)
             })
               .then((response) => response.json())

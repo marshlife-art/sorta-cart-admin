@@ -172,9 +172,15 @@ function OrderLineItems(props: {
   }
 
   const createLineItemCredit = (line_item: LineItem) => {
-    console.log('createLineItemCredit line_item:', line_item)
     props.createCreditFromLineItem(line_item)
   }
+
+  const onHandProducts = props.line_items.filter(
+    (li) => li.kind === 'product' && li.status === 'on_hand'
+  )
+  const backorderProducts = props.line_items.filter(
+    (li) => li.kind === 'product' && li.status !== 'on_hand'
+  )
 
   const adjustments = props.line_items.filter((li) => li.kind === 'adjustment')
   const payments = props.line_items.filter((li) => li.kind === 'payment')
@@ -192,6 +198,94 @@ function OrderLineItems(props: {
     parseFloat(`${creditsTotal}`) +
     parseFloat(`${paymentsTotal}`)
 
+  function renderLineItemRow(
+    line_item: LineItem,
+    idx: number,
+    heading: string
+  ) {
+    return (
+      <TableRow key={`li${heading}${idx}`}>
+        <TableCell align="center">
+          <Tooltip title="remove line item">
+            <IconButton
+              aria-label="delete"
+              size="small"
+              onClick={(event: any) => removeLineItem(line_item)}
+            >
+              <ClearIcon fontSize="inherit" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="give order credits">
+            <IconButton
+              aria-label="issue order credits for this item"
+              onClick={() => createLineItemCredit(line_item)}
+            >
+              <CreditIcon />
+            </IconButton>
+          </Tooltip>
+        </TableCell>
+        <TableCell>
+          [{line_item.vendor}] {line_item.description}
+        </TableCell>
+        <TableCell align="right">
+          <div>
+            {line_item.data &&
+            line_item.data.product &&
+            line_item.selected_unit === 'EA' &&
+            line_item.data.product.u_price
+              ? usdFormat(line_item.data.product.u_price)
+              : usdFormat(
+                  line_item.data && line_item.data.product
+                    ? line_item.data.product.ws_price
+                    : line_item.price
+                )}
+          </div>
+          <div>{liPkSize(line_item)}</div>
+        </TableCell>
+        <TableCell align="center">
+          {line_item.data &&
+          line_item.data.product &&
+          line_item.data.product.u_price &&
+          line_item.data.product.u_price !== line_item.data.product.ws_price ? (
+            <Select
+              value={line_item.selected_unit}
+              onChange={(event: any) =>
+                handleUnitChange(line_item, event.target.value)
+              }
+              margin="dense"
+            >
+              <MenuItem value="CS">Case</MenuItem>
+              <MenuItem value="EA">Each</MenuItem>
+            </Select>
+          ) : line_item.data &&
+            line_item.data.product &&
+            line_item.data.product.unit_type === 'CS' ? (
+            'Case'
+          ) : (
+            'Each'
+          )}
+        </TableCell>
+        <TableCell align="right">
+          <TextField
+            className={classes.qtyinput}
+            type="number"
+            InputLabelProps={{
+              shrink: true
+            }}
+            margin="dense"
+            fullWidth
+            value={line_item.quantity}
+            onChange={(event: any) =>
+              handleQtyChange(line_item, event.target.value)
+            }
+            inputProps={{ min: '1', step: '1' }}
+          />
+        </TableCell>
+        <TableCell align="right">{usdFormat(line_item.total)}</TableCell>
+      </TableRow>
+    )
+  }
+
   return (
     <Paper className={classes.root}>
       <Table className={classes.table} aria-label="cart">
@@ -206,92 +300,26 @@ function OrderLineItems(props: {
           </TableRow>
         </TableHead>
         <TableBody>
-          {props.line_items.map(
-            (line_item, idx) =>
-              line_item.kind === 'product' && (
-                <TableRow key={`li${idx}`}>
-                  <TableCell align="center">
-                    <Tooltip title="remove line item">
-                      <IconButton
-                        aria-label="delete"
-                        size="small"
-                        onClick={(event: any) => removeLineItem(line_item)}
-                      >
-                        <ClearIcon fontSize="inherit" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="give order credits">
-                      <IconButton
-                        aria-label="issue order credits for this item"
-                        onClick={() => createLineItemCredit(line_item)}
-                      >
-                        <CreditIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                  <TableCell>
-                    [{line_item.vendor}] {line_item.description}
-                  </TableCell>
-                  <TableCell align="right">
-                    <div>
-                      {line_item.data &&
-                      line_item.data.product &&
-                      line_item.selected_unit === 'EA' &&
-                      line_item.data.product.u_price
-                        ? usdFormat(line_item.data.product.u_price)
-                        : usdFormat(
-                            line_item.data && line_item.data.product
-                              ? line_item.data.product.ws_price
-                              : line_item.price
-                          )}
-                    </div>
-                    <div>{liPkSize(line_item)}</div>
-                  </TableCell>
-                  <TableCell align="center">
-                    {line_item.data &&
-                    line_item.data.product &&
-                    line_item.data.product.u_price &&
-                    line_item.data.product.u_price !==
-                      line_item.data.product.ws_price ? (
-                      <Select
-                        value={line_item.selected_unit}
-                        onChange={(event: any) =>
-                          handleUnitChange(line_item, event.target.value)
-                        }
-                        margin="dense"
-                      >
-                        <MenuItem value="CS">Case</MenuItem>
-                        <MenuItem value="EA">Each</MenuItem>
-                      </Select>
-                    ) : line_item.data &&
-                      line_item.data.product &&
-                      line_item.data.product.unit_type === 'CS' ? (
-                      'Case'
-                    ) : (
-                      'Each'
-                    )}
-                  </TableCell>
-                  <TableCell align="right">
-                    <TextField
-                      className={classes.qtyinput}
-                      type="number"
-                      InputLabelProps={{
-                        shrink: true
-                      }}
-                      margin="dense"
-                      fullWidth
-                      value={line_item.quantity}
-                      onChange={(event: any) =>
-                        handleQtyChange(line_item, event.target.value)
-                      }
-                      inputProps={{ min: '1', step: '1' }}
-                    />
-                  </TableCell>
-                  <TableCell align="right">
-                    {usdFormat(line_item.total)}
-                  </TableCell>
-                </TableRow>
-              )
+          {onHandProducts.length > 0 && (
+            <TableRow>
+              <TableCell align="left" colSpan={3}>
+                On Hand
+              </TableCell>
+            </TableRow>
+          )}
+          {onHandProducts.map((line_item, idx) =>
+            renderLineItemRow(line_item, idx, 'on_hand')
+          )}
+
+          {backorderProducts.length > 0 && (
+            <TableRow>
+              <TableCell align="left" colSpan={3}>
+                Backorder
+              </TableCell>
+            </TableRow>
+          )}
+          {backorderProducts.map((line_item, idx) =>
+            renderLineItemRow(line_item, idx, 'backorder')
           )}
           <TableRow>
             <TableCell rowSpan={1} colSpan={3} />

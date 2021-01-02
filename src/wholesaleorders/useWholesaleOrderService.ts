@@ -26,8 +26,6 @@ const useWholesaleOrderService = (
     status: 'loading'
   })
 
-  const token = localStorage && localStorage.getItem('token')
-
   useEffect(() => {
     if (!id) {
       setLoading(false)
@@ -43,9 +41,7 @@ const useWholesaleOrderService = (
     }
 
     fetch(`${API_HOST}/wholesaleorder/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      credentials: 'include',
     })
       .then((response) => response.json())
       .then((response) => {
@@ -59,7 +55,7 @@ const useWholesaleOrderService = (
         setLoading(false)
         setReload(false)
       })
-  }, [id, setLoading, reload, setReload, token])
+  }, [id, setLoading, reload, setReload])
 
   return result
 }
@@ -74,16 +70,14 @@ const useAllWholesaleOrdersService = (
     status: 'loading'
   })
 
-  const token = localStorage && localStorage.getItem('token')
-
   useEffect(() => {
     reloadWholesaleOrders &&
       fetch(`${API_HOST}/wholesaleorders`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           status
         })
@@ -108,7 +102,6 @@ const useAllWholesaleOrdersService = (
     setReloadWholesaleOrders,
     status,
     setLoading,
-    token
   ])
 
   return result
@@ -125,8 +118,6 @@ const useWholesaleOrderSaveService = (
     status: 'loading'
   })
 
-  const token = localStorage && localStorage.getItem('token')
-
   useEffect(() => {
     if (!doSave || !wholesaleOrder || !wholesaleOrder.id) {
       setDoSave(false)
@@ -141,8 +132,8 @@ const useWholesaleOrderSaveService = (
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
       },
+      credentials: 'include',
       body: JSON.stringify(wholesaleOrder)
     })
       .then((response) => response.json())
@@ -163,7 +154,7 @@ const useWholesaleOrderSaveService = (
       .finally(() => {
         setDoSave(false)
       })
-  }, [wholesaleOrder, doSave, setDoSave, setSnackMsg, setSnackOpen, token])
+  }, [wholesaleOrder, doSave, setDoSave, setSnackMsg, setSnackOpen])
 
   return result
 }

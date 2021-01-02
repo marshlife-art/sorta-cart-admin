@@ -69,18 +69,14 @@ const useStyles = makeStyles((theme: Theme) =>
 
 async function fetchMemberOrders(
   MemberId: string,
-  token: string | null,
   setOrders: React.Dispatch<React.SetStateAction<Order[]>>
 ) {
-  if (!token) {
-    return
-  }
   const orders = await fetch(`${API_HOST}/admin/member_orders`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
+      'Content-Type': 'application/json'
     },
+    credentials: 'include',
     body: JSON.stringify({ MemberId })
   })
     .then((response: any) => response.json())
@@ -102,8 +98,6 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
   const [storeCredit, setStoreCredit] = useState(0)
   const [orders, setOrders] = useState<Order[]>([])
 
-  const token = localStorage && localStorage.getItem('token')
-
   useEffect(() => {
     if (!memberId || memberId === 'undefined') {
       return
@@ -116,9 +110,9 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
       fetch(`${API_HOST}/members`, {
         method: 'post',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           filters: [
             {
@@ -137,10 +131,10 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
         })
         .catch((err) => setMember(blankMember))
         .finally(() => setLoadingMember(false))
-      fetchStoreCredit(memberId, token, setStoreCredit)
-      fetchMemberOrders(memberId, token, setOrders)
+      fetchStoreCredit(memberId, setStoreCredit)
+      fetchMemberOrders(memberId, setOrders)
     }
-  }, [memberId, token])
+  }, [memberId])
 
   function submitData() {
     setError('')
@@ -152,9 +146,9 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
     fetch(`${API_HOST}/member${path}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify({ member, createNewUser })
     })
       .then((response) => response.json())

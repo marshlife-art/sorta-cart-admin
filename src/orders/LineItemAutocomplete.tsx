@@ -48,7 +48,11 @@ export default function LineItemAutocomplete(props: LineItemAutocompleteProps) {
           products.data.map((p) => ({
             name: `${p.name} ${p.description} ${p.pk} ${p.size} $${
               p.ws_price
-            } ${p.u_price !== p.ws_price ? `($${p.u_price} EA)` : ''}`,
+            } ${p.u_price !== p.ws_price ? `($${p.u_price} EA)` : ''}${
+              isNaN(parseInt(`${p.count_on_hand}`))
+                ? ''
+                : ` ${p.count_on_hand} on hand`
+            }`,
             product: p
           }))
         )
@@ -87,7 +91,9 @@ export default function LineItemAutocomplete(props: LineItemAutocompleteProps) {
       }}
       getOptionSelected={(option, value) => option.name === value.name}
       getOptionLabel={(option) => option.name}
-      onChange={(event, value) => props.onItemSelected(value)}
+      onChange={(event, value) =>
+        value && typeof value !== 'string' && props.onItemSelected(value)
+      }
       options={options}
       loading={loading}
       freeSolo

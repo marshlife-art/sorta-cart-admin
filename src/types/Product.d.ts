@@ -16,6 +16,7 @@ export interface Product {
   codes?: string
   import_tag?: string
   vendor: string
+  count_on_hand?: number
   createdAt?: string
   updatedAt?: string
 }

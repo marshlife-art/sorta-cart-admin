@@ -42,10 +42,13 @@ import WholesaleOrders from './wholesaleorders/WholesaleOrders'
 import Users from './users/Users'
 import Products from './products/Products'
 import ImportProducts from './products/ImportProducts'
+import OnHand from './products/OnHand'
+import AddStock from './products/AddStock'
 import EditOrder from './orders/EditOrder'
 import Members from './members/Members'
 import EditMember from './members/EditMember'
 import { APP_VERSION } from './constants'
+import Announcements from './announcements/Announcements'
 
 const drawerWidth = 240
 
@@ -95,7 +98,8 @@ const useStyles = makeStyles((theme: Theme) =>
       justifyContent: 'flex-end'
     },
     content: {
-      marginLeft: '16px'
+      marginLeft: '16px',
+      maxWidth: '98%'
     }
   })
 )
@@ -294,6 +298,16 @@ export function App(props: Props) {
                 />
                 <ProtectedRoute
                   userService={userService}
+                  path="/products/onhand"
+                  component={OnHand}
+                />
+                <ProtectedRoute
+                  userService={userService}
+                  path="/products/addstock"
+                  component={AddStock}
+                />
+                <ProtectedRoute
+                  userService={userService}
                   path="/orders"
                   exact
                   component={Orders}
@@ -333,6 +347,11 @@ export function App(props: Props) {
                   userService={userService}
                   path="/storecredits"
                   component={StoreCredits}
+                />
+                <ProtectedRoute
+                  userService={userService}
+                  path="/announcements"
+                  component={Announcements}
                 />
                 <ProtectedRoute
                   userService={userService}

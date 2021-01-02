@@ -13,6 +13,9 @@ import AssignmentIcon from '@material-ui/icons/Assignment'
 import LocalShippingIcon from '@material-ui/icons/LocalShipping'
 import OpenInBrowserIcon from '@material-ui/icons/OpenInBrowser'
 import CreditIcon from '@material-ui/icons/LocalAtm'
+import OnHandIcon from '@material-ui/icons/PanTool'
+import AddStockIcon from '@material-ui/icons/LibraryAdd'
+import AnnouncementsIcon from '@material-ui/icons/Notifications'
 
 export const mainListItems = (
   <div>
@@ -33,6 +36,18 @@ export const mainListItems = (
         <OpenInBrowserIcon />
       </ListItemIcon>
       <ListItemText primary="Import Products" />
+    </ListItem>
+    <ListItem button component={Link} to="/products/onhand">
+      <ListItemIcon>
+        <OnHandIcon />
+      </ListItemIcon>
+      <ListItemText primary="Stock On Hand" />
+    </ListItem>
+    <ListItem button component={Link} to="/products/addstock">
+      <ListItemIcon>
+        <AddStockIcon />
+      </ListItemIcon>
+      <ListItemText primary="Add Stock" />
     </ListItem>
     <ListItem button component={Link} to="/orders">
       <ListItemIcon>
@@ -63,6 +78,12 @@ export const mainListItems = (
         <CreditIcon />
       </ListItemIcon>
       <ListItemText primary="Store Credits" />
+    </ListItem>
+    <ListItem button component={Link} to="/announcements">
+      <ListItemIcon>
+        <AnnouncementsIcon />
+      </ListItemIcon>
+      <ListItemText primary="Announcements" />
     </ListItem>
   </div>
 )

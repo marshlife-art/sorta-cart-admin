@@ -45,7 +45,6 @@ function WholesaleOrderLineItems(
   } & RouteComponentProps
 ) {
   const classes = useStyles()
-  const token = localStorage && localStorage.getItem('token')
   const lineItems = props?.wholesaleOrder?.OrderLineItems
   const { lineItemData, setLineItemData, setSnackMsg, setSnackOpen } = props
 
@@ -75,6 +74,11 @@ function WholesaleOrderLineItems(
           ? li.quantity / li.data.product.pk
           : li.quantity
 
+      const qtyUnits =
+        li.data && li.data.product && li.selected_unit === 'CS'
+          ? li.quantity * li.data.product.pk
+          : li.quantity
+
       const liTotal =
         li.data && li.data.product
           ? +(parseFloat(li.data.product.ws_price_cost) * qty).toFixed(2)
@@ -82,6 +86,8 @@ function WholesaleOrderLineItems(
 
       groupedLineItems[key] = {
         qtySum: acc ? acc.qtySum + qty : qty,
+        qtyUnits: acc ? acc.qtyUnits + qtyUnits : qtyUnits,
+        qtyAdjustments: 0,
         totalSum: acc ? acc.totalSum + liTotal : liTotal,
         product: li && li.data && li.data.product,
         vendor: li.vendor,
@@ -121,6 +127,7 @@ function WholesaleOrderLineItems(
         // also add to the sums when creating this adjustment.
         item.totalSum = item.totalSum + total
         item.qtySum = Math.round(item.qtySum + quantity / pk)
+        item.qtyAdjustments = quantity
 
         setLineItemData((prevData) => ({
           ...prevData,
@@ -136,6 +143,7 @@ function WholesaleOrderLineItems(
     }))
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(calc, [lineItems])
 
   function removeLineItem(item: GroupedItem) {
@@ -144,9 +152,9 @@ function WholesaleOrderLineItems(
       fetch(`${API_HOST}/wholesaleorder/removelineitem`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({ ids })
       })
         .then((response) => response.json())
@@ -167,15 +175,14 @@ function WholesaleOrderLineItems(
           : undefined
       )
       .filter((o) => o)
-    console.log('issueOrderCredits item:', item, ' orderIds:', items)
 
     if (window.confirm('will issue order credits. are you sure?')) {
       fetch(`${API_HOST}/wholesaleorder/issuecredits`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify(items)
       })
         .then((response) => response.json())

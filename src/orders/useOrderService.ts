@@ -18,13 +18,11 @@ const useOrderService = (
       return
     }
 
-    const token = localStorage && localStorage.getItem('token')
-
     fetch(`${API_HOST}/order/edit/${id}`, {
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      }
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
     })
       .then((response) => response.json())
       .then((response) => {

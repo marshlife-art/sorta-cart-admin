@@ -12,6 +12,7 @@ import { RouteComponentProps, withRouter } from 'react-router-dom'
 
 import { API_HOST } from '../constants'
 import { Member } from '../types/Member'
+import { formatDistance } from 'date-fns'
 
 interface MemberData {
   data: Member[]
@@ -34,8 +35,6 @@ const useStyles = makeStyles((theme) => ({
 function Members(props: RouteComponentProps) {
   const classes = useStyles()
 
-  const token = localStorage && localStorage.getItem('token')
-
   const [members, setMembers] = useState<MemberData>({
     data: [],
     page: 0,
@@ -43,23 +42,21 @@ function Members(props: RouteComponentProps) {
   })
 
   useEffect(() => {
-    token &&
-      setMembers &&
-      fetch(`${API_HOST}/members`, {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ pageSize: 10 })
+    fetch(`${API_HOST}/members`, {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({ pageSize: 10 })
+    })
+      .then((response) => response.json())
+      .then(setMembers)
+      .catch((err) => {
+        console.warn(err)
+        return { data: [], page: 0, totalCount: 0 }
       })
-        .then((response) => response.json())
-        .then(setMembers)
-        .catch((err) => {
-          console.warn(err)
-          return { data: [], page: 0, totalCount: 0 }
-        })
-  }, [token, setMembers])
+  }, [])
 
   return (
     <React.Fragment>
@@ -80,9 +77,16 @@ function Members(props: RouteComponentProps) {
               className={classes.rowHover}
               onClick={() => props.history.push(`/members/${member.id}`)}
             >
-              <TableCell>
+              <TableCell
+                title={
+                  member.createdAt &&
+                  new Date(member.createdAt).toLocaleString()
+                }
+              >
                 {member.createdAt &&
-                  new Date(member.createdAt).toLocaleString()}
+                  formatDistance(new Date(member.createdAt), Date.now(), {
+                    addSuffix: true
+                  })}
               </TableCell>
               <TableCell>{member.name}</TableCell>
               <TableCell>{member.registration_email}</TableCell>
@@ -99,7 +103,7 @@ function Members(props: RouteComponentProps) {
             props.history.push('/members')
           }}
         >
-          SEE ALL MEMBERS
+          ALL MEMBERS
         </Button>
       </div>
     </React.Fragment>

@@ -6,6 +6,7 @@ import MaterialTable from 'material-table'
 import { MemberRouterProps } from '../types/Member'
 import { Member } from '../types/Member'
 import { API_HOST } from '../constants'
+import { formatRelative } from 'date-fns'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -20,8 +21,6 @@ const useStyles = makeStyles((theme: Theme) =>
 function Members(props: RouteComponentProps<MemberRouterProps>) {
   const classes = useStyles()
   const tableRef = createRef<any>()
-
-  const token = localStorage && localStorage.getItem('token')
 
   const newMemberAction = {
     icon: 'add',
@@ -49,9 +48,9 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
         fetch(`${API_HOST}/member`, {
           method: 'DELETE',
           headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
+            'Content-Type': 'application/json'
           },
+          credentials: 'include',
           body: JSON.stringify({ id })
         })
           .then((response) => response.json())
@@ -85,8 +84,16 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
             field: 'createdAt',
             type: 'datetime',
             filtering: false,
-            render: (row) =>
-              row.createdAt && new Date(row.createdAt).toLocaleString()
+            render: (row) => (
+              <div
+                title={
+                  row.createdAt && new Date(row.createdAt).toLocaleString()
+                }
+              >
+                {row.createdAt &&
+                  formatRelative(new Date(row.createdAt), Date.now())}
+              </div>
+            )
           },
           {
             title: 'registration email',
@@ -121,9 +128,9 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
             fetch(`${API_HOST}/members`, {
               method: 'post',
               headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
+                'Content-Type': 'application/json'
               },
+              credentials: 'include',
               body: JSON.stringify(query)
             })
               .then((response) => response.json())

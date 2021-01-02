@@ -67,6 +67,9 @@ export default function OrderDetailPanel(props: { order: Order }) {
               Line Items ({order.item_count})
             </TableCell>
             <TableCell component="th" align="right">
+              on hand
+            </TableCell>
+            <TableCell component="th" align="right">
               price
             </TableCell>
             <TableCell component="th" align="right">
@@ -91,6 +94,9 @@ export default function OrderDetailPanel(props: { order: Order }) {
                     {li.data && li.data.product
                       ? ` ${li.data.product.unf}`
                       : ''}
+                  </TableCell>
+                  <TableCell align="right">
+                    {li.status === 'on_hand' ? 'x' : ''}
                   </TableCell>
                   <TableCell align="right">{li.price}</TableCell>
                   <TableCell align="right">{li.selected_unit}</TableCell>

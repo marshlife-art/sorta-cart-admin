@@ -1,6 +1,6 @@
 {
   "name": "sorta-cart-admin",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "private": true,
   "homepage": "https://admin.marshcoop.org/",
   "repository": "github:marshlife-art/sorta-cart-admin",
@@ -18,16 +18,19 @@
     "@material-ui/core": "latest",
     "@material-ui/icons": "^4.5.1",
     "@material-ui/lab": "^4.0.0-alpha.36",
+    "date-fns": "^2.16.1",
     "json2csv": "^4.5.4",
     "material-table": "^1.54.2",
     "react": "latest",
     "react-dom": "latest",
+    "react-markdown": "^5.0.3",
     "react-redux": "^7.1.3",
     "react-router-dom": "^5.1.2",
-    "react-scripts": "latest",
+    "react-scripts": "^4.0.1",
     "redux": "^4.0.5",
     "redux-logger": "^3.0.6",
     "redux-thunk": "^2.3.0",
+    "remark-gfm": "^1.0.0",
     "typescript": "latest"
   },
   "devDependencies": {
@@ -36,12 +39,10 @@
     "@types/react-redux": "^7.1.5",
     "@types/react-router-dom": "^5.1.3",
     "@types/redux-logger": "^3.0.7",
-    "@types/jest": "24.0.25",
     "@types/node": "13.1.2",
     "@types/redux-mock-store": "^1.0.1",
     "fake-indexeddb": "^3.0.0",
     "gh-pages": "^2.1.1",
-    "jest": "^24.9.0",
     "redux-mock-store": "^1.5.4"
   },
   "eslintConfig": {

@@ -57,13 +57,12 @@ export default function UserRolesMenu(props: {
     if (!id) {
       return
     }
-    const token = localStorage && localStorage.getItem('token')
     fetch(`${API_HOST}/user/role`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify({ id, role })
     })
       .then((response) => response.json())

@@ -22,6 +22,10 @@ export type OrderStatus =
   | 'void'
   | 'complete'
   | 'archived'
+  export type OLIStatus =
+  | 'backorder'
+  | 'on_hand'
+  | 'void'
 
 export interface Order {
   id: number | string
@@ -65,6 +69,8 @@ export interface LineItem {
   vendor?: string
   WholesaleOrderId?: number
   OrderId?: number
+  invalid?: string
+  status?: OLIStatus
   data?: {
     product?: Product
     payment?: { receipt_url: string; receipt_number: string }

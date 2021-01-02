@@ -12,6 +12,7 @@ import { RouteComponentProps, withRouter } from 'react-router-dom'
 
 import { API_HOST } from '../constants'
 import { Order } from '../types/Order'
+import { formatDistance } from 'date-fns/esm'
 
 interface OrderData {
   data: Order[]
@@ -34,8 +35,6 @@ const useStyles = makeStyles((theme) => ({
 function Orders(props: RouteComponentProps) {
   const classes = useStyles()
 
-  const token = localStorage && localStorage.getItem('token')
-
   const [orders, setOrders] = useState<OrderData>({
     data: [],
     page: 0,
@@ -43,27 +42,24 @@ function Orders(props: RouteComponentProps) {
   })
 
   useEffect(() => {
-    token &&
-      setOrders &&
-      fetch(`${API_HOST}/orders`, {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ pageSize: 10 })
+    fetch(`${API_HOST}/orders/recent`, {
+      method: 'get',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    })
+      .then((response) => response.json())
+      .then(setOrders)
+      .catch((err) => {
+        console.warn(err)
+        return { data: [], page: 0, totalCount: 0 }
       })
-        .then((response) => response.json())
-        .then(setOrders)
-        .catch((err) => {
-          console.warn(err)
-          return { data: [], page: 0, totalCount: 0 }
-        })
-  }, [token, setOrders])
+  }, [])
 
   return (
     <React.Fragment>
-      <Title>recent orders</Title>
+      <Title>orders in the last 14 days</Title>
       <Table size="small">
         <TableHead>
           <TableRow>
@@ -83,8 +79,15 @@ function Orders(props: RouteComponentProps) {
               className={classes.rowHover}
               onClick={() => props.history.push(`/orders/edit/${order.id}`)}
             >
-              <TableCell>
-                {order.createdAt && new Date(order.createdAt).toLocaleString()}
+              <TableCell
+                title={
+                  order.createdAt && new Date(order.createdAt).toLocaleString()
+                }
+              >
+                {order.createdAt &&
+                  formatDistance(new Date(order.createdAt), Date.now(), {
+                    addSuffix: true
+                  })}
               </TableCell>
               <TableCell>{order.status}</TableCell>
               <TableCell>{order.name}</TableCell>
@@ -104,7 +107,7 @@ function Orders(props: RouteComponentProps) {
             props.history.push('/orders')
           }}
         >
-          SEE MORE ORDERS
+          ALL ORDERS
         </Button>
       </div>
     </React.Fragment>

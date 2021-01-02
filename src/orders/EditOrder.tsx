@@ -114,18 +114,14 @@ const useStyles = makeStyles((theme: Theme) =>
 
 export async function fetchStoreCredit(
   MemberId: string,
-  token: string | null,
   setStoreCredit: React.Dispatch<React.SetStateAction<number>>
 ) {
-  if (!token) {
-    return
-  }
   const store_credit = await fetch(`${API_HOST}/admin/store_credit`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
+      'Content-Type': 'application/json'
     },
+    credentials: 'include',
     body: JSON.stringify({ MemberId })
   })
     .then((response: any) => response.json())
@@ -145,8 +141,6 @@ function EditOrder(
   props: EditOrderProps & RouteComponentProps<OrderRouterProps>
 ) {
   const classes = useStyles()
-
-  const token = localStorage && localStorage.getItem('token')
 
   const [orderId, setOrderId] = useState('')
   const [loading, setLoading] = useState(true)
@@ -174,12 +168,12 @@ function EditOrder(
           setCanApplyMemberDiscount(true)
         }
         if (_order.Member && _order.Member.id) {
-          fetchStoreCredit(_order.Member.id, token, setStoreCredit)
+          fetchStoreCredit(_order.Member.id, setStoreCredit)
         }
         setOrder(_order)
       }
     }
-  }, [orderService, token])
+  }, [orderService])
 
   const pOrderId = props.match.params.id
 
@@ -412,9 +406,9 @@ function EditOrder(
     fetch(`${API_HOST}/orders/resend_email`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify({ orderId: order.id })
     })
       .then((response) => response.json())
@@ -448,7 +442,7 @@ function EditOrder(
         MemberId: id
       }))
       setShowMemberAutocomplete(false)
-      fetchStoreCredit(id, token, setStoreCredit)
+      fetchStoreCredit(id, setStoreCredit)
     }
   }
 
@@ -459,9 +453,9 @@ function EditOrder(
     fetch(`${API_HOST}${path}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify(order)
     })
       .then((response) => response.json())
@@ -470,7 +464,7 @@ function EditOrder(
           order &&
             order.Member &&
             order.Member.id &&
-            fetchStoreCredit(order.Member.id, token, setStoreCredit)
+            fetchStoreCredit(order.Member.id, setStoreCredit)
           setSnackOpen(true)
           setSnackMsg('Saved order!')
           if (response.order.id && (!orderId || orderId === 'new')) {
@@ -482,7 +476,6 @@ function EditOrder(
   }
 
   function onTaxesChange(tax: number) {
-    console.log('onTaxesChange tax:', tax)
     setOrder((prevOrder) => {
       const notTaxLineItems = prevOrder.OrderLineItems.filter(
         (li) => li.kind !== 'tax'
