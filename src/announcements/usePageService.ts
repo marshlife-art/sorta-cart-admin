@@ -21,7 +21,6 @@ const usePageService = (
     fetch(`${API_HOST}/page?id=${id}`)
       .then((response) => response.json())
       .then((response) => {
-        // console.log('page', response)
         setResult({ status: 'loaded', payload: response as Page })
       })
       .catch((error) => {
@@ -51,7 +50,6 @@ const useAllPagesService = (
       })
         .then((response) => response.json())
         .then((response) => {
-          // console.log('page', response)
           setResult({ status: 'loaded', payload: response.rows as Page[] })
         })
         .catch((error) => {
@@ -91,8 +89,7 @@ const usePageSaveService = (
     })
       .then((response) => response.json())
       .then((response) => {
-        // console.log('usePageSaveService response:', response)
-        setResult({ status: 'loaded', payload: response as Page })
+        setResult({ status: 'loaded', payload: response.page[0] as Page })
         setSnackMsg(response.msg)
         setSnackOpen(true)
       })

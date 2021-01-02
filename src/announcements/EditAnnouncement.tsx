@@ -45,8 +45,7 @@ function EditAnnouncement(props: RouteComponentProps<PageRouterProps>) {
   const { id, slug } = props.match.params
   const classes = useStyles()
 
-  const [pageSlug, setPageSlug] = useState('')
-  const [page, setPage] = useState<Page>({ slug: '', content: '' })
+  const [page, setPage] = useState<Page>({ slug: slug, content: '' })
   const [loading, setLoading] = useState(true)
   const [doSave, setDoSave] = useState(false)
   const [showPreview, setShowPreview] = useState(true)
@@ -57,11 +56,9 @@ function EditAnnouncement(props: RouteComponentProps<PageRouterProps>) {
     if (pageService.status === 'loaded') {
       if (pageService.payload) {
         setPage(pageService.payload)
-      } else {
-        setPage({ slug: pageSlug, content: '' })
       }
     }
-  }, [pageService, pageSlug])
+  }, [pageService])
 
   const [snackOpen, setSnackOpen] = React.useState(false)
   const [snackMsg, setSnackMsg] = React.useState('')
@@ -86,17 +83,28 @@ function EditAnnouncement(props: RouteComponentProps<PageRouterProps>) {
     setSnackOpen(false)
   }
 
-  useEffect(() => {
-    if (slug) {
-      setPageSlug(slug)
-    }
-  }, [slug])
-
   const onSaveBtnClick = (): void => {
     setDoSave(true)
   }
 
-  usePageSaveService(page, doSave, setDoSave, setSnackMsg, setSnackOpen)
+  const pageSaveService = usePageSaveService(
+    page,
+    doSave,
+    setDoSave,
+    setSnackMsg,
+    setSnackOpen
+  )
+
+  useEffect(() => {
+    if (pageSaveService.status === 'loaded') {
+      const p = pageSaveService.payload
+      // handy, no need parse URI here to compare slug string!
+      if (id !== `${p.id}` || slug !== p.slug) {
+        props.history.replace(`/announcements/edit/${p.slug}/${p.id}`)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageSaveService])
 
   const onDeleteBtnClick = (): void => {
     fetch(`${API_HOST}/page`, {

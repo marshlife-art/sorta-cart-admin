@@ -77,7 +77,7 @@ function Announcements(props: Props & RouteComponentProps<PageRouterProps>) {
   }
 
   function addPage() {
-    props.history.push('/announcements/edit/draft')
+    props.history.push('/announcements/edit/draft/-1')
     setSnackOpen(true)
   }
 
