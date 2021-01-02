@@ -143,6 +143,7 @@ function WholesaleOrderLineItems(
     }))
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(calc, [lineItems])
 
   function removeLineItem(item: GroupedItem) {

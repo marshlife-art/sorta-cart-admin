@@ -88,7 +88,9 @@ export default function MemberAutocomplete(props: MemberAutocompleteProps) {
       }}
       getOptionSelected={(option, value) => option.name === value.name}
       getOptionLabel={(option) => option.name}
-      onChange={(event, value) => props.onItemSelected(value)}
+      onChange={(event, value) =>
+        value && typeof value !== 'string' && props.onItemSelected(value)
+      }
       options={options}
       loading={loading}
       freeSolo
