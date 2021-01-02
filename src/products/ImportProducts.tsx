@@ -99,7 +99,17 @@ export default function ImportProducts() {
         console.warn('fetch caugher err:', err)
         setError(err.toString())
       })
-      .finally(() => setLoading(false))
+      .finally(() => {
+        setLoading(false)
+
+        const importFile = document.getElementById(
+          'csvFileInput'
+        ) as HTMLInputElement
+        if (importFile) {
+          setFormData(undefined)
+          importFile.value = ''
+        }
+      })
   }
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -259,6 +269,7 @@ export default function ImportProducts() {
           </FormControl>
 
           <input
+            id="csvFileInput"
             type="file"
             accept=".csv"
             onChange={handleFileChange}
