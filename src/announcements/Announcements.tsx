@@ -5,10 +5,11 @@ import Paper from '@material-ui/core/Paper'
 import Grid from '@material-ui/core/Grid'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
-import Add from '@material-ui/icons/Add'
+// import Add from '@material-ui/icons/Add'
 import ListItemText from '@material-ui/core/ListItemText'
 import Divider from '@material-ui/core/Divider'
 import Snackbar from '@material-ui/core/Snackbar'
+import Button from '@material-ui/core/Button'
 import IconButton from '@material-ui/core/IconButton'
 import CloseIcon from '@material-ui/icons/Close'
 import { connect } from 'react-redux'
@@ -32,11 +33,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     title: {
       display: 'flex',
-      alignItems: 'center',
-      marginLeft: '-10px'
-    },
-    titleText: {
-      flexGrow: 1
+      alignItems: 'center'
     },
     paper: {
       padding: theme.spacing(2),
@@ -46,8 +43,6 @@ const useStyles = makeStyles((theme: Theme) =>
     }
   })
 )
-
-const Default = () => <></>
 
 interface Props {
   userService?: UserService
@@ -81,6 +76,20 @@ function Announcements(props: Props & RouteComponentProps<PageRouterProps>) {
     setSnackOpen(true)
   }
 
+  const Default = () => (
+    <Grid xs={12} sm={8} md={9} lg={10} item>
+      <Paper className={classes.paper}>
+        <Button
+          aria-label="add announcement"
+          title="add announcement"
+          onClick={() => addPage()}
+        >
+          Create A New Announcement
+        </Button>
+      </Paper>
+    </Grid>
+  )
+
   return userService ? (
     <>
       <Grid
@@ -97,14 +106,16 @@ function Announcements(props: Props & RouteComponentProps<PageRouterProps>) {
               <ListItem>
                 <ListItemText>
                   <div className={classes.title}>
-                    <span className={classes.titleText}>ANNOUNCEMENTS</span>
-                    <IconButton
-                      aria-label="add announcement"
-                      title="add announcement"
-                      onClick={() => addPage()}
+                    <Button
+                      aria-label="Announcement"
+                      title="Announcement"
+                      onClick={() => {
+                        setReloadPages(true)
+                        props.history.push('/announcements/')
+                      }}
                     >
-                      <Add />
-                    </IconButton>
+                      ANNOUNCEMENTS
+                    </Button>
                   </div>
                 </ListItemText>
               </ListItem>
@@ -131,8 +142,6 @@ function Announcements(props: Props & RouteComponentProps<PageRouterProps>) {
           </Paper>
         </Grid>
 
-        {/* <Grid xs={12} sm={8} md={9} lg={10} item> */}
-        {/* <Paper className={classes.paper}> */}
         <Switch>
           <ProtectedRoute
             userService={userService}
@@ -146,8 +155,6 @@ function Announcements(props: Props & RouteComponentProps<PageRouterProps>) {
             component={EditAnnouncement}
           />
         </Switch>
-        {/* </Paper> */}
-        {/* </Grid> */}
       </Grid>
       <Snackbar
         anchorOrigin={{
