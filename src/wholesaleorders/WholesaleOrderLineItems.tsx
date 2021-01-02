@@ -174,7 +174,6 @@ function WholesaleOrderLineItems(
           : undefined
       )
       .filter((o) => o)
-    console.log('issueOrderCredits item:', item, ' orderIds:', items)
 
     if (window.confirm('will issue order credits. are you sure?')) {
       fetch(`${API_HOST}/wholesaleorder/issuecredits`, {

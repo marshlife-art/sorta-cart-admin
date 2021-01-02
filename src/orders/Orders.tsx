@@ -48,7 +48,6 @@ function Orders(props: RouteComponentProps) {
     icon: 'print',
     onClick: (e: any, data: Order[]) => {
       const orderIds = data.map((order) => order.id)
-      console.log('printAction orderIds:', orderIds, ' data:', data)
 
       fetch(`${API_HOST}/orders/print`, {
         method: 'POST',

@@ -119,7 +119,6 @@ function StoreCredits(props: RouteComponentProps) {
     })
       .then((response) => response.json())
       .then((result) => {
-        console.log('store_credit_report result:', result)
         setMembers(result)
       })
       .catch((err) => {
@@ -128,7 +127,6 @@ function StoreCredits(props: RouteComponentProps) {
       })
   }, [])
 
-  console.log('members:', members)
   return (
     <Paper className={classes.root}>
       <List

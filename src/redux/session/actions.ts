@@ -88,7 +88,6 @@ export const register = (
       })
         .then((response) => response.json())
         .then((response) => {
-          // console.log('[session/actions] user login', response)
           if (response.msg === 'ok' && response.user && response.user.id) {
             dispatch(set(response.user))
           } else {
@@ -96,7 +95,7 @@ export const register = (
           }
         })
         .catch((e) => {
-          console.log('register error:', e)
+          console.warn('register error:', e)
           dispatch(
             setError({
               error: 'error',
@@ -130,7 +129,6 @@ export const login = (
       })
         .then((response) => response.json())
         .then((response) => {
-          // console.log('[session/actions] user login', response)
           if (response.msg === 'ok' && response.user && response.user.id) {
             dispatch(set(response.user))
           } else {
@@ -138,7 +136,7 @@ export const login = (
           }
         })
         .catch((e) => {
-          console.log('login error:', e)
+          console.warn('login error:', e)
           dispatch(
             setError({ error: 'error', reason: 'unable to login right now :(' })
           )

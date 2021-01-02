@@ -84,7 +84,6 @@ function Register(props: Props) {
 
   let query = useQuery()
   const regKeyParam = query.get('regKey')
-  console.log('[Register] regKeyParam', regKeyParam)
   const { userService, history } = props
   const classes = useStyles()
   const [error, setError] = useState('')

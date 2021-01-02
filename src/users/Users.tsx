@@ -43,8 +43,6 @@ function Users(props: Props & RouteComponentProps<UserRouterProps>) {
   const { userService } = props
   const tableRef = createRef<any>()
 
-  console.log('#TODO: deal with userService:', userService)
-
   const [searchExpanded, setSearchExpanded] = useState(false)
   const [newUserModalOpen, setNewUserModalOpen] = useState(false)
 

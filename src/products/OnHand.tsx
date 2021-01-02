@@ -58,7 +58,6 @@ function OnHand() {
     icon: 'file_copy',
     isFreeAction: true,
     onClick: () => {
-      console.log('export this to csv!')
       window.location.assign(`${API_HOST}/products/stock_csv`)
     }
   }

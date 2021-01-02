@@ -476,7 +476,6 @@ function EditOrder(
   }
 
   function onTaxesChange(tax: number) {
-    console.log('onTaxesChange tax:', tax)
     setOrder((prevOrder) => {
       const notTaxLineItems = prevOrder.OrderLineItems.filter(
         (li) => li.kind !== 'tax'

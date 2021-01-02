@@ -172,7 +172,6 @@ function OrderLineItems(props: {
   }
 
   const createLineItemCredit = (line_item: LineItem) => {
-    console.log('createLineItemCredit line_item:', line_item)
     props.createCreditFromLineItem(line_item)
   }
 
