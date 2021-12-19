@@ -251,33 +251,34 @@ function EditWholesaleOrder(
 
   const saveStreamCSV = (filename: string, text: any) => {
     // lolol shoutout to https://stackoverflow.com/questions/37095233/downloading-and-saving-data-with-fetch-from-authenticated-rest
-    if (window.navigator.msSaveBlob) {
-      // IE 10 and later, and Edge.
+
+    // if (window.navigator.msSaveBlob) {
+    //   // IE 10 and later, and Edge.
+    //   const blobObject = new Blob([text], { type: 'text/csv' })
+    //   window.navigator.msSaveBlob(blobObject, filename)
+    // } else {
+    // Everthing else (except old IE).
+    // Create a dummy anchor (with a download attribute) to click.
+    const anchor = document.createElement('a')
+    anchor.download = filename
+    if (window.URL.createObjectURL) {
+      // Everything else new.
       const blobObject = new Blob([text], { type: 'text/csv' })
-      window.navigator.msSaveBlob(blobObject, filename)
+      anchor.href = window.URL.createObjectURL(blobObject)
     } else {
-      // Everthing else (except old IE).
-      // Create a dummy anchor (with a download attribute) to click.
-      const anchor = document.createElement('a')
-      anchor.download = filename
-      if (window.URL.createObjectURL) {
-        // Everything else new.
-        const blobObject = new Blob([text], { type: 'text/csv' })
-        anchor.href = window.URL.createObjectURL(blobObject)
-      } else {
-        // Fallback for older browsers (limited to 2MB on post-2010 Chrome).
-        // Load up the data into the URI for "download."
-        anchor.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(text)
-      }
-      // Now, click it.
-      if (document.createEvent) {
-        const event = document.createEvent('MouseEvents')
-        event.initEvent('click', true, true)
-        anchor.dispatchEvent(event)
-      } else {
-        anchor.click()
-      }
+      // Fallback for older browsers (limited to 2MB on post-2010 Chrome).
+      // Load up the data into the URI for "download."
+      anchor.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(text)
     }
+    // Now, click it.
+    if (document.createEvent) {
+      const event = document.createEvent('MouseEvents')
+      event.initEvent('click', true, true)
+      anchor.dispatchEvent(event)
+    } else {
+      anchor.click()
+    }
+    // }
   }
 
   const onProductsExportToCsv = (): void => {

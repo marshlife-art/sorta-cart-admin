@@ -176,9 +176,7 @@ function EditAnnouncement(props: RouteComponentProps<PageRouterProps>) {
       <Grid xs={6} sm={4} lg={5} item>
         {showPreview && (
           <Paper className={classes.paper}>
-            <ReactMarkdown plugins={[gfm]} renderers={renderers}>
-              {page.content}
-            </ReactMarkdown>
+            <ReactMarkdown plugins={[gfm]}>{page.content}</ReactMarkdown>
           </Paper>
         )}
       </Grid>
