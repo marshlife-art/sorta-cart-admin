@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react'
-// import Link from '@material-ui/core/Link'
+import React from 'react'
 import Button from '@material-ui/core/Button'
 import { makeStyles } from '@material-ui/core/styles'
 import Table from '@material-ui/core/Table'
@@ -10,9 +9,10 @@ import TableRow from '@material-ui/core/TableRow'
 import Title from './Title'
 import { RouteComponentProps, withRouter } from 'react-router-dom'
 import { formatDistance } from 'date-fns'
+import useSWR from 'swr'
 
-import { API_HOST } from '../constants'
 import { WholesaleOrder } from '../types/WholesaleOrder'
+import { supabase } from '../lib/supabaseClient'
 
 interface WholesaleOrderData {
   data: WholesaleOrder[]
@@ -35,28 +35,37 @@ const useStyles = makeStyles((theme) => ({
 function WholesaleOrders(props: RouteComponentProps) {
   const classes = useStyles()
 
-  const [orders, setOrders] = useState<WholesaleOrderData>({
-    data: [],
-    page: 0,
-    totalCount: 0
-  })
+  const { data: orders, error } = useSWR<WholesaleOrderData>(
+    'dashboard_wholesale_orders',
+    async () => {
+      const {
+        data,
+        error,
+        count: totalCount
+      } = await supabase
+        .from<WholesaleOrder>('WholesaleOrders')
+        .select('*', { count: 'exact' })
+        .order('createdAt', { ascending: false })
+        .limit(10)
 
-  useEffect(() => {
-    fetch(`${API_HOST}/wholesaleorders`, {
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ pageSize: 10 })
-    })
-      .then((response) => response.json())
-      .then(setOrders)
-      .catch((err) => {
-        console.warn(err)
-        return { data: [], page: 0, totalCount: 0 }
-      })
-  }, [])
+      if (!error && data?.length && totalCount) {
+        return {
+          data,
+          page: 0,
+          totalCount
+        }
+      }
+
+      return {
+        data: [],
+        page: 0,
+        totalCount: 0
+      }
+    }
+  )
+
+  if (error) return <div>failed to load</div>
+  if (!orders) return <div>loading...</div>
 
   return (
     <React.Fragment>

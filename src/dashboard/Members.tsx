@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react'
-// import Link from '@material-ui/core/Link'
+import React from 'react'
 import Button from '@material-ui/core/Button'
 import { makeStyles } from '@material-ui/core/styles'
 import Table from '@material-ui/core/Table'
@@ -9,10 +8,11 @@ import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 import Title from './Title'
 import { RouteComponentProps, withRouter } from 'react-router-dom'
-
-import { API_HOST } from '../constants'
-import { Member } from '../types/Member'
 import { formatDistance } from 'date-fns'
+import useSWR from 'swr'
+
+import { Member } from '../types/Member'
+import { supabase } from '../lib/supabaseClient'
 
 interface MemberData {
   data: Member[]
@@ -35,28 +35,37 @@ const useStyles = makeStyles((theme) => ({
 function Members(props: RouteComponentProps) {
   const classes = useStyles()
 
-  const [members, setMembers] = useState<MemberData>({
-    data: [],
-    page: 0,
-    totalCount: 0
-  })
+  const { data: members, error } = useSWR<MemberData>(
+    'dashboard_members',
+    async () => {
+      const {
+        data,
+        error,
+        count: totalCount
+      } = await supabase
+        .from<Member>('Members')
+        .select('*', { count: 'exact' })
+        .order('createdAt', { ascending: false })
+        .limit(10)
 
-  useEffect(() => {
-    fetch(`${API_HOST}/members`, {
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ pageSize: 10 })
-    })
-      .then((response) => response.json())
-      .then(setMembers)
-      .catch((err) => {
-        console.warn(err)
-        return { data: [], page: 0, totalCount: 0 }
-      })
-  }, [])
+      if (!error && data?.length && totalCount) {
+        return {
+          data,
+          page: 0,
+          totalCount
+        }
+      }
+
+      return {
+        data: [],
+        page: 0,
+        totalCount: 0
+      }
+    }
+  )
+
+  if (error) return <div>failed to load</div>
+  if (!members) return <div>loading...</div>
 
   return (
     <React.Fragment>

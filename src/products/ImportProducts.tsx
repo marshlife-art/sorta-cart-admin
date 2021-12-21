@@ -125,10 +125,8 @@ export default function ImportProducts() {
     }
   }
 
-  const [
-    vendorMenuAnchorEl,
-    setVendorMenuAnchorEl
-  ] = React.useState<null | HTMLElement>(null)
+  const [vendorMenuAnchorEl, setVendorMenuAnchorEl] =
+    React.useState<null | HTMLElement>(null)
 
   const handleVendorMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
     setVendorMenuAnchorEl(event.currentTarget)
@@ -218,7 +216,7 @@ export default function ImportProducts() {
             </Select>
             <FormHelperText>
               If updating, products with the tag you select here will first be
-              removed.
+              marked inactive.
             </FormHelperText>
           </FormControl>
           <TextField
@@ -264,7 +262,7 @@ export default function ImportProducts() {
                   value="force_check"
                 />
               }
-              label="Force duplicate check. (only check this if you absolutly need to!)"
+              label="Disable duplicate check. (only check this if you absolutly need to!)"
             />
           </FormControl>
 

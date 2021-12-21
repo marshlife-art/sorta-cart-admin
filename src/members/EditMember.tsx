@@ -131,6 +131,9 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
         })
         .catch((err) => setMember(blankMember))
         .finally(() => setLoadingMember(false))
+      if (!memberId) {
+        return
+      }
       fetchStoreCredit(memberId, setStoreCredit)
       fetchMemberOrders(memberId, setOrders)
     }

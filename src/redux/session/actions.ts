@@ -1,8 +1,8 @@
 import { ThunkAction, ThunkDispatch } from 'redux-thunk'
 import { AnyAction } from 'redux'
 
-import { User, LoginError } from '../../types/User'
-import { API_HOST } from '../../constants'
+import { User, LoginError, LoginMessage } from '../../types/User'
+import { supabase } from '../../lib/supabaseClient'
 
 export interface SetAction {
   type: 'SET'
@@ -16,8 +16,12 @@ export interface SetError {
   type: 'SET_ERROR'
   error: LoginError
 }
+export interface SetMagic {
+  type: 'SET_MAGIC'
+  message: LoginMessage
+}
 
-export type Action = SetAction | SetFetcing | SetError
+export type Action = SetAction | SetFetcing | SetError | SetMagic
 
 export const set = (user: User): SetAction => {
   return { type: 'SET', user }
@@ -27,6 +31,9 @@ export const setError = (error: LoginError): SetError => {
 }
 export const isFetching = (isFetching: boolean): SetFetcing => {
   return { type: 'SET_FETCHING', isFetching }
+}
+export const setMagic = (message: LoginMessage): SetMagic => {
+  return { type: 'SET_MAGIC', message }
 }
 
 const NULL_USER: User = {
@@ -45,68 +52,17 @@ export const checkSession = (): ThunkAction<
     return new Promise<void>((resolve) => {
       dispatch(isFetching(true))
 
-      fetch(`${API_HOST}/check_session`, {
-        credentials: 'include'
-      })
-        .then((response) => response.json())
-        .then((response) => {
-          // console.log('check_session', response)
-          if (response.msg === 'ok' && response.user) {
-            dispatch(set(response.user))
-          } else {
-            dispatch(set(NULL_USER))
-          }
-        })
-        .catch((err) => {
-          console.warn('check_session caught err:', err)
-          // hmm, maybe the API is just down? ...is it really necessary to NULL the user?
-          dispatch(set(NULL_USER))
-        })
-        .finally(() => {
-          dispatch(isFetching(false))
-          resolve()
-        })
-    })
-  }
-}
+      const session = supabase.auth.session()
+      console.log('zomg supabase.auth.session():', session)
+      if (session?.user) {
+        console.log('zomg have user:', session?.user)
+        dispatch(set({ ...session.user, role: 'admin' })) // #TODO: don't hard-code admin role :/
+      } else {
+        dispatch(set(NULL_USER))
+      }
 
-export const register = (
-  regKey: string,
-  password: string
-): ThunkAction<Promise<void>, {}, {}, AnyAction> => {
-  return async (dispatch: ThunkDispatch<{}, {}, AnyAction>): Promise<void> => {
-    return new Promise<void>((resolve) => {
-      dispatch(isFetching(true))
-
-      fetch(`${API_HOST}/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ regKey, password })
-      })
-        .then((response) => response.json())
-        .then((response) => {
-          if (response.msg === 'ok' && response.user && response.user.id) {
-            dispatch(set(response.user))
-          } else {
-            dispatch(setError({ error: 'error', reason: response.message }))
-          }
-        })
-        .catch((e) => {
-          console.warn('register error:', e)
-          dispatch(
-            setError({
-              error: 'error',
-              reason: 'unable to register right now :('
-            })
-          )
-        })
-        .finally(() => {
-          dispatch(isFetching(false))
-          resolve()
-        })
+      dispatch(isFetching(false))
+      resolve()
     })
   }
 }
@@ -119,32 +75,32 @@ export const login = (
     return new Promise<void>((resolve) => {
       dispatch(isFetching(true))
 
-      fetch(`${API_HOST}/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ email, password })
-      })
-        .then((response) => response.json())
+      supabase.auth
+        .signIn({ email, password })
         .then((response) => {
-          if (response.msg === 'ok' && response.user && response.user.id) {
-            dispatch(set(response.user))
+          if (response.user && response.user.id) {
+            dispatch(set({ ...response.user, role: 'admin' })) // #TODO: don't hard-code admin role :/
           } else {
-            dispatch(setError({ error: 'error', reason: response.message }))
+            if (!password && !response.error) {
+              dispatch(
+                setMagic({
+                  message: 'Check your email for a magic login link.'
+                })
+              )
+            } else {
+              dispatch(
+                setError({
+                  error: 'error',
+                  reason: response.error?.message || 'unknown error'
+                })
+              )
+            }
           }
         })
-        .catch((e) => {
-          console.warn('login error:', e)
-          dispatch(
-            setError({ error: 'error', reason: 'unable to login right now :(' })
-          )
+        .catch((err) => {
+          console.warn('[login] caught error:', err.response.text)
         })
-        .finally(() => {
-          dispatch(isFetching(false))
-          resolve()
-        })
+        .finally(() => resolve())
     })
   }
 }
@@ -154,13 +110,8 @@ export const logout = (): ThunkAction<Promise<void>, {}, {}, AnyAction> => {
     return new Promise<void>((resolve) => {
       dispatch(isFetching(true))
 
-      fetch(`${API_HOST}/logout`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include'
-      })
+      supabase.auth
+        .signOut()
         .catch(console.warn)
         .finally(() => {
           dispatch(set(NULL_USER))

@@ -44,21 +44,16 @@ function Login(props: Props) {
     setError('')
     const target = event.currentTarget as HTMLFormElement
     const emailEl = target.elements.namedItem('email') as HTMLInputElement
-    const passwordEl = target.elements.namedItem('password') as HTMLInputElement
 
-    if (
-      emailEl &&
-      emailEl.value.length > 0 &&
-      passwordEl &&
-      passwordEl.value.length > 0
-    ) {
-      props.login(emailEl.value, passwordEl.value)
+    if (emailEl && emailEl.value.length > 0) {
+      props.login(emailEl.value, password)
     }
   }
 
   const { userService, history } = props
   const classes = useStyles()
   const [error, setError] = useState('')
+  const [password, setPassword] = useState('')
 
   // when userService changes, figure out if the page should redirect if a user is already logged in.
   useEffect(() => {
@@ -98,8 +93,9 @@ function Login(props: Props) {
           label="password"
           name="password"
           type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           fullWidth
-          required
         />
 
         <div>
@@ -111,10 +107,17 @@ function Login(props: Props) {
             disabled={props.userService.isFetching}
             className={classes.submit}
           >
-            Login
+            {!password ? 'Email Magic Link' : 'Login'}
           </Button>
         </div>
 
+        <Box>
+          {props.userService.message && (
+            <Typography variant="body1" display="block" gutterBottom>
+              {props.userService.message.message}
+            </Typography>
+          )}
+        </Box>
         <Box color="error.main">
           {props.userService.error && (
             <>

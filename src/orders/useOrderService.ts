@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { Service } from '../types/Service'
 import { Order } from '../types/Order'
-import { API_HOST } from '../constants'
+import { supabase } from '../lib/supabaseClient'
 
 const useOrderService = (
   id: string | undefined,
@@ -18,22 +18,15 @@ const useOrderService = (
       return
     }
 
-    fetch(`${API_HOST}/order/edit/${id}`, {
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        // console.log('page', response)
-        setResult({ status: 'loaded', payload: response as Order })
-      })
-      .catch((error) => {
-        console.warn('useOrderService fetch caught err:', error)
-        setResult({ ...error })
-      })
-      .finally(() => {
+    supabase
+      .from<Order>('Orders')
+      .select('*, OrderLineItems ( * )')
+      .eq('id', id)
+      .single()
+      .then((result) => {
+        console.log('zomg result.data:', result.data)
+        result.data && setResult({ status: 'loaded', payload: result.data })
+
         setLoading(false)
       })
   }, [id, setLoading])

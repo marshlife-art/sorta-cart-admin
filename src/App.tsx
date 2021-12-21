@@ -33,7 +33,6 @@ import { getPreferences, setPreferences } from './redux/preferences/actions'
 import Loading from './Loading'
 import Dashboard from './dashboard/Dashboard'
 import Login from './auth/Login'
-import Register from './auth/Register'
 import ProtectedRoute from './auth/ProtectedRoute'
 // import UserMenu from './auth/UserMenu'
 import StoreCredits from './members/StoreCredits'
@@ -284,7 +283,6 @@ export function App(props: Props) {
             ) : (
               <Switch>
                 <Route path="/login" component={Login} />
-                <Route path="/register" component={Register} />
                 <ProtectedRoute
                   userService={userService}
                   path="/products"

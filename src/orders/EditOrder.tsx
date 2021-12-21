@@ -113,7 +113,7 @@ const useStyles = makeStyles((theme: Theme) =>
 )
 
 export async function fetchStoreCredit(
-  MemberId: string,
+  MemberId: string | number,
   setStoreCredit: React.Dispatch<React.SetStateAction<number>>
 ) {
   const store_credit = await fetch(`${API_HOST}/admin/store_credit`, {
@@ -321,8 +321,9 @@ function EditOrder(
     setOrder((prevOrder) => {
       const orderLineItems = prevOrder.OrderLineItems
       orderLineItems.splice(idx, 1)
-      const item_count = orderLineItems.filter((li) => li.kind === 'product')
-        .length
+      const item_count = orderLineItems.filter(
+        (li) => li.kind === 'product'
+      ).length
       return {
         ...prevOrder,
         item_count,
@@ -442,6 +443,9 @@ function EditOrder(
         MemberId: id
       }))
       setShowMemberAutocomplete(false)
+      if (!id) {
+        return
+      }
       fetchStoreCredit(id, setStoreCredit)
     }
   }

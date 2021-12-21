@@ -11,6 +11,7 @@ import {
   SHIPMENT_STATUSES
 } from '../constants'
 import { formatRelative } from 'date-fns'
+import { supabase } from '../lib/supabaseClient'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -183,26 +184,59 @@ function Orders(props: RouteComponentProps) {
           },
           { title: 'history', field: 'history', type: 'string', hidden: true }
         ]}
-        data={(query) =>
-          new Promise((resolve, reject) => {
-            // console.log('query:', query)
-            fetch(`${API_HOST}/orders`, {
-              method: 'post',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              credentials: 'include',
-              body: JSON.stringify(query)
-            })
-              .then((response) => response.json())
-              .then((result) => {
-                // console.log('result', result)
-                resolve(result)
+        data={(q) =>
+          new Promise(async (resolve, reject) => {
+            let query = supabase
+              .from('Orders')
+              .select('*, OrderLineItems ( * )', { count: 'exact' })
+
+            if (q.filters.length) {
+              q.filters.forEach((filter) => {
+                if (filter.column.field && filter.value) {
+                  if (filter.value instanceof Array && filter.value.length) {
+                    const or = filter.value
+                      .map((v) => `${filter.column.field}.eq.${v}`)
+                      .join(',')
+                    query = query.or(or)
+                  } else if (filter.value.length) {
+                    query = query.or(
+                      `${filter.column.field}.eq.${filter.value}`
+                    )
+                  }
+                }
               })
-              .catch((err) => {
-                console.warn(err)
-                return resolve({ data: [], page: 0, totalCount: 0 })
+            }
+            if (q.search) {
+              query = query.textSearch('fts', q.search, {
+                type: 'websearch',
+                config: 'english'
               })
+            }
+            if (q.page) {
+              query = query.range(
+                q.pageSize * q.page,
+                q.pageSize * q.page + q.pageSize
+              )
+            }
+            if (q.pageSize) {
+              query = query.limit(q.pageSize)
+            }
+            if (q.orderBy && q.orderBy.field) {
+              query = query.order(q.orderBy.field, {
+                ascending: q.orderDirection === 'asc'
+              })
+            } else {
+              query = query.order('createdAt', { ascending: false })
+            }
+
+            const { data, error, count } = await query
+
+            // console.log('orders count:', count, ' q:', q, 'data:', data)
+            if (!data || error) {
+              resolve({ data: [], page: 0, totalCount: 0 })
+            } else {
+              resolve({ data, page: q.page, totalCount: count || 0 })
+            }
           })
         }
         detailPanel={(order) => <OrderDetailPanel order={order} />}

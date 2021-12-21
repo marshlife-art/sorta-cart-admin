@@ -22,3 +22,7 @@ export interface LoginError {
   error: string
   reason: string
 }
+
+export interface LoginMessage {
+  message: string
+}

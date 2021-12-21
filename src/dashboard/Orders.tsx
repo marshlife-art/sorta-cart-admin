@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react'
-// import Link from '@material-ui/core/Link'
+import React from 'react'
 import Button from '@material-ui/core/Button'
 import { makeStyles } from '@material-ui/core/styles'
 import Table from '@material-ui/core/Table'
@@ -9,10 +8,11 @@ import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 import Title from './Title'
 import { RouteComponentProps, withRouter } from 'react-router-dom'
-
-import { API_HOST } from '../constants'
-import { Order } from '../types/Order'
 import { formatDistance } from 'date-fns/esm'
+import useSWR from 'swr'
+
+import { Order } from '../types/Order'
+import { supabase } from '../lib/supabaseClient'
 
 interface OrderData {
   data: Order[]
@@ -35,27 +35,37 @@ const useStyles = makeStyles((theme) => ({
 function Orders(props: RouteComponentProps) {
   const classes = useStyles()
 
-  const [orders, setOrders] = useState<OrderData>({
-    data: [],
-    page: 0,
-    totalCount: 0
-  })
+  const { data: orders, error } = useSWR<OrderData>(
+    'dashboard_orders',
+    async () => {
+      const {
+        data,
+        error,
+        count: totalCount
+      } = await supabase
+        .from<Order>('Orders')
+        .select('*', { count: 'exact' })
+        .order('createdAt', { ascending: false })
+        .limit(20)
 
-  useEffect(() => {
-    fetch(`${API_HOST}/orders/recent`, {
-      method: 'get',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include'
-    })
-      .then((response) => response.json())
-      .then(setOrders)
-      .catch((err) => {
-        console.warn(err)
-        return { data: [], page: 0, totalCount: 0 }
-      })
-  }, [])
+      if (!error && data?.length && totalCount) {
+        return {
+          data,
+          page: 0,
+          totalCount
+        }
+      }
+
+      return {
+        data: [],
+        page: 0,
+        totalCount: 0
+      }
+    }
+  )
+
+  if (error) return <div>failed to load</div>
+  if (!orders) return <div>loading...</div>
 
   return (
     <React.Fragment>

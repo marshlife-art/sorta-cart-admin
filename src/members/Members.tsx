@@ -4,9 +4,11 @@ import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import MaterialTable from 'material-table'
 
 import { MemberRouterProps } from '../types/Member'
-import { Member } from '../types/Member'
+// import { Member } from '../types/Member'
 import { API_HOST } from '../constants'
 import { formatRelative } from 'date-fns'
+import { supabase } from '../lib/supabaseClient'
+import { SupaMember as Member } from '../types/SupaTypes'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -123,24 +125,78 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
           },
           { title: 'id', field: 'id', type: 'string', hidden: true }
         ]}
-        data={(query) =>
-          new Promise((resolve, reject) => {
-            fetch(`${API_HOST}/members`, {
-              method: 'post',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              credentials: 'include',
-              body: JSON.stringify(query)
+        data={(q) =>
+          new Promise(async (resolve, reject) => {
+            let query = supabase
+              .from<Member>('Members')
+              .select('*', { count: 'exact' })
+            //, users ( * ) i think need to use service role or otherwise setup rls for users relation?
+
+            if (q.filters.length) {
+              const or = q.filters
+                .map((filter) => {
+                  if (filter.column.field && filter.value) {
+                    if (filter.value instanceof Array && filter.value.length) {
+                      return filter.value.map((v) => {
+                        // NOTE: ilike only seems to work on string fields
+                        if (filter.column.field === 'member_type') {
+                          return `${filter.column.field}.ilike.%${v}%`
+                        }
+                        return `${filter.column.field}.eq.${v}`
+                      })
+                    } else if (filter.value.length) {
+                      if (filter.column.field === 'member_type') {
+                        return `${filter.column.field}.ilike.%${filter.value}%`
+                      } else {
+                        return `${filter.column.field}.eq.${filter.value}`
+                      }
+                    }
+                  }
+                })
+                .join(',')
+
+              query = query.or(or)
+            }
+            if (q.search) {
+              query = query.or(
+                ['name', 'phone', 'address', 'registration_email']
+                  .map((f) => `${f}.ilike.%${q.search}%`)
+                  .join(',')
+              )
+            }
+            if (q.page) {
+              query = query.range(
+                q.pageSize * q.page,
+                q.pageSize * q.page + q.pageSize
+              )
+            }
+            if (q.pageSize) {
+              query = query.limit(q.pageSize)
+            }
+            if (q.orderBy && q.orderBy.field) {
+              query = query.order(q.orderBy.field as keyof Member, {
+                ascending: q.orderDirection === 'asc'
+              })
+            } else {
+              query = query.order('createdAt', { ascending: false })
+            }
+
+            const { data, error, count: totalCount } = await query
+
+            if (!error && data?.length && totalCount) {
+              resolve({
+                data,
+                page: 0,
+                totalCount
+              })
+              return
+            }
+
+            resolve({
+              data: [],
+              page: 0,
+              totalCount: 0
             })
-              .then((response) => response.json())
-              .then((result) => {
-                resolve(result)
-              })
-              .catch((err) => {
-                console.warn(err)
-                return resolve({ data: [], page: 0, totalCount: 0 })
-              })
           })
         }
         title="Members"
