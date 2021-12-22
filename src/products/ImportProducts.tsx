@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import useSWR from 'swr'
 import { makeStyles, Theme, createStyles } from '@material-ui/core'
 import Paper from '@material-ui/core/Paper'
 import Grid from '@material-ui/core/Grid'
@@ -16,7 +17,9 @@ import Typography from '@material-ui/core/Typography'
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
 
 import Loading from '../Loading'
+import { supabase } from '../lib/supabaseClient'
 import { API_HOST } from '../constants'
+import parseProductsCSV from '../lib/parseProductsCSV'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -51,23 +54,44 @@ export default function ImportProducts() {
   const [error, setError] = useState('')
   const [response, setResponse] = useState('')
 
-  const [vendorLookup, setVendorLookup] = useState<object>(() => {
-    fetch(`${API_HOST}/products/vendors`)
-      .then((response) => response.json())
-      .then((result) => setVendorLookup(result))
+  const [file, setFile] = useState<File>()
+
+  const { data: vendorLookup, error: vendorLookupError } = useSWR<string[]>(
+    'distinct_product_vendors',
+    async () => {
+      const { data, error } = await supabase.rpc('distinct_product_vendors')
+
+      if (!error && data?.length) {
+        return data?.reduce((acc, row) => {
+          acc.push(row.vendor)
+          return acc
+        }, [])
+      }
+
+      return []
+    }
+  )
+
+  const { data: importTagsLookup, error: importTagsLookupError } = useSWR<
+    string[]
+  >('distinct_product_import_tags', async () => {
+    const { data, error } = await supabase.rpc('distinct_product_import_tags')
+
+    if (!error && data?.length) {
+      return data?.reduce((acc, row) => {
+        acc.push(row.import_tag)
+        return acc
+      }, [])
+    }
+
+    return []
   })
 
-  const [importTagsLookup, setImportTagsLookup] = useState<object>(() => {
-    fetch(`${API_HOST}/products/import_tags`)
-      .then((response) => response.json())
-      .then((result) => setImportTagsLookup(result))
-  })
-
-  function submitData() {
+  async function submitData() {
     setError('')
     setResponse('')
     setLoading(true)
-    if (!formData) {
+    if (!formData || !file) {
       setError('please select a file!')
       return
     }
@@ -82,34 +106,38 @@ export default function ImportProducts() {
     formData.append('markup', `${markup}`)
     formData.append('force_check', `${forceCheck}`)
 
-    fetch(`${API_HOST}/products/upload`, {
-      method: 'POST',
-      credentials: 'include',
-      body: formData
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        if (response.error) {
-          setError(response.msg)
-        } else {
-          setResponse(response.msg)
-        }
-      })
-      .catch((err) => {
-        console.warn('fetch caugher err:', err)
-        setError(err.toString())
-      })
-      .finally(() => {
-        setLoading(false)
+    const result = await parseProductsCSV(file, importTag, vendor, markup)
+    console.log('zomg parseProductsCSV result:', result)
+    setLoading(false)
 
-        const importFile = document.getElementById(
-          'csvFileInput'
-        ) as HTMLInputElement
-        if (importFile) {
-          setFormData(undefined)
-          importFile.value = ''
-        }
-      })
+    // fetch(`${API_HOST}/products/upload`, {
+    //   method: 'POST',
+    //   credentials: 'include',
+    //   body: formData
+    // })
+    //   .then((response) => response.json())
+    //   .then((response) => {
+    //     if (response.error) {
+    //       setError(response.msg)
+    //     } else {
+    //       setResponse(response.msg)
+    //     }
+    //   })
+    //   .catch((err) => {
+    //     console.warn('fetch caugher err:', err)
+    //     setError(err.toString())
+    //   })
+    //   .finally(() => {
+    //     setLoading(false)
+
+    //     const importFile = document.getElementById(
+    //       'csvFileInput'
+    //     ) as HTMLInputElement
+    //     if (importFile) {
+    //       setFormData(undefined)
+    //       importFile.value = ''
+    //     }
+    //   })
   }
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -118,6 +146,8 @@ export default function ImportProducts() {
       let data = new FormData()
       data.append('file', event.target.files[0])
       setFormData(data)
+
+      setFile(event.target.files[0])
       setLoading(false)
     } else {
       setFormData(undefined)
@@ -183,7 +213,7 @@ export default function ImportProducts() {
               onClose={handleVendorMenuClose}
             >
               {vendorLookup &&
-                Object.keys(vendorLookup).map((vendor) => (
+                vendorLookup.map((vendor) => (
                   <MenuItem
                     key={`vendor-sel-${vendor}`}
                     onClick={() => handleVendorSelect(vendor)}
@@ -208,7 +238,7 @@ export default function ImportProducts() {
             >
               <MenuItem value="">None</MenuItem>
               {importTagsLookup &&
-                Object.keys(importTagsLookup).map((tag) => (
+                importTagsLookup.map((tag) => (
                   <MenuItem key={`tag-sel-${tag}`} value={tag}>
                     {tag}
                   </MenuItem>
@@ -476,7 +506,7 @@ export default function ImportProducts() {
                 <br />
                 <br />
                 When the Previous Import Tag is specified, products with that
-                tag are first deleted before new products are created.
+                tag are first marked inactive before new products are created.
               </dd>
             </dl>
           </Typography>

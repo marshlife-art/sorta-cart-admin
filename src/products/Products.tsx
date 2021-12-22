@@ -4,6 +4,7 @@ import MaterialTable from 'material-table'
 
 import { Product } from '../types/Product'
 import { API_HOST } from '../constants'
+import { supabase } from '../lib/supabaseClient'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -179,23 +180,57 @@ function Products() {
           // { title: 'unf', field: 'unf', type: 'string' },
           { title: 'id', field: 'id', type: 'string', hidden: true }
         ]}
-        data={(query) =>
-          new Promise((resolve, reject) => {
-            fetch(`${API_HOST}/products`, {
-              method: 'post',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(query)
-            })
-              .then((response) => response.json())
-              .then((result) => {
-                resolve(result)
+        data={(q) =>
+          new Promise(async (resolve, reject) => {
+            let query = supabase
+              .from('products')
+              .select('*', { count: 'exact' })
+
+            if (q.filters.length) {
+              q.filters.forEach((filter) => {
+                if (filter.column.field && filter.value) {
+                  if (filter.value instanceof Array && filter.value.length) {
+                    const or = filter.value
+                      .map((v) => `${String(filter.column.field)}.eq.${v}`)
+                      .join(',')
+                    query = query.or(or)
+                  } else if (filter.value.length) {
+                    query = query.or(
+                      `${String(filter.column.field)}.eq.${filter.value}`
+                    )
+                  }
+                }
               })
-              .catch((err) => {
-                console.warn('onoz, caught err:', err)
-                return resolve({ data: [], page: 0, totalCount: 0 })
+            }
+            if (q.search) {
+              query = query.textSearch('fts', q.search, {
+                type: 'websearch',
+                config: 'english'
               })
+            }
+            if (q.page) {
+              query = query.range(
+                q.pageSize * q.page,
+                q.pageSize * q.page + q.pageSize
+              )
+            }
+            if (q.pageSize) {
+              query = query.limit(q.pageSize)
+            }
+            if (q.orderBy && q.orderBy.field) {
+              query = query.order(q.orderBy.field, {
+                ascending: q.orderDirection === 'asc'
+              })
+            }
+
+            const { data, error, count } = await query
+
+            // console.log('orders count:', count, ' q:', q, 'data:', data)
+            if (!data || error) {
+              resolve({ data: [], page: 0, totalCount: 0 })
+            } else {
+              resolve({ data, page: q.page, totalCount: count || 0 })
+            }
           })
         }
         title="Products"

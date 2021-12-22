@@ -805,6 +805,44 @@ export interface paths {
       };
     };
   };
+  "/rpc/distinct_product_import_tags": {
+    post: {
+      parameters: {
+        body: {
+          args: {
+            import_tag: string;
+          };
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferParams"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: unknown;
+      };
+    };
+  };
+  "/rpc/distinct_product_vendors": {
+    post: {
+      parameters: {
+        body: {
+          args: {
+            vendor: string;
+          };
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferParams"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: unknown;
+      };
+    };
+  };
   "/rpc/distinct_product_categories": {
     post: {
       parameters: {
