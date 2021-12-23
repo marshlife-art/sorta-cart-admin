@@ -4,6 +4,8 @@ import { Service } from '../types/Service'
 import { WholesaleOrder } from '../types/WholesaleOrder'
 import { API_HOST } from '../constants'
 import { OrderStatus } from '../types/Order'
+import { supabase } from '../lib/supabaseClient'
+import useSWR from 'swr'
 
 const blankWholesaleOrder: WholesaleOrder = {
   id: '',
@@ -26,7 +28,7 @@ const useWholesaleOrderService = (
     status: 'loading'
   })
 
-  useEffect(() => {
+  useSWR({ key: 'get_wholesale_order', id, reload }, async ({ id, reload }) => {
     if (!id) {
       setLoading(false)
       setReload(false)
@@ -40,22 +42,40 @@ const useWholesaleOrderService = (
       return
     }
 
-    fetch(`${API_HOST}/wholesaleorder/${id}`, {
-      credentials: 'include',
+    let query = supabase
+      .from('WholesaleOrders')
+      .select('*, OrderLineItems ( * )')
+      .eq('id', id)
+      .single()
+
+    const { data, error } = await query
+
+    if (error) {
+      console.warn('useWholesaleOrderService got error:', error)
+      // #TODO: handle errorz
+      // setResult({ error })
+    }
+
+    // whee, so need to JSON.parse each OrderLineItem .data field
+    const { OrderLineItems, ...rest } = data
+    const wholesaleOrder = {
+      ...rest,
+      OrderLineItems: OrderLineItems.map(
+        ({ data, ...rest }: { data: string }) => ({
+          ...rest,
+          data: JSON.parse(data)
+        })
+      )
+    }
+
+    setResult({
+      status: 'loaded',
+      payload: wholesaleOrder as WholesaleOrder
     })
-      .then((response) => response.json())
-      .then((response) => {
-        setResult({ status: 'loaded', payload: response as WholesaleOrder })
-      })
-      .catch((error) => {
-        console.warn('useWholesaleOrderService fetch caught err:', error)
-        setResult({ ...error })
-      })
-      .finally(() => {
-        setLoading(false)
-        setReload(false)
-      })
-  }, [id, setLoading, reload, setReload])
+
+    setReload(false)
+    setLoading(false)
+  })
 
   return result
 }
@@ -70,39 +90,33 @@ const useAllWholesaleOrdersService = (
     status: 'loading'
   })
 
-  useEffect(() => {
-    reloadWholesaleOrders &&
-      fetch(`${API_HOST}/wholesaleorders`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          status
-        })
+  useSWR(
+    { key: 'get_wholesale_orders', reloadWholesaleOrders, status },
+    async ({ reloadWholesaleOrders, status }) => {
+      if (!reloadWholesaleOrders) {
+        return
+      }
+      let query = supabase.from('WholesaleOrders').select()
+      if (status) {
+        query = query.eq('status', status)
+      }
+
+      const { data, error, count } = await query
+
+      if (error) {
+        console.warn('useWholesaleOrderService got error:', error)
+        // #TODO: handle errorz
+        // setResult({ error })
+      }
+
+      setResult({
+        status: 'loaded',
+        payload: data as WholesaleOrder[]
       })
-        .then((response) => response.json())
-        .then((response) => {
-          setResult({
-            status: 'loaded',
-            payload: response.data as WholesaleOrder[]
-          })
-        })
-        .catch((error) => {
-          console.warn('useWholesaleOrderService fetch caught err:', error)
-          setResult({ ...error })
-        })
-        .finally(() => {
-          setReloadWholesaleOrders(false)
-          setLoading(false)
-        })
-  }, [
-    reloadWholesaleOrders,
-    setReloadWholesaleOrders,
-    status,
-    setLoading,
-  ])
+      setReloadWholesaleOrders(false)
+      setLoading(false)
+    }
+  )
 
   return result
 }
@@ -131,7 +145,7 @@ const useWholesaleOrderSaveService = (
     fetch(`${API_HOST}${path}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       credentials: 'include',
       body: JSON.stringify(wholesaleOrder)
