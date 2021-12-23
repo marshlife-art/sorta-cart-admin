@@ -49,7 +49,10 @@ export default function ImportProducts() {
   const [importTag, setImportTag] = useState('')
   const [prevImportTag, setPrevImportTag] = useState('')
   const [markup, setMarkup] = useState(0.0)
-  const [forceCheck, setForceCheck] = useState(false)
+  const [ignoreDuplicates, setIgnoreDuplicates] = useState(false)
+  const [defaultCat, setDefaultCat] = useState('')
+  const [defaultSubCat, setDefaultSubCat] = useState('')
+  const [dryRun, setDryRun] = useState(false)
   const [formData, setFormData] = useState<FormData>()
   const [error, setError] = useState('')
   const [response, setResponse] = useState('')
@@ -95,22 +98,25 @@ export default function ImportProducts() {
       setError('please select a file!')
       return
     }
-    // formData.delete('vendor')
-    // formData.delete('import_tag')
-    // formData.delete('prev_import_tag')
-    // formData.delete('markup')
-    // formData.delete('force_check')
-    // formData.append('vendor', vendor)
-    // formData.append('import_tag', importTag)
-    // formData.append('prev_import_tag', prevImportTag)
-    // formData.append('markup', `${markup}`)
-    // formData.append('force_check', `${forceCheck}`)
 
-    const result = await parseProductsCSV(file, importTag, vendor, markup)
+    const result = await parseProductsCSV(
+      file,
+      importTag,
+      vendor,
+      markup,
+      defaultCat,
+      defaultSubCat
+    )
     console.log('zomg parseProductsCSV result:', result)
 
     if (result.problems.length) {
       setError(result.problems.join('\n '))
+      setLoading(false)
+      return
+    }
+
+    if (dryRun) {
+      setResponse(`Dry Run! ${result.products.length} products to be imported.`)
       setLoading(false)
       return
     }
@@ -132,7 +138,8 @@ export default function ImportProducts() {
         .from('products')
         .upsert(products, {
           count: 'exact',
-          returning: 'minimal'
+          returning: 'minimal',
+          ignoreDuplicates
         })
       if (error) {
         console.warn('zomg supabase upsert error:', error)
@@ -310,6 +317,24 @@ export default function ImportProducts() {
             className={classes.gridItem}
           />
 
+          <TextField
+            label="Default Category"
+            helperText="Optional. Will use this category if not specified in .csv file."
+            fullWidth
+            value={defaultCat}
+            onChange={(event) => setDefaultCat(event.target.value)}
+            className={classes.gridItem}
+          />
+
+          <TextField
+            label="Default Sub Category"
+            helperText="Optional. Will use this sub_category if not specified in .csv file."
+            fullWidth
+            value={defaultSubCat}
+            onChange={(event) => setDefaultSubCat(event.target.value)}
+            className={classes.gridItem}
+          />
+
           <FormControl fullWidth className={classes.gridItem}>
             <FormControlLabel
               control={
@@ -318,13 +343,31 @@ export default function ImportProducts() {
                     event: React.ChangeEvent<HTMLInputElement>,
                     checked: boolean
                   ) => {
-                    setForceCheck(checked)
+                    setIgnoreDuplicates(checked)
                   }}
-                  checked={forceCheck}
-                  value="force_check"
+                  checked={ignoreDuplicates}
+                  value="ignore_duplicates"
                 />
               }
-              label="Disable duplicate check. (only check this if you absolutly need to!)"
+              label="Ignore duplicates. (only if you absolutly need to!)"
+            />
+          </FormControl>
+
+          <FormControl fullWidth className={classes.gridItem}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  onChange={(
+                    event: React.ChangeEvent<HTMLInputElement>,
+                    checked: boolean
+                  ) => {
+                    setDryRun(checked)
+                  }}
+                  checked={dryRun}
+                  value="dry_run"
+                />
+              }
+              label="Dry Run (will not import products to DB)"
             />
           </FormControl>
 

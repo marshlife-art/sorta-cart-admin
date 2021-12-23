@@ -88,10 +88,12 @@ function step(props: {
   import_tag: string
   vendor: string
   markup: number
+  defaultSubCat?: string
   products: SupaProduct[]
   problems: string[]
 }): void {
-  const { row, import_tag, vendor, markup, products, problems } = props
+  const { row, import_tag, vendor, markup, defaultSubCat, products, problems } =
+    props
   const { data, errors } = row
 
   if (errors.length) {
@@ -142,7 +144,7 @@ function step(props: {
       description,
       size,
       unit_type,
-      sub_category,
+      sub_category: data['sub_category'] || defaultSubCat,
       plu,
       category: data['category'] || cat
     }
@@ -270,10 +272,16 @@ export default function parseProductsCSV(
   file: File,
   import_tag: string = `import${Date.now()}`,
   vendor: string = 'default',
-  markup: number = 0.0
+  markup: number = 0.0,
+  defaultCat?: string,
+  defaultSubCat?: string
 ): Promise<IParseProductsCSV> {
   const products: SupaProduct[] = []
   const problems: string[] = []
+
+  if (defaultCat) {
+    cat = defaultCat
+  }
 
   return new Promise((resolve, reject) => {
     // any cuz getting tsc is squaks: Argument of type 'File' is not assignable to parameter of type 'unique symbol'
@@ -293,6 +301,7 @@ export default function parseProductsCSV(
           import_tag,
           vendor,
           markup,
+          defaultSubCat,
           products,
           problems
         })
