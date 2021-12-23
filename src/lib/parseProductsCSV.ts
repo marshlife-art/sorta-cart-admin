@@ -25,6 +25,8 @@ const PRODUCT_KEYS: Array<keyof SupaProduct> = [
   'upc_code',
   'name',
   'description',
+  'description_orig',
+  'description_edit',
   'pk',
   'size',
   'unit_type',
@@ -33,12 +35,14 @@ const PRODUCT_KEYS: Array<keyof SupaProduct> = [
   'category',
   'sub_category',
   'no_backorder',
-  'codes'
+  'codes',
+  'plu'
 ]
 
 const KNOWN_HEADERS: string[] = [
   'ws_price_markup',
   'u_price_markup',
+  'iow',
   ...PRODUCT_KEYS,
   ...CODE_COLZ
 ]
@@ -47,12 +51,24 @@ const HEADER_MAP: { [index: string]: string } = {
   'UPC Code': 'upc_code',
   'Long Name': 'name',
   'Advertising Description': 'description',
+  'Product Description': 'description',
   'Unit Type': 'unit_type',
   M: '',
   'W/S Price': 'ws_price',
   'U Price': 'u_price',
-  'Category Description': 'sub_category'
+  'Category Description': 'sub_category',
+  UNFI: 'unf',
+  UPCPLU: 'upc_code',
+  Pack: 'pk',
+  PkgSize: 'size',
+  Price: 'ws_price',
+  UnitCost: 'u_price',
+  'Item Number': 'unf'
 }
+
+// mutable cat here because vendor sheets sometimes have categories as their own row
+// so need a value that can persist across per-row step() fn
+let cat: string | null
 
 function transformHeader(header: string, index: number): string {
   if (HEADER_MAP[header]) {
@@ -72,13 +88,10 @@ function step(props: {
   import_tag: string
   vendor: string
   markup: number
-  cat: string
-  results: any[]
   products: SupaProduct[]
   problems: string[]
 }): void {
-  const { row, import_tag, vendor, markup, results, products, problems } = props
-  let cat = props.cat
+  const { row, import_tag, vendor, markup, products, problems } = props
   const { data, errors } = row
 
   if (errors.length) {
@@ -101,25 +114,41 @@ function step(props: {
       console.warn('parseProductsCSV row was empty?! row:', row)
       return
     }
+    // UNFI pricesheets have multiple warehouse location colz.
+    // MARSH can only order IOW products.
+    // so if there's an IOW column and it has an empty string value, skip it.
+    if (data['iow'] === '') {
+      // console.log('ZOMG have an empty data[iow]! ...gonna skip!')
+      return
+    }
 
     // there could probably be a better way to pull out known Product properties
-    const { unf, upc_code, name, description, size, unit_type, sub_category } =
-      data
-    let product: SupaProduct = {
-      id: 666, // #TODO: use unf & upc_code composite keyz
+    const {
       unf,
       upc_code,
       name,
       description,
       size,
       unit_type,
-      sub_category
+      sub_category,
+      plu
+    } = data
+
+    const product: SupaProduct = {
+      id: `${unf ? unf : ''}__${upc_code ? upc_code : ''}__${plu ? plu : ''}`, // "natural" pk
+      unf,
+      upc_code: upc_code ? upc_code.replace(/-/g, '') : upc_code, // strip dashes (-) from upc_code
+      name,
+      description,
+      size,
+      unit_type,
+      sub_category,
+      plu,
+      category: data['category'] || cat
     }
 
-    product.category = data['category'] || cat
-
     // aggregate codes cols into single col
-    let codes: string[] = []
+    const codes: string[] = []
 
     CODE_COLZ.forEach((code) => {
       if (data[code]) {
@@ -176,7 +205,7 @@ function step(props: {
       throw 'u_price is 0!'
     }
 
-    // in the database we track ws_price_cost instead of _markup so switch those around:
+    // in the database we track u_price_cost instead of _markup so switch those around:
     product.u_price_cost = product.u_price
 
     const _u_price_markup =
@@ -206,8 +235,25 @@ function step(props: {
 
     product.import_tag = import_tag
     product.vendor = vendor
-    results.push(data)
-    products.push(product)
+
+    // description is a generated field like: coalesce(description_edit, description_orig)
+    // so move description -> description_orig
+    product.description_orig = description
+    product.description = undefined
+
+    // okay, omit description cuz it's a generated field
+    // then reduce to make sure anything undefined (falsy, actually) is turned to null
+    // so it can make it thru JSON.stringify; this is needed because
+    // upsert operation needs every object to have the same keys (cuz sql update will use values)
+    const { description: omitDescription, ...productRest } = product
+    products.push(
+      Object.entries(productRest).reduce((acc, entry) => {
+        const key = entry[0]
+        const v = entry[1]
+        acc[key] = v ? v : null
+        return acc
+      }, {} as { [index: string]: any }) as SupaProduct
+    )
   } catch (e) {
     problems.push(
       `error (${e}) processing row: unf: ${data['unf']} upc_code: ${data['upc_code']}, name: ${data['name']}, description: ${data['description']}`
@@ -215,24 +261,27 @@ function step(props: {
   }
 }
 
+interface IParseProductsCSV {
+  products: SupaProduct[]
+  problems: string[]
+}
+
 export default function parseProductsCSV(
   file: File,
   import_tag: string = `import${Date.now()}`,
   vendor: string = 'default',
   markup: number = 0.0
-) {
-  // mutable cat here because vendor sheets sometimes have categories as their own row
-  // so need a value that can persist across per-row step() fn
-  let cat: string = ''
-  // this probably should be Product[]
-  const results: any[] = []
+): Promise<IParseProductsCSV> {
   const products: SupaProduct[] = []
   const problems: string[] = []
 
   return new Promise((resolve, reject) => {
     // any cuz getting tsc is squaks: Argument of type 'File' is not assignable to parameter of type 'unique symbol'
     parse(file as any, {
-      complete: () => resolve({ results, products, problems }),
+      complete: () => {
+        cat = null
+        resolve({ products, problems })
+      },
       error: reject,
       skipEmptyLines: 'greedy',
       header: true,
@@ -244,8 +293,6 @@ export default function parseProductsCSV(
           import_tag,
           vendor,
           markup,
-          cat,
-          results,
           products,
           problems
         })

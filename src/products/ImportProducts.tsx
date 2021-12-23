@@ -18,8 +18,8 @@ import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
 
 import Loading from '../Loading'
 import { supabase } from '../lib/supabaseClient'
-import { API_HOST } from '../constants'
 import parseProductsCSV from '../lib/parseProductsCSV'
+import { SupaProduct } from '../types/SupaTypes'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -91,53 +91,85 @@ export default function ImportProducts() {
     setError('')
     setResponse('')
     setLoading(true)
-    if (!formData || !file) {
+    if (!file) {
       setError('please select a file!')
       return
     }
-    formData.delete('vendor')
-    formData.delete('import_tag')
-    formData.delete('prev_import_tag')
-    formData.delete('markup')
-    formData.delete('force_check')
-    formData.append('vendor', vendor)
-    formData.append('import_tag', importTag)
-    formData.append('prev_import_tag', prevImportTag)
-    formData.append('markup', `${markup}`)
-    formData.append('force_check', `${forceCheck}`)
+    // formData.delete('vendor')
+    // formData.delete('import_tag')
+    // formData.delete('prev_import_tag')
+    // formData.delete('markup')
+    // formData.delete('force_check')
+    // formData.append('vendor', vendor)
+    // formData.append('import_tag', importTag)
+    // formData.append('prev_import_tag', prevImportTag)
+    // formData.append('markup', `${markup}`)
+    // formData.append('force_check', `${forceCheck}`)
 
     const result = await parseProductsCSV(file, importTag, vendor, markup)
     console.log('zomg parseProductsCSV result:', result)
+
+    if (result.problems.length) {
+      setError(result.problems.join('\n '))
+      setLoading(false)
+      return
+    }
+
+    const itemsPerChunk = 1000 // items per chunk
+    const chunkedProducts = result.products.reduce((acc, item, index) => {
+      const chunkIndex = Math.floor(index / itemsPerChunk)
+      if (!acc[chunkIndex]) {
+        acc[chunkIndex] = [] // start a new chunk
+      }
+      acc[chunkIndex].push(item)
+      return acc
+    }, [] as SupaProduct[][])
+
+    const upsertErrors: string[] = []
+    let upsertCount = 0
+    for await (const products of chunkedProducts) {
+      const { error, count, ...rest } = await supabase
+        .from('products')
+        .upsert(products, {
+          count: 'exact',
+          returning: 'minimal'
+        })
+      if (error) {
+        console.warn('zomg supabase upsert error:', error)
+        upsertErrors.push(error.message)
+      }
+      if (count) {
+        upsertCount += count
+      }
+      console.log('zomg supabase upsert rest:', rest)
+    }
+
+    if (upsertErrors.length) {
+      const chunkUpsertErrors = upsertErrors.reduce((acc, item, index) => {
+        const itemsPerChunk = 20
+        const chunkIndex = Math.floor(index / itemsPerChunk)
+        if (!acc[chunkIndex]) {
+          acc[chunkIndex] = [] // start a new chunk
+        }
+        acc[chunkIndex].push(item)
+        return acc
+      }, [] as any)
+
+      const [twentyErrors, restOfTheErrors] = chunkUpsertErrors
+      setError(
+        `${
+          upsertCount ? `Successfully imported ${upsertCount} products!\n` : ''
+        }There were ${
+          upsertErrors.length
+        } errors adding new products:\n${twentyErrors.join('\n ')} \n\n...and ${
+          restOfTheErrors.length
+        } more`
+      )
+    } else {
+      setResponse(`Success! ${upsertCount} products imported.`)
+    }
+
     setLoading(false)
-
-    // fetch(`${API_HOST}/products/upload`, {
-    //   method: 'POST',
-    //   credentials: 'include',
-    //   body: formData
-    // })
-    //   .then((response) => response.json())
-    //   .then((response) => {
-    //     if (response.error) {
-    //       setError(response.msg)
-    //     } else {
-    //       setResponse(response.msg)
-    //     }
-    //   })
-    //   .catch((err) => {
-    //     console.warn('fetch caugher err:', err)
-    //     setError(err.toString())
-    //   })
-    //   .finally(() => {
-    //     setLoading(false)
-
-    //     const importFile = document.getElementById(
-    //       'csvFileInput'
-    //     ) as HTMLInputElement
-    //     if (importFile) {
-    //       setFormData(undefined)
-    //       importFile.value = ''
-    //     }
-    //   })
   }
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -213,9 +245,9 @@ export default function ImportProducts() {
               onClose={handleVendorMenuClose}
             >
               {vendorLookup &&
-                vendorLookup.map((vendor) => (
+                vendorLookup.map((vendor, idx) => (
                   <MenuItem
-                    key={`vendor-sel-${vendor}`}
+                    key={`vendor-sel-${idx}`}
                     onClick={() => handleVendorSelect(vendor)}
                   >
                     {vendor}
@@ -238,8 +270,8 @@ export default function ImportProducts() {
             >
               <MenuItem value="">None</MenuItem>
               {importTagsLookup &&
-                importTagsLookup.map((tag) => (
-                  <MenuItem key={`tag-sel-${tag}`} value={tag}>
+                importTagsLookup.map((tag, idx) => (
+                  <MenuItem key={`tag-sel-${idx}`} value={idx}>
                     {tag}
                   </MenuItem>
                 ))}

@@ -529,13 +529,11 @@ export interface paths {
     get: {
       parameters: {
         query: {
-          id?: parameters["rowFilter.products.id"];
           unf?: parameters["rowFilter.products.unf"];
           upc_code?: parameters["rowFilter.products.upc_code"];
           category?: parameters["rowFilter.products.category"];
           sub_category?: parameters["rowFilter.products.sub_category"];
           name?: parameters["rowFilter.products.name"];
-          description?: parameters["rowFilter.products.description"];
           pk?: parameters["rowFilter.products.pk"];
           size?: parameters["rowFilter.products.size"];
           unit_type?: parameters["rowFilter.products.unit_type"];
@@ -550,7 +548,13 @@ export interface paths {
           updatedAt?: parameters["rowFilter.products.updatedAt"];
           count_on_hand?: parameters["rowFilter.products.count_on_hand"];
           no_backorder?: parameters["rowFilter.products.no_backorder"];
-          fts?: parameters["rowFilter.products.fts"];
+          plu?: parameters["rowFilter.products.plu"];
+          id?: parameters["rowFilter.products.id"];
+          /** original description from vendor pricesheet */
+          description_orig?: parameters["rowFilter.products.description_orig"];
+          /** hand-edited description, intended to persist after upsert */
+          description_edit?: parameters["rowFilter.products.description_edit"];
+          description?: parameters["rowFilter.products.description"];
           /** Filtering Columns */
           select?: parameters["select"];
           /** Ordering */
@@ -601,13 +605,11 @@ export interface paths {
     delete: {
       parameters: {
         query: {
-          id?: parameters["rowFilter.products.id"];
           unf?: parameters["rowFilter.products.unf"];
           upc_code?: parameters["rowFilter.products.upc_code"];
           category?: parameters["rowFilter.products.category"];
           sub_category?: parameters["rowFilter.products.sub_category"];
           name?: parameters["rowFilter.products.name"];
-          description?: parameters["rowFilter.products.description"];
           pk?: parameters["rowFilter.products.pk"];
           size?: parameters["rowFilter.products.size"];
           unit_type?: parameters["rowFilter.products.unit_type"];
@@ -622,7 +624,13 @@ export interface paths {
           updatedAt?: parameters["rowFilter.products.updatedAt"];
           count_on_hand?: parameters["rowFilter.products.count_on_hand"];
           no_backorder?: parameters["rowFilter.products.no_backorder"];
-          fts?: parameters["rowFilter.products.fts"];
+          plu?: parameters["rowFilter.products.plu"];
+          id?: parameters["rowFilter.products.id"];
+          /** original description from vendor pricesheet */
+          description_orig?: parameters["rowFilter.products.description_orig"];
+          /** hand-edited description, intended to persist after upsert */
+          description_edit?: parameters["rowFilter.products.description_edit"];
+          description?: parameters["rowFilter.products.description"];
         };
         header: {
           /** Preference */
@@ -637,13 +645,11 @@ export interface paths {
     patch: {
       parameters: {
         query: {
-          id?: parameters["rowFilter.products.id"];
           unf?: parameters["rowFilter.products.unf"];
           upc_code?: parameters["rowFilter.products.upc_code"];
           category?: parameters["rowFilter.products.category"];
           sub_category?: parameters["rowFilter.products.sub_category"];
           name?: parameters["rowFilter.products.name"];
-          description?: parameters["rowFilter.products.description"];
           pk?: parameters["rowFilter.products.pk"];
           size?: parameters["rowFilter.products.size"];
           unit_type?: parameters["rowFilter.products.unit_type"];
@@ -658,7 +664,13 @@ export interface paths {
           updatedAt?: parameters["rowFilter.products.updatedAt"];
           count_on_hand?: parameters["rowFilter.products.count_on_hand"];
           no_backorder?: parameters["rowFilter.products.no_backorder"];
-          fts?: parameters["rowFilter.products.fts"];
+          plu?: parameters["rowFilter.products.plu"];
+          id?: parameters["rowFilter.products.id"];
+          /** original description from vendor pricesheet */
+          description_orig?: parameters["rowFilter.products.description_orig"];
+          /** hand-edited description, intended to persist after upsert */
+          description_edit?: parameters["rowFilter.products.description_edit"];
+          description?: parameters["rowFilter.products.description"];
         };
         body: {
           /** products */
@@ -805,13 +817,28 @@ export interface paths {
       };
     };
   };
+  "/rpc/products_update_id": {
+    post: {
+      parameters: {
+        body: {
+          args: { [key: string]: unknown };
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferParams"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: unknown;
+      };
+    };
+  };
   "/rpc/distinct_product_import_tags": {
     post: {
       parameters: {
         body: {
-          args: {
-            import_tag: string;
-          };
+          args: { [key: string]: unknown };
         };
         header: {
           /** Preference */
@@ -828,9 +855,7 @@ export interface paths {
     post: {
       parameters: {
         body: {
-          args: {
-            vendor: string;
-          };
+          args: { [key: string]: unknown };
         };
         header: {
           /** Preference */
@@ -959,17 +984,11 @@ export interface definitions {
     updatedAt?: string;
   };
   products: {
-    /**
-     * Note:
-     * This is a Primary Key.<pk/>
-     */
-    id: number;
     unf?: string;
     upc_code?: string;
     category?: string;
     sub_category?: string;
     name?: string;
-    description?: string;
     pk?: number;
     size?: string;
     unit_type?: string;
@@ -984,7 +1003,17 @@ export interface definitions {
     updatedAt?: string;
     count_on_hand?: number;
     no_backorder?: boolean;
-    fts?: string;
+    plu?: string;
+    /**
+     * Note:
+     * This is a Primary Key.<pk/>
+     */
+    id: string;
+    /** original description from vendor pricesheet */
+    description_orig?: string;
+    /** hand-edited description, intended to persist after upsert */
+    description_edit?: string;
+    description?: string;
   };
   /** square on-hand inventory */
   stock: {
@@ -1094,13 +1123,11 @@ export interface parameters {
   "rowFilter.WholesaleOrders.updatedAt": string;
   /** products */
   "body.products": definitions["products"];
-  "rowFilter.products.id": string;
   "rowFilter.products.unf": string;
   "rowFilter.products.upc_code": string;
   "rowFilter.products.category": string;
   "rowFilter.products.sub_category": string;
   "rowFilter.products.name": string;
-  "rowFilter.products.description": string;
   "rowFilter.products.pk": string;
   "rowFilter.products.size": string;
   "rowFilter.products.unit_type": string;
@@ -1115,7 +1142,13 @@ export interface parameters {
   "rowFilter.products.updatedAt": string;
   "rowFilter.products.count_on_hand": string;
   "rowFilter.products.no_backorder": string;
-  "rowFilter.products.fts": string;
+  "rowFilter.products.plu": string;
+  "rowFilter.products.id": string;
+  /** original description from vendor pricesheet */
+  "rowFilter.products.description_orig": string;
+  /** hand-edited description, intended to persist after upsert */
+  "rowFilter.products.description_edit": string;
+  "rowFilter.products.description": string;
   /** stock */
   "body.stock": definitions["stock"];
   "rowFilter.stock.variation_id": string;
