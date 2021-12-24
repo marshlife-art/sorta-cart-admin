@@ -16,9 +16,7 @@ import Tooltip from '@material-ui/core/Tooltip'
 import Button from '@material-ui/core/Button'
 import ListSubheader from '@material-ui/core/ListSubheader'
 import List from '@material-ui/core/List'
-import ListItem from '@material-ui/core/ListItem'
 
-import { API_HOST } from '../constants'
 import { LineItem } from '../types/Order'
 import { Member } from '../types/Member'
 import { getStoreCreditReport } from '../lib/storeCredit'
@@ -127,19 +125,6 @@ function StoreCredits(props: RouteComponentProps) {
       >
         {members.map((member) => (
           <React.Fragment key={member.id}>
-            {/* <ListItem>
-              <div className={classes.row}>
-                <Tooltip title="edit member">
-                  <Button
-                    onClick={() => props.history.push(`/members/${member.id}`)}
-                  >
-                    {member.name}
-                  </Button>
-                </Tooltip>
-                <Typography>{member.registration_email}</Typography>
-                <Typography>$ {member.store_credit.toFixed(2)}</Typography>
-              </div>
-            </ListItem> */}
             <ExpansionPanel square>
               <ExpansionPanelSummary
                 expandIcon={<ExpandMoreIcon />}
@@ -159,8 +144,6 @@ function StoreCredits(props: RouteComponentProps) {
                   <Typography>{member.registration_email}</Typography>
                   <Typography>$ {member.store_credit.toFixed(2)}</Typography>
                 </div>
-
-                {/* <Typography>Order Line Items</Typography> */}
               </ExpansionPanelSummary>
               <ExpansionPanelDetails>
                 <Table>

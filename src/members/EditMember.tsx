@@ -23,9 +23,10 @@ import ListItemText from '@material-ui/core/ListItemText'
 
 import { Member, MemberRouterProps } from '../types/Member'
 import Loading from '../Loading'
-import { API_HOST } from '../constants'
 import { fetchStoreCredit } from '../orders/EditOrder'
 import { Order } from '../types/Order'
+import { supabase } from '../lib/supabaseClient'
+import { SupaOrder } from '../types/SupaTypes'
 
 const blankMember: Member = {
   id: 'new',
@@ -71,17 +72,16 @@ async function fetchMemberOrders(
   MemberId: string,
   setOrders: React.Dispatch<React.SetStateAction<Order[]>>
 ) {
-  const orders = await fetch(`${API_HOST}/admin/member_orders`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include',
-    body: JSON.stringify({ MemberId })
-  })
-    .then((response: any) => response.json())
-    .catch((err: any) => [])
-  setOrders(orders)
+  const { data: orders, error } = await supabase
+    .from<SupaOrder>('Orders')
+    .select()
+    .eq('MemberId', MemberId)
+  if (error || !orders) {
+    console.warn('fetchMemberOrders got error', error)
+    setOrders([])
+  } else {
+    setOrders(orders as Order[])
+  }
 }
 
 function EditMember(props: RouteComponentProps<MemberRouterProps>) {
@@ -107,30 +107,16 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
       setMember(blankMember)
       setLoadingMember(false)
     } else {
-      fetch(`${API_HOST}/members`, {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          filters: [
-            {
-              column: {
-                field: 'id'
-              },
-              value: memberId
-            }
-          ]
+      supabase
+        .from('Members')
+        .select()
+        .eq('id', memberId)
+        .single()
+        .then(({ data: member }) => {
+          setMember({ ...member, data: JSON.parse(member.data) })
+          setLoadingMember(false)
         })
-      })
-        .then((response) => response.json())
-        .then((response) => {
-          // console.log('zomfg response:', response)
-          setMember(response.data[0] as Member)
-        })
-        .catch((err) => setMember(blankMember))
-        .finally(() => setLoadingMember(false))
+
       if (!memberId) {
         return
       }
@@ -139,34 +125,29 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
     }
   }, [memberId])
 
-  function submitData() {
+  async function submitData() {
     setError('')
     setResponse('')
     setLoading(true)
 
-    const path = memberId === 'new' ? '/create' : '/update'
-
-    fetch(`${API_HOST}/member${path}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
+    const { error } = await supabase.from('Members').upsert(
+      {
+        ...member,
+        id: memberId === 'new' ? undefined : memberId,
+        createdAt: memberId === 'new' ? undefined : member.createdAt,
+        updatedAt: null,
+        fts: undefined
       },
-      credentials: 'include',
-      body: JSON.stringify({ member, createNewUser })
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        if (response.error) {
-          setError(response.msg)
-        } else {
-          setResponse(response.msg)
-        }
-      })
-      .catch((err) => {
-        console.warn('fetch caugher err:', err)
-        setError(err.toString())
-      })
-      .finally(() => setLoading(false))
+      { returning: 'minimal' }
+    )
+
+    if (error) {
+      console.warn('upsert member caugher err:', error)
+      setError(error.message)
+    } else {
+      setResponse('Success!')
+    }
+    setLoading(false)
   }
 
   return (

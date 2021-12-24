@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react'
+import useSWR from 'swr'
 import TextField from '@material-ui/core/TextField'
 import Autocomplete from '@material-ui/lab/Autocomplete'
 import CircularProgress from '@material-ui/core/CircularProgress'
 
 import { Member } from '../types/Member'
-import { API_HOST } from '../constants'
-
-interface MemberResponse {
-  data: Member[]
-}
+import { supabase } from '../lib/supabaseClient'
 
 interface MemberOption {
   name: string
@@ -25,42 +22,37 @@ export default function MemberAutocomplete(props: MemberAutocompleteProps) {
   const [q, setQ] = useState('')
   const [loading, setLoading] = useState(open && options.length === 0)
 
-  useEffect(() => {
-    let active = true
+  useSWR({ key: 'member_autocomplete', q }, async ({ q }) => {
+    if (!q) {
+      setOptions([])
+      return
+    }
+    let query = supabase.from('Members').select()
 
-    if (!loading) {
-      return undefined
+    if (q) {
+      query = query.or(
+        ['name', 'registration_email', 'phone']
+          .map((f) => `${f}.ilike.%${q}%`)
+          .join(',')
+      )
     }
 
-    // this is a little weird
-    ;(async () => {
-      const response = await fetch(`${API_HOST}/members`, {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ search: q })
-      })
+    const { data: members, error } = await query
 
-      const members = (await response.json()) as MemberResponse
-      if (active) {
-        setOptions(
-          members.data.map((p) => ({
-            name: `${p.name} ${
-              p.User && p.User.email ? p.User.email : p.registration_email
-            }`,
-            member: p
-          }))
-        )
-        setLoading(false)
-      }
-    })()
-
-    return () => {
-      active = false
+    if (error || !members) {
+      return
     }
-  }, [loading, q])
+
+    setOptions(
+      members.map((m) => ({
+        name: `${m.name} ${
+          m.User && m.User.email ? m.User.email : m.registration_email
+        }`,
+        member: m
+      }))
+    )
+    setLoading(false)
+  })
 
   useEffect(() => {
     if (!open) {
@@ -106,10 +98,10 @@ export default function MemberAutocomplete(props: MemberAutocompleteProps) {
           InputProps={{
             ...params.InputProps,
             endAdornment: (
-              <React.Fragment>
+              <>
                 {loading ? <CircularProgress size={20} /> : null}
                 {params.InputProps.endAdornment}
-              </React.Fragment>
+              </>
             )
           }}
         />

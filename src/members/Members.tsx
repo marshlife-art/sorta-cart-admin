@@ -47,17 +47,11 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
       }
       const id = members[0].id
       if (window.confirm(`Are you sure you want to delete this member?`)) {
-        fetch(`${API_HOST}/member`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({ id })
-        })
-          .then((response) => response.json())
+        supabase
+          .from('Members')
+          .delete({ returning: 'minimal' })
+          .eq('id', id)
           .then(() => tableRef.current && tableRef.current.onQueryChange())
-          .catch((err) => console.warn('members deleteAction caught err', err))
       }
     }
   }
