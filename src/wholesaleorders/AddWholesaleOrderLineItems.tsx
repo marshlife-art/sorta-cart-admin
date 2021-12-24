@@ -10,6 +10,7 @@ import { LineItem, OrderStatus } from '../types/Order'
 import { API_HOST } from '../constants'
 import { supabase } from '../lib/supabaseClient'
 import { useAllWholesaleOrdersService } from './useWholesaleOrderService'
+import { SupaOrderLineItem } from '../types/SupaTypes'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -97,25 +98,27 @@ function AddWholesaleOrderLineItems(
     setWholesaleOrderMenuAnchorEl(null)
   }
 
-  const handleWholesaleOrderSelect = (id: string) => {
-    fetch(`${API_HOST}/wholesaleorder/addlineitems`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ id, selectedLineItems })
-    })
-      .then((response) => response.json())
-      .then((result) => {
-        // console.log('update line items result:', result)
-      })
-      .catch(console.warn)
-      .finally(() => {
-        handleWholesaleOrderMenuClose()
-        setNeedsRefresh(true)
-        props.setReloadOrders(true)
-      })
+  const handleWholesaleOrderSelect = async (id: string) => {
+    if (!selectedLineItems?.length) {
+      return
+    }
+    const WholesaleOrderId = parseInt(id)
+    const response = await supabase
+      .from<SupaOrderLineItem>('OrderLineItems')
+      .update({ WholesaleOrderId }, { returning: 'minimal' })
+      .in(
+        'id',
+        selectedLineItems?.map((id) => parseInt(id))
+      )
+    if (response.error) {
+      console.warn(
+        '[AddWholesaleOrderLineItems] handleWholesaleOrderSelect() got error response:',
+        response
+      )
+    }
+    handleWholesaleOrderMenuClose()
+    setNeedsRefresh(true)
+    props.setReloadOrders(true)
   }
 
   return (

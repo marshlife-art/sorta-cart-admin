@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { Service } from '../types/Service'
 import { WholesaleOrder } from '../types/WholesaleOrder'
@@ -132,43 +132,44 @@ const useWholesaleOrderSaveService = (
     status: 'loading'
   })
 
-  useEffect(() => {
+  const createOrUpdateWholesaleOrder = useCallback(async () => {
     if (!doSave || !wholesaleOrder || !wholesaleOrder.id) {
       setDoSave(false)
       return
     }
 
-    const path =
-      wholesaleOrder.id === 'new'
-        ? '/wholesaleorder/create'
-        : '/wholesaleorder/upsert'
-    fetch(`${API_HOST}${path}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify(wholesaleOrder)
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        setResult({
-          status: 'loaded',
-          payload: response.order as WholesaleOrder
-        })
-        setSnackMsg(response.msg)
-        setSnackOpen(true)
+    const { data, error } = await supabase
+      .from('WholesaleOrders')
+      .upsert({
+        ...wholesaleOrder,
+        id: wholesaleOrder.id === 'new' ? undefined : wholesaleOrder.id,
+        createdAt:
+          wholesaleOrder.id === 'new' ? undefined : wholesaleOrder.createdAt,
+        updatedAt:
+          wholesaleOrder.id === 'new' ? undefined : wholesaleOrder.updatedAt,
+        OrderLineItems: undefined
       })
-      .catch((error) => {
-        console.warn('useWholesaleOrderSaveService fetch caught err:', error)
-        setResult({ ...error })
-        setSnackMsg(`o noz! ${error}`)
-        setSnackOpen(true)
+      .single()
+
+    if (error) {
+      setSnackMsg(error.message)
+      setSnackOpen(true)
+      setResult({ status: 'error', error: new Error(error.message) })
+    } else {
+      setSnackMsg('Saved!')
+      setSnackOpen(true)
+      setResult({
+        status: 'loaded',
+        payload: data as WholesaleOrder
       })
-      .finally(() => {
-        setDoSave(false)
-      })
+    }
+
+    setDoSave(false)
   }, [wholesaleOrder, doSave, setDoSave, setSnackMsg, setSnackOpen])
+
+  useEffect(() => {
+    createOrUpdateWholesaleOrder()
+  }, [doSave])
 
   return result
 }

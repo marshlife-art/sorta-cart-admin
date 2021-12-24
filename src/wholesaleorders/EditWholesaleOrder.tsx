@@ -31,6 +31,7 @@ import {
 } from './useWholesaleOrderService'
 import EditMenu from './EditMenu'
 import WholesaleOrderLineItems from './WholesaleOrderLineItems'
+import { supabase } from '../lib/supabaseClient'
 
 const { Parser } = require('json2csv')
 
@@ -108,75 +109,56 @@ function EditWholesaleOrder(
   const [snackOpen, setSnackOpen] = React.useState(false)
   const [snackMsg, setSnackMsg] = React.useState('')
 
-  const handleOrderNotesChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleOrderNotesChange = (notes?: string) => {
     setWholesaleOrder((prevOrder) => {
       if (prevOrder) {
         return {
           ...prevOrder,
-          notes: event.target.value
+          notes
         }
       }
     })
   }
 
-  const handleOrderVendorChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleOrderVendorChange = (vendor: string) => {
     setWholesaleOrder((prevOrder) => {
       if (prevOrder) {
         return {
           ...prevOrder,
-          vendor: event.target.value
+          vendor
         }
       }
     })
   }
 
-  const handleStatusChange = (
-    event: React.ChangeEvent<{
-      name?: string | undefined
-      value: unknown
-    }>
-  ) => {
+  const handleStatusChange = (status: OrderStatus) => {
     setWholesaleOrder((prevOrder) => {
       if (prevOrder) {
         return {
           ...prevOrder,
-          status: event.target.value as OrderStatus
+          status
         }
       }
     })
   }
 
-  const handlePaymentStatusChange = (
-    event: React.ChangeEvent<{
-      name?: string | undefined
-      value: unknown
-    }>
-  ) => {
+  const handlePaymentStatusChange = (payment_status: PaymentStatus) => {
     setWholesaleOrder((prevOrder) => {
       if (prevOrder) {
         return {
           ...prevOrder,
-          payment_status: event.target.value as PaymentStatus
+          payment_status
         }
       }
     })
   }
 
-  const handleShipmentStatusChange = (
-    event: React.ChangeEvent<{
-      name?: string | undefined
-      value: unknown
-    }>
-  ) => {
+  const handleShipmentStatusChange = (shipment_status: ShipmentStatus) => {
     setWholesaleOrder((prevOrder) => {
       if (prevOrder) {
         return {
           ...prevOrder,
-          shipment_status: event.target.value as ShipmentStatus
+          shipment_status
         }
       }
     })
@@ -223,30 +205,38 @@ function EditWholesaleOrder(
     setSnackOpen
   )
 
-  const onDeleteBtnClick = (): void => {
-    wholesaleOrder &&
-      fetch(`${API_HOST}/wholesaleorder`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ id: wholesaleOrder.id })
-      })
-        .then((response) => response.json())
-        .then((response) => {
-          if (response.error) {
-            setSnackMsg(response.msg)
-            setSnackOpen(true)
-          } else {
-            props.history.replace('/wholesaleorders')
-          }
-        })
-        .catch((error) => {
-          console.warn('delete wholesaleOrder fetch caught err:', error)
-          setSnackMsg(`o noz! ${error}`)
-          setSnackOpen(true)
-        })
+  const onDeleteBtnClick = async (): Promise<void> => {
+    if (!wholesaleOrder) {
+      return
+    }
+
+    const updateOLIResult = await supabase
+      .from('OrderLineItems')
+      .update({ WholesaleOrderId: null })
+      .eq('WholesaleOrderId', wholesaleOrder.id)
+
+    if (updateOLIResult.error && updateOLIResult.status !== 404) {
+      console.warn(
+        'delete wholesale firstUpdateOLI order caught error:',
+        updateOLIResult
+      )
+      setSnackMsg(updateOLIResult.error.message)
+      setSnackOpen(true)
+      return
+    }
+
+    const result = await supabase
+      .from('WholesaleOrders')
+      .delete()
+      .eq('id', wholesaleOrder.id)
+
+    if (result.error) {
+      console.warn('delete wholesale order caught error:', result.error)
+      setSnackMsg(result.error.message)
+      setSnackOpen(true)
+    } else {
+      props.history.replace('/wholesaleorders')
+    }
   }
 
   const saveStreamCSV = (filename: string, text: any) => {
@@ -337,7 +327,9 @@ function EditWholesaleOrder(
                 label="vendor"
                 fullWidth
                 value={valueFor('vendor')}
-                onChange={handleOrderVendorChange}
+                onChange={(event) =>
+                  handleOrderVendorChange(event.target.value)
+                }
               />
               <FormControl fullWidth>
                 <InputLabel id="order-status-select-label">status</InputLabel>
@@ -345,7 +337,9 @@ function EditWholesaleOrder(
                   labelId="order-status-select-label"
                   id="order-status-select"
                   value={valueFor('status')}
-                  onChange={handleStatusChange}
+                  onChange={(event) =>
+                    handleStatusChange(event.target.value as OrderStatus)
+                  }
                 >
                   {Object.keys(ORDER_STATUSES).map((status) => (
                     <MenuItem key={`os-sel-${status}`} value={status}>
@@ -362,7 +356,11 @@ function EditWholesaleOrder(
                   labelId="payment-status-select-label"
                   id="payment-status-select"
                   value={valueFor('payment_status')}
-                  onChange={handlePaymentStatusChange}
+                  onChange={(event) =>
+                    handlePaymentStatusChange(
+                      event.target.value as PaymentStatus
+                    )
+                  }
                 >
                   {Object.keys(PAYMENT_STATUSES).map((status) => (
                     <MenuItem key={`ps-sel-${status}`} value={status}>
@@ -379,7 +377,11 @@ function EditWholesaleOrder(
                   labelId="shipment-status-select-label"
                   id="shipment-status-select"
                   value={valueFor('shipment_status')}
-                  onChange={handleShipmentStatusChange}
+                  onChange={(event) =>
+                    handleShipmentStatusChange(
+                      event.target.value as ShipmentStatus
+                    )
+                  }
                 >
                   {Object.keys(SHIPMENT_STATUSES).map((status) => (
                     <MenuItem key={`ship-sel-${status}`} value={status}>
@@ -397,7 +399,7 @@ function EditWholesaleOrder(
                 rows={4}
                 rowsMax={28}
                 value={valueFor('notes')}
-                onChange={handleOrderNotesChange}
+                onChange={(event) => handleOrderNotesChange(event.target.value)}
               />
               <div className={classes.editMenu}>
                 <EditMenu
