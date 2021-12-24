@@ -15,6 +15,8 @@ import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import { LineItemData, GroupedItem } from './EditWholesaleOrder'
 import { WholesaleOrder } from '../types/WholesaleOrder'
 import { API_HOST } from '../constants'
+import { supabase } from '../lib/supabaseClient'
+import { SupaOrderLineItem } from '../types/SupaTypes'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -153,20 +155,21 @@ function WholesaleOrderLineItems(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(calc, [lineItems])
 
-  function removeLineItem(item: GroupedItem) {
+  async function removeLineItem(item: GroupedItem) {
     const ids = item.line_items.map((li) => li.id).filter((a) => a)
     if (ids && ids.length && window.confirm('are you sure?')) {
-      fetch(`${API_HOST}/wholesaleorder/removelineitem`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ ids })
-      })
-        .then((response) => response.json())
-        .then((response) => !response.error && props.setReload(true))
-        .catch((err) => console.warn('members removelineitem caught err', err))
+      const response = await supabase
+        .from('OrderLineItems')
+        .update({ WholesaleOrderId: null })
+        .in('id', ids)
+      if (response.error) {
+        console.warn(
+          '[removeLineItem] got error updating OLIs:',
+          response.error
+        )
+      }
+      console.log('update response:', response)
+      props.setReload(true)
     }
   }
 

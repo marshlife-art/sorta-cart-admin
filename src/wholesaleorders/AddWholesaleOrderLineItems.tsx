@@ -6,8 +6,10 @@ import Divider from '@material-ui/core/Divider'
 import MaterialTable from 'material-table'
 import Link from '@material-ui/core/Link'
 
-import { LineItem } from '../types/Order'
+import { LineItem, OrderStatus } from '../types/Order'
 import { API_HOST } from '../constants'
+import { supabase } from '../lib/supabaseClient'
+import { useAllWholesaleOrdersService } from './useWholesaleOrderService'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -50,43 +52,39 @@ function AddWholesaleOrderLineItems(
     }
   }
 
+  const [reloadOrders, setReloadOrders] = useState(true)
+  const allWholesaleOrders = useAllWholesaleOrdersService(
+    null as unknown as OrderStatus,
+    () => {},
+    reloadOrders,
+    setReloadOrders
+  )
+
   useEffect(() => {
     if (needsRefresh) {
       refreshTable()
     }
   }, [needsRefresh, refreshTable])
 
-  const [wholesaleorderLookup, setWholesaleOrderLookup] = useState<
-    Array<{ id: string; name: string }>
-  >()
+  const [wholesaleorderLookup, setWholesaleOrderLookup] =
+    useState<Array<{ id: string; name: string }>>()
+
   useEffect(() => {
-    fetch(`${API_HOST}/wholesaleorders`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ status: ['new', 'needs_review'] })
-    })
-      .then((response) => response.json())
-      .then((result) =>
-        setWholesaleOrderLookup(
-          result.data.map(
-            (order: { id: string; vendor: string; createdAt: string }) => ({
-              id: order.id,
-              name: `${order.vendor} ${new Date(
-                order.createdAt
-              ).toLocaleDateString()}`
-            })
-          )
+    if (allWholesaleOrders.status === 'loaded') {
+      setWholesaleOrderLookup(
+        allWholesaleOrders.payload.map(
+          (order: { id: string; vendor: string; createdAt: string }) => ({
+            id: order.id,
+            name: `${order.vendor} ${new Date(
+              order.createdAt
+            ).toLocaleDateString()}`
+          })
         )
       )
-      .catch(console.warn)
-  }, [])
-  const [
-    wholesaleorderMenuAnchorEl,
-    setWholesaleOrderMenuAnchorEl
-  ] = React.useState<null | HTMLElement>(null)
+    }
+  }, [allWholesaleOrders])
+  const [wholesaleorderMenuAnchorEl, setWholesaleOrderMenuAnchorEl] =
+    React.useState<null | HTMLElement>(null)
 
   const handleWholesaleOrderMenuOpen = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -173,24 +171,71 @@ function AddWholesaleOrderLineItems(
             hidden: true
           }
         ]}
-        data={(query) =>
-          new Promise((resolve, reject) => {
-            fetch(`${API_HOST}/wholesaleorders/lineitems`, {
-              method: 'post',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              credentials: 'include',
-              body: JSON.stringify(query)
-            })
-              .then((response) => response.json())
-              .then((result) => {
-                resolve(result)
+        data={(q) =>
+          new Promise(async (resolve, reject) => {
+            let query = supabase
+              .from('OrderLineItems')
+              .select('*', { count: 'exact' })
+              .is('WholesaleOrderId', null)
+              .eq('kind', 'product')
+              .or('status.neq.on_hand,status.is.null')
+
+            //(status != 'on_hand' or status is null)
+            if (q.filters.length) {
+              q.filters.forEach((filter) => {
+                if (filter.column.field && filter.value) {
+                  if (filter.value instanceof Array && filter.value.length) {
+                    const or = filter.value
+                      .map((v) => `${String(filter.column.field)}.eq.${v}`)
+                      .join(',')
+                    query = query.or(or)
+                  } else if (filter.value.length) {
+                    query = query.or(
+                      `${String(filter.column.field)}.eq.${filter.value}`
+                    )
+                  }
+                }
               })
-              .catch((err) => {
-                console.warn('onoz, caught err:', err)
-                return resolve({ data: [], page: 0, totalCount: 0 })
+            }
+
+            if (q.search) {
+              // #todo consider q.search.split(' ')
+              query = query.or(
+                ['vendor', 'description']
+                  .map((f) => `${f}.ilike.%${q.search}%`)
+                  .join(',')
+              )
+            }
+            if (q.page) {
+              query = query.range(
+                q.pageSize * q.page,
+                q.pageSize * q.page + q.pageSize
+              )
+            }
+            if (q.pageSize) {
+              query = query.limit(q.pageSize)
+            }
+            if (q.orderBy && q.orderBy.field) {
+              query = query.order(q.orderBy.field, {
+                ascending: q.orderDirection === 'asc'
               })
+            }
+
+            const { data: orderLineItems, error, count } = await query
+
+            // whee, so need to JSON.parse each OrderLineItem .data field
+            const data =
+              orderLineItems &&
+              (orderLineItems.map(({ data, ...rest }: { data: string }) => ({
+                ...rest,
+                data: JSON.parse(data)
+              })) as LineItem[])
+
+            if (!data || error) {
+              resolve({ data: [], page: 0, totalCount: 0 })
+            } else {
+              resolve({ data, page: q.page, totalCount: count || 0 })
+            }
           })
         }
         title="Line Items"
