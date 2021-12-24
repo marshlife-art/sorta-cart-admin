@@ -48,6 +48,8 @@ import {
   TAX_RATE
 } from '../constants'
 import { getMemberCreditsAdjustmentsSums } from '../lib/storeCredit'
+import { createOrder, updateOrder } from '../lib/orderService'
+import { SupaOrder, SupaOrderLineItem } from '../types/SupaTypes'
 
 const blankOrder: Order = {
   id: 'new',
@@ -438,33 +440,39 @@ function EditOrder(
     }
   }
 
-  const onSaveBtnClick = (): void => {
+  const onSaveBtnClick = async (): Promise<void> => {
+    const { OrderLineItems: orderLineItems, Members, fts, ...o } = order
+
     setSaving(true)
-    const path =
-      orderId && orderId !== 'new' ? '/order/update' : '/order/create'
-    fetch(`${API_HOST}${path}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify(order)
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        if (response.success) {
-          order &&
-            order.Members &&
-            order.Members.id &&
-            fetchStoreCredit(order.Members.id, setStoreCredit)
-          setSnackOpen(true)
-          setSnackMsg('Saved order!')
-          if (response.order.id && (!orderId || orderId === 'new')) {
-            props.history.replace(`/orders/edit/${response.order.id}`)
-          }
-        }
-      })
-      .finally(() => setSaving(false))
+
+    if (!orderId || orderId === 'new') {
+      const result = await createOrder(
+        o as SupaOrder,
+        orderLineItems as SupaOrderLineItem[]
+      )
+      setSnackOpen(true)
+      setSnackMsg('Saved order!')
+      setSaving(false)
+      if (result && result.id) {
+        props.history.replace(`/orders/edit/${result.id}`)
+      }
+    } else {
+      const result = await updateOrder(
+        o as SupaOrder,
+        orderLineItems as SupaOrderLineItem[]
+      )
+      setSnackOpen(true)
+      if (!result) {
+        setSnackMsg('Oops! Could not update order.')
+      } else {
+        setSnackMsg('Updated order!')
+      }
+      if (order.Members?.id) {
+        await fetchStoreCredit(order.Members.id, setStoreCredit)
+      }
+
+      setSaving(false)
+    }
   }
 
   function onTaxesChange(tax: number) {

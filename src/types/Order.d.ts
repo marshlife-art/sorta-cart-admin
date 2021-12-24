@@ -46,6 +46,7 @@ export interface Order {
   User?: User
   Member?: Member
   Members?: Member // eek :/
+  fts?: string
 }
 
 export type PartialOrder = Partial<Order>
@@ -55,7 +56,7 @@ export interface OrderRouterProps {
 }
 
 export interface LineItem {
-  id?: string
+  id?: string | number
   createdAt?: string
   updatedAt?: string
   description: string
