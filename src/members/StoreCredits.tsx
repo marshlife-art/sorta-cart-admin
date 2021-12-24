@@ -21,6 +21,7 @@ import ListItem from '@material-ui/core/ListItem'
 import { API_HOST } from '../constants'
 import { LineItem } from '../types/Order'
 import { Member } from '../types/Member'
+import { getStoreCreditReport } from '../lib/storeCredit'
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -110,21 +111,7 @@ function StoreCredits(props: RouteComponentProps) {
 
   const [members, setMembers] = useState<StoreCreditRow[]>([])
   useEffect(() => {
-    fetch(`${API_HOST}/admin/store_credit_report`, {
-      method: 'get',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include'
-    })
-      .then((response) => response.json())
-      .then((result) => {
-        setMembers(result)
-      })
-      .catch((err) => {
-        console.warn(err)
-        setMembers([])
-      })
+    getStoreCreditReport().then((result) => setMembers(result))
   }, [])
 
   return (

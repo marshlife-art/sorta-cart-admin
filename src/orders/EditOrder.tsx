@@ -47,6 +47,7 @@ import {
   TAX_RATE_STRING,
   TAX_RATE
 } from '../constants'
+import { getMemberCreditsAdjustmentsSums } from '../lib/storeCredit'
 
 const blankOrder: Order = {
   id: 'new',
@@ -116,20 +117,7 @@ export async function fetchStoreCredit(
   MemberId: string | number,
   setStoreCredit: React.Dispatch<React.SetStateAction<number>>
 ) {
-  const store_credit = await fetch(`${API_HOST}/admin/store_credit`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include',
-    body: JSON.stringify({ MemberId })
-  })
-    .then((response: any) => response.json())
-    .then((response) =>
-      response && response.store_credit ? response.store_credit : 0
-    )
-    .catch((err: any) => 0)
-
+  const { store_credit } = await getMemberCreditsAdjustmentsSums(MemberId)
   setStoreCredit(store_credit)
 }
 
@@ -161,14 +149,14 @@ function EditOrder(
       if (orderService.payload) {
         const _order = orderService.payload
         if (
-          _order.Member &&
-          _order.Member.discount &&
-          _order.Member.discount > 0
+          _order.Members &&
+          _order.Members.discount &&
+          _order.Members.discount > 0
         ) {
           setCanApplyMemberDiscount(true)
         }
-        if (_order.Member && _order.Member.id) {
-          fetchStoreCredit(_order.Member.id, setStoreCredit)
+        if (_order.Members && _order.Members.id) {
+          fetchStoreCredit(_order.Members.id, setStoreCredit)
         }
         setOrder(_order)
       }
@@ -466,9 +454,9 @@ function EditOrder(
       .then((response) => {
         if (response.success) {
           order &&
-            order.Member &&
-            order.Member.id &&
-            fetchStoreCredit(order.Member.id, setStoreCredit)
+            order.Members &&
+            order.Members.id &&
+            fetchStoreCredit(order.Members.id, setStoreCredit)
           setSnackOpen(true)
           setSnackMsg('Saved order!')
           if (response.order.id && (!orderId || orderId === 'new')) {
@@ -644,14 +632,14 @@ function EditOrder(
                 </Typography>
               </Box>
             )}
-            {order.Member && order.Member.discount && (
+            {order.Members && order.Members.discount && (
               <Box color="info.main">
                 <Typography variant="overline" display="block" gutterBottom>
                   Member has discount:{' '}
                   <b>
-                    {order.Member.discount}{' '}
-                    {order.Member.discount_type &&
-                      `(${order.Member.discount_type})`}
+                    {order.Members.discount}{' '}
+                    {order.Members.discount_type &&
+                      `(${order.Members.discount_type})`}
                   </b>
                 </Typography>
               </Box>

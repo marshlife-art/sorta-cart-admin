@@ -20,13 +20,11 @@ const useOrderService = (
 
     supabase
       .from<Order>('Orders')
-      .select('*, OrderLineItems ( * )')
+      .select('*, OrderLineItems ( * ), Members ( * )')
       .eq('id', id)
       .single()
       .then((result) => {
-        console.log('zomg result.data:', result.data)
         result.data && setResult({ status: 'loaded', payload: result.data })
-
         setLoading(false)
       })
   }, [id, setLoading])

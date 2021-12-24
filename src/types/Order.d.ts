@@ -45,6 +45,7 @@ export interface Order {
   UserId?: string
   User?: User
   Member?: Member
+  Members?: Member // eek :/
 }
 
 export type PartialOrder = Partial<Order>
