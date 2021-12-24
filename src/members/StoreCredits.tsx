@@ -127,7 +127,7 @@ function StoreCredits(props: RouteComponentProps) {
       >
         {members.map((member) => (
           <React.Fragment key={member.id}>
-            <ListItem>
+            {/* <ListItem>
               <div className={classes.row}>
                 <Tooltip title="edit member">
                   <Button
@@ -139,18 +139,37 @@ function StoreCredits(props: RouteComponentProps) {
                 <Typography>{member.registration_email}</Typography>
                 <Typography>$ {member.store_credit.toFixed(2)}</Typography>
               </div>
-            </ListItem>
+            </ListItem> */}
             <ExpansionPanel square>
               <ExpansionPanelSummary
                 expandIcon={<ExpandMoreIcon />}
                 aria-controls={`panel${member.id}-content`}
                 id={`panel${member.id}-header`}
               >
-                <Typography>Order Line Items</Typography>
+                <div className={classes.row}>
+                  <Tooltip title="edit member">
+                    <Button
+                      onClick={() =>
+                        props.history.push(`/members/${member.id}`)
+                      }
+                    >
+                      {member.name}
+                    </Button>
+                  </Tooltip>
+                  <Typography>{member.registration_email}</Typography>
+                  <Typography>$ {member.store_credit.toFixed(2)}</Typography>
+                </div>
+
+                {/* <Typography>Order Line Items</Typography> */}
               </ExpansionPanelSummary>
               <ExpansionPanelDetails>
                 <Table>
                   <TableHead>
+                    <TableRow>
+                      <TableCell colSpan={3}>
+                        <Typography>Order Line Items</Typography>
+                      </TableCell>
+                    </TableRow>
                     <TableRow>
                       <TableCell>createdAt</TableCell>
                       <TableCell>order#</TableCell>
