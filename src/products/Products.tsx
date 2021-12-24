@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, createRef } from 'react'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
-import MaterialTable from 'material-table'
+import MaterialTable, { Query } from 'material-table'
 
 import { Product } from '../types/Product'
 import { API_HOST } from '../constants'
 import { supabase } from '../lib/supabaseClient'
+import { getCategories, getSubCategories, getVendors } from './productsService'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -30,7 +31,7 @@ function Products() {
   const deleteAction = {
     tooltip: 'destroy all selected products',
     icon: 'delete',
-    onClick: (e: any, data: Product | Product[]) => {
+    onClick: async (e: any, data: Product | Product[]) => {
       const ids = Array.isArray(data) ? data.map((p) => p.id) : [data.id]
       if (ids.length === 0) {
         return
@@ -40,16 +41,15 @@ function Products() {
           `are sure you want to destroy these ${ids.length} products?`
         )
       ) {
-        fetch(`${API_HOST}/products/destroy`, {
-          method: 'post',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({ ids })
-        })
-          .catch((err) => console.warn('destroy products caught err:', err))
-          .finally(() => setNeedsRefresh(true))
+        const { error } = await supabase
+          .from('products')
+          .delete({ returning: 'minimal' })
+          .in('id', ids)
+
+        if (error) {
+          console.warn('destroy products caught err:', error)
+        }
+        setNeedsRefresh(true)
       }
     }
   }
@@ -61,22 +61,59 @@ function Products() {
   }, [needsRefresh, refreshTable])
 
   const [categoryLookup, setCategoryLookup] = useState<object>(() => {
-    fetch(`${API_HOST}/categories`)
-      .then((response) => response.json())
-      .then((result) => setCategoryLookup(result))
+    getCategories().then((result) => setCategoryLookup(result))
   })
 
   const [subCategoryLookup, setSubCategoryLookup] = useState<object>(() => {
-    fetch(`${API_HOST}/sub_categories`)
-      .then((response) => response.json())
-      .then((result) => setSubCategoryLookup(result))
+    getSubCategories('').then((result) => setSubCategoryLookup(result))
   })
 
   const [vendorLookup, setVendorLookup] = useState<object>(() => {
-    fetch(`${API_HOST}/products/vendors`)
-      .then((response) => response.json())
-      .then((result) => setVendorLookup(result))
+    getVendors().then((result) => setVendorLookup(result))
   })
+
+  const [catDefaultFilter, setCatDefaultFilter] = useState<
+    '' | string[] | undefined
+  >()
+  const [subCatDefaultFilter, setSubCatDefaultFilter] = useState<
+    '' | string[] | undefined
+  >()
+
+  async function setSelectedCatsFromQuery(query: Query<any>) {
+    try {
+      const categories = query.filters
+        .filter((f) => f.column.field === 'category')
+        .reduce(
+          (terms: string[], t: { value: string[] }) => [...terms, ...t.value],
+          []
+        )
+      const subCatz = query.filters
+        .filter((f) => f.column.field === 'sub_category')
+        .reduce(
+          (terms: string[], t: { value: string[] }) => [...terms, ...t.value],
+          []
+        )
+      if (categories.length === 0) {
+        return
+      }
+
+      let newSubCatz = {}
+
+      for await (const cat of categories) {
+        const result = await getSubCategories(cat)
+        newSubCatz = {
+          ...newSubCatz,
+          ...result
+        }
+      }
+
+      setCatDefaultFilter(categories)
+      setSubCategoryLookup(newSubCatz)
+      setSubCatDefaultFilter(subCatz)
+    } catch (e) {
+      console.warn('onoz caught err:', e)
+    }
+  }
 
   return (
     <div className={classes.root}>
@@ -88,14 +125,16 @@ function Products() {
             field: 'category',
             type: 'string',
             lookup: categoryLookup,
-            filterPlaceholder: 'filter'
+            filterPlaceholder: 'filter',
+            defaultFilter: catDefaultFilter
           },
           {
             title: 'sub category',
             field: 'sub_category',
             type: 'string',
             lookup: subCategoryLookup,
-            filterPlaceholder: 'filter'
+            filterPlaceholder: 'filter',
+            defaultFilter: subCatDefaultFilter
           },
           {
             title: 'vendor',
@@ -182,6 +221,7 @@ function Products() {
         ]}
         data={(q) =>
           new Promise(async (resolve, reject) => {
+            setSelectedCatsFromQuery(q)
             let query = supabase
               .from('products')
               .select('*', { count: 'exact' })
