@@ -13,6 +13,7 @@ import {
 import { formatRelative } from 'date-fns'
 import { supabase } from '../lib/supabaseClient'
 import { getStatusAction, getShipmentStatusAction } from './StatusMenu'
+import printOrders from '../lib/printOrder'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -60,32 +61,19 @@ function Orders(props: RouteComponentProps) {
   const printAction = {
     tooltip: 'PRINT',
     icon: 'print',
-    onClick: (e: any, data: Order[]) => {
-      const orderIds = data.map((order) => order.id)
+    onClick: async (e: any, data: Order[]) => {
+      const orderIds = data.map((order) => parseInt(`${order.id}`))
 
-      fetch(`${API_HOST}/orders/print`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ orderIds })
-      })
-        .then((response) => response.text())
-        .then((result) => {
-          try {
-            // eslint-disable-next-line
-            const wOpen = window.open('about:blank')
-            if (wOpen) {
-              wOpen.document.body.innerHTML += result
-            }
-          } catch (e) {
-            console.warn('caught error doing this razzle dazze shit e:', e)
-          }
-        })
-        .catch((err) => {
-          console.warn(err)
-        })
+      try {
+        const ordersHTML = await printOrders(orderIds)
+        // eslint-disable-next-line
+        const wOpen = window.open('about:blank')
+        if (wOpen) {
+          wOpen.document.body.innerHTML += ordersHTML
+        }
+      } catch (e) {
+        console.warn('caught error doing this razzle dazze shit e:', e)
+      }
     }
   }
 

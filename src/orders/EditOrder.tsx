@@ -11,7 +11,6 @@ import Tooltip from '@material-ui/core/Tooltip'
 import Typography from '@material-ui/core/Typography'
 import CloseIcon from '@material-ui/icons/Close'
 import AddIcon from '@material-ui/icons/Add'
-import EmailIcon from '@material-ui/icons/Email'
 import ClearIcon from '@material-ui/icons/Clear'
 import PeopleIcon from '@material-ui/icons/People'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
@@ -40,7 +39,6 @@ import MemberAutocomplete from './MemberAutocomplete'
 import { Product } from '../types/Product'
 import { Member } from '../types/Member'
 import {
-  API_HOST,
   ORDER_STATUSES,
   PAYMENT_STATUSES,
   SHIPMENT_STATUSES,
@@ -393,29 +391,30 @@ function EditOrder(
     }))
   }
 
-  function emailReceipt(event: any) {
-    fetch(`${API_HOST}/orders/resend_email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ orderId: order.id })
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        if (response.success) {
-          setSnackMsg(`Re-sent email to ${order.email}`)
-        } else {
-          setSnackMsg(`onoz! could not send email to ${order.email}`)
-        }
-      })
-      .catch((e) => {
-        console.warn('onoz! caught error re-sending email:', e)
-        setSnackMsg('onoz! could not re-send email')
-      })
-      .finally(() => setSnackOpen(true))
-  }
+  // #TODO: hmm, figure this out.
+  // function emailReceipt(event: any) {
+  //   fetch(`${API_HOST}/orders/resend_email`, {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json'
+  //     },
+  //     credentials: 'include',
+  //     body: JSON.stringify({ orderId: order.id })
+  //   })
+  //     .then((response) => response.json())
+  //     .then((response) => {
+  //       if (response.success) {
+  //         setSnackMsg(`Re-sent email to ${order.email}`)
+  //       } else {
+  //         setSnackMsg(`onoz! could not send email to ${order.email}`)
+  //       }
+  //     })
+  //     .catch((e) => {
+  //       console.warn('onoz! caught error re-sending email:', e)
+  //       setSnackMsg('onoz! could not re-send email')
+  //     })
+  //     .finally(() => setSnackOpen(true))
+  // }
 
   function onMembertemSelected(value?: { name: string; member: Member }) {
     if (value && value.member) {
@@ -846,14 +845,14 @@ function EditOrder(
                     CREDIT
                   </Button>
 
-                  <Button
+                  {/* <Button
                     aria-label="email receipt"
                     size="large"
                     onClick={emailReceipt}
                   >
                     <EmailIcon className={classes.emailIcon} />
                     email receipt
-                  </Button>
+                  </Button> */}
                 </>
               )}
             </div>

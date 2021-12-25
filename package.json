@@ -19,6 +19,7 @@
     "@material-ui/icons": "^4.11.2",
     "@material-ui/lab": "^4.0.0-alpha.60",
     "date-fns": "^2.27.0",
+    "handlebars": "^4.7.7",
     "json2csv": "^5.0.6",
     "material-table": "^1.69.3",
     "papaparse": "^5.3.1",
@@ -37,6 +38,7 @@
   },
   "devDependencies": {
     "@supabase/supabase-js": "^1.28.5",
+    "@types/handlebars": "^4.1.0",
     "@types/jest": "^27.0.3",
     "@types/node": "17.0.0",
     "@types/papaparse": "^5.3.1",

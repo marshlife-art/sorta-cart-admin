@@ -868,6 +868,23 @@ export interface paths {
       };
     };
   };
+  "/rpc/recent_orders": {
+    post: {
+      parameters: {
+        body: {
+          args: { [key: string]: unknown };
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferParams"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: unknown;
+      };
+    };
+  };
   "/rpc/distinct_product_categories": {
     post: {
       parameters: {

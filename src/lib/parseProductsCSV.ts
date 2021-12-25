@@ -120,7 +120,6 @@ function step(props: {
     // MARSH can only order IOW products.
     // so if there's an IOW column and it has an empty string value, skip it.
     if (data['iow'] === '') {
-      // console.log('ZOMG have an empty data[iow]! ...gonna skip!')
       return
     }
 

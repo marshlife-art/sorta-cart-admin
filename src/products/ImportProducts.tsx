@@ -107,7 +107,6 @@ export default function ImportProducts() {
       defaultCat,
       defaultSubCat
     )
-    console.log('zomg parseProductsCSV result:', result)
 
     if (result.problems.length) {
       setError(result.problems.join('\n '))
@@ -148,7 +147,6 @@ export default function ImportProducts() {
       if (count) {
         upsertCount += count
       }
-      console.log('zomg supabase upsert rest:', rest)
     }
 
     if (upsertErrors.length) {

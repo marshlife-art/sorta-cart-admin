@@ -265,7 +265,6 @@ function Products() {
 
             const { data, error, count } = await query
 
-            // console.log('orders count:', count, ' q:', q, 'data:', data)
             if (!data || error) {
               resolve({ data: [], page: 0, totalCount: 0 })
             } else {

@@ -1,5 +1,9 @@
 import { supabase } from './supabaseClient'
-import { SupaOrder, SupaOrderLineItem } from '../types/SupaTypes'
+import {
+  SupaOrder,
+  SupaOrderLineItem,
+  SupaOrderWithLineItems
+} from '../types/SupaTypes'
 import { Order } from '../types/Order'
 import { TAX_RATE } from '../constants'
 
