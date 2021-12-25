@@ -7,10 +7,9 @@ import MaterialTable from 'material-table'
 import Link from '@material-ui/core/Link'
 
 import { LineItem, OrderStatus } from '../types/Order'
-import { API_HOST } from '../constants'
 import { supabase } from '../lib/supabaseClient'
 import { useAllWholesaleOrdersService } from './useWholesaleOrderService'
-import { SupaOrderLineItem } from '../types/SupaTypes'
+import { SupaOrderLineItem, SupaWholesaleOrder } from '../types/SupaTypes'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -102,7 +101,27 @@ function AddWholesaleOrderLineItems(
     if (!selectedLineItems?.length) {
       return
     }
-    const WholesaleOrderId = parseInt(id)
+
+    let WholesaleOrderId: number
+    if (id === 'new') {
+      const { data, error } = await supabase
+        .from<SupaWholesaleOrder>('WholesaleOrders')
+        .insert(
+          {
+            vendor: 'New Wholesale Order',
+            status: 'new'
+          },
+          { returning: 'representation' }
+        )
+        .single()
+      if (error || !data) {
+        return
+      }
+      WholesaleOrderId = data.id
+    } else {
+      WholesaleOrderId = parseInt(id)
+    }
+
     const response = await supabase
       .from<SupaOrderLineItem>('OrderLineItems')
       .update({ WholesaleOrderId }, { returning: 'minimal' })

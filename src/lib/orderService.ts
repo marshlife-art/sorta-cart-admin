@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient'
 import { SupaOrder, SupaOrderLineItem } from '../types/SupaTypes'
 import { Order } from '../types/Order'
+import { TAX_RATE } from '../constants'
 
 // supabase
 
@@ -170,4 +171,54 @@ export const updateOrder = async (
   }
 
   return data
+}
+
+export interface OrderCreditItem {
+  OrderId: string | number
+  total: number | string
+  description: string
+}
+
+function toMoney(input: any) {
+  if (isNaN(parseFloat(input))) {
+    return 0
+  }
+  return +parseFloat(input).toFixed(2)
+}
+
+export const createOrderCredits = async (items: OrderCreditItem[]) => {
+  if (!items || items.length === 0) {
+    throw new Error('[createOrderCredits] invalid request!')
+  }
+
+  return await Promise.all(
+    items.map(async (item) => {
+      if (item.OrderId && item.total && item.description) {
+        const OrderId = parseInt(`${item.OrderId}`)
+        const absPrice = Math.abs(parseFloat(`${item.total}`))
+        const price = toMoney(-absPrice)
+        const total = toMoney(-(absPrice + absPrice * TAX_RATE))
+
+        const { data: orderLineItems, error } = await supabase
+          .from<SupaOrderLineItem>('OrderLineItems')
+          .select()
+          .eq('OrderId', OrderId)
+          .eq('kind', 'credit')
+          .eq('total', total)
+
+        if (error || !orderLineItems || orderLineItems.length > 0) {
+          return
+        }
+
+        await supabase.from<SupaOrderLineItem>('OrderLineItems').insert({
+          quantity: 1,
+          price,
+          total,
+          description: `STORE CREDIT (${item.description})`,
+          kind: 'credit',
+          OrderId
+        })
+      }
+    })
+  )
 }

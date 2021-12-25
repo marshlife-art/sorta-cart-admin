@@ -14,8 +14,8 @@ import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 
 import { LineItemData, GroupedItem } from './EditWholesaleOrder'
 import { WholesaleOrder } from '../types/WholesaleOrder'
-import { API_HOST } from '../constants'
 import { supabase } from '../lib/supabaseClient'
+import { createOrderCredits, OrderCreditItem } from '../lib/orderService'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -171,43 +171,29 @@ function WholesaleOrderLineItems(
     }
   }
 
-  function issueOrderCredits(item: GroupedItem) {
-    const items = item.line_items
-      .map((li) =>
-        li.OrderId
-          ? {
-              OrderId: li.OrderId,
-              total: li.total,
-              description: item.description
-            }
-          : undefined
-      )
-      .filter((o) => o)
+  async function issueOrderCredits(item: GroupedItem) {
+    const items: OrderCreditItem[] = item.line_items
+      .filter((li) => !!li.OrderId)
+      .map((li) => ({
+        OrderId: li.OrderId as number,
+        total: li.total,
+        description: item.description
+      }))
+
+    if (!items || !items.length) {
+      return
+    }
 
     if (window.confirm('will issue order credits. are you sure?')) {
-      fetch(`${API_HOST}/wholesaleorder/issuecredits`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify(items)
-      })
-        .then((response) => response.json())
-        .then((response) => {
-          if (!response.error) {
-            setSnackMsg('Store credits created!')
-            setSnackOpen(true)
-          } else {
-            setSnackMsg('Unable to create credits!')
-            setSnackOpen(true)
-          }
-        })
-        .catch((err) => {
-          setSnackMsg(`onoz! error creating credits: ${err}`)
-          setSnackOpen(true)
-          console.warn('issueOrderCredits caught err', err)
-        })
+      try {
+        await createOrderCredits(items)
+        setSnackMsg('Store credits created!')
+        setSnackOpen(true)
+      } catch (e) {
+        console.warn('createOrderCredits caught error:', e)
+        setSnackMsg(`onoz! error creating credits: ${e}`)
+        setSnackOpen(true)
+      }
     }
   }
 
