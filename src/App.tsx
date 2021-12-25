@@ -44,7 +44,6 @@ import EditOrder from './orders/EditOrder'
 import Members from './members/Members'
 import EditMember from './members/EditMember'
 import { APP_VERSION } from './constants'
-import Announcements from './announcements/Announcements'
 
 const drawerWidth = 240
 
@@ -327,11 +326,6 @@ export function App(props: Props) {
                   userService={userService}
                   path="/storecredits"
                   component={StoreCredits}
-                />
-                <ProtectedRoute
-                  userService={userService}
-                  path="/announcements"
-                  component={Announcements}
                 />
                 <ProtectedRoute
                   userService={userService}

@@ -13,7 +13,6 @@ import AssignmentIcon from '@material-ui/icons/Assignment'
 import LocalShippingIcon from '@material-ui/icons/LocalShipping'
 import OpenInBrowserIcon from '@material-ui/icons/OpenInBrowser'
 import CreditIcon from '@material-ui/icons/LocalAtm'
-import AnnouncementsIcon from '@material-ui/icons/Notifications'
 
 export const mainListItems = (
   <div>
@@ -58,12 +57,6 @@ export const mainListItems = (
         <CreditIcon />
       </ListItemIcon>
       <ListItemText primary="Store Credits" />
-    </ListItem>
-    <ListItem button component={Link} to="/announcements">
-      <ListItemIcon>
-        <AnnouncementsIcon />
-      </ListItemIcon>
-      <ListItemText primary="Announcements" />
     </ListItem>
   </div>
 )
