@@ -16,7 +16,6 @@ import { LineItemData, GroupedItem } from './EditWholesaleOrder'
 import { WholesaleOrder } from '../types/WholesaleOrder'
 import { API_HOST } from '../constants'
 import { supabase } from '../lib/supabaseClient'
-import { SupaOrderLineItem } from '../types/SupaTypes'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -168,7 +167,6 @@ function WholesaleOrderLineItems(
           response.error
         )
       }
-      console.log('update response:', response)
       props.setReload(true)
     }
   }

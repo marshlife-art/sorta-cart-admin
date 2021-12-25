@@ -226,7 +226,7 @@ function Orders(props: RouteComponentProps) {
                 ascending: q.orderDirection === 'asc'
               })
             } else {
-              query = query.order('createdAt', { ascending: false })
+              query = query.order('id', { ascending: false })
             }
 
             const { data, error, count } = await query

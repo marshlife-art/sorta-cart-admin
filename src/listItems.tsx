@@ -7,14 +7,12 @@ import ListSubheader from '@material-ui/core/ListSubheader'
 import DashboardIcon from '@material-ui/icons/Dashboard'
 import ViewListIcon from '@material-ui/icons/ViewList'
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart'
-import TagFacesIcon from '@material-ui/icons/TagFaces'
+// import TagFacesIcon from '@material-ui/icons/TagFaces'
 import PeopleIcon from '@material-ui/icons/People'
 import AssignmentIcon from '@material-ui/icons/Assignment'
 import LocalShippingIcon from '@material-ui/icons/LocalShipping'
 import OpenInBrowserIcon from '@material-ui/icons/OpenInBrowser'
 import CreditIcon from '@material-ui/icons/LocalAtm'
-import OnHandIcon from '@material-ui/icons/PanTool'
-import AddStockIcon from '@material-ui/icons/LibraryAdd'
 import AnnouncementsIcon from '@material-ui/icons/Notifications'
 
 export const mainListItems = (
@@ -37,18 +35,6 @@ export const mainListItems = (
       </ListItemIcon>
       <ListItemText primary="Import Products" />
     </ListItem>
-    <ListItem button component={Link} to="/products/onhand">
-      <ListItemIcon>
-        <OnHandIcon />
-      </ListItemIcon>
-      <ListItemText primary="Stock On Hand" />
-    </ListItem>
-    <ListItem button component={Link} to="/products/addstock">
-      <ListItemIcon>
-        <AddStockIcon />
-      </ListItemIcon>
-      <ListItemText primary="Add Stock" />
-    </ListItem>
     <ListItem button component={Link} to="/orders">
       <ListItemIcon>
         <ShoppingCartIcon />
@@ -60,12 +46,6 @@ export const mainListItems = (
         <LocalShippingIcon />
       </ListItemIcon>
       <ListItemText primary="Wholesale Orders" />
-    </ListItem>
-    <ListItem button component={Link} to="/users">
-      <ListItemIcon>
-        <TagFacesIcon />
-      </ListItemIcon>
-      <ListItemText primary="Users" />
     </ListItem>
     <ListItem button component={Link} to="/members">
       <ListItemIcon>

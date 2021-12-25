@@ -38,11 +38,8 @@ import ProtectedRoute from './auth/ProtectedRoute'
 import StoreCredits from './members/StoreCredits'
 import Orders from './orders/Orders'
 import WholesaleOrders from './wholesaleorders/WholesaleOrders'
-import Users from './users/Users'
 import Products from './products/Products'
 import ImportProducts from './products/ImportProducts'
-import OnHand from './products/OnHand'
-import AddStock from './products/AddStock'
 import EditOrder from './orders/EditOrder'
 import Members from './members/Members'
 import EditMember from './members/EditMember'
@@ -296,16 +293,6 @@ export function App(props: Props) {
                 />
                 <ProtectedRoute
                   userService={userService}
-                  path="/products/onhand"
-                  component={OnHand}
-                />
-                <ProtectedRoute
-                  userService={userService}
-                  path="/products/addstock"
-                  component={AddStock}
-                />
-                <ProtectedRoute
-                  userService={userService}
                   path="/orders"
                   exact
                   component={Orders}
@@ -324,11 +311,6 @@ export function App(props: Props) {
                   userService={userService}
                   path="/wholesaleorders"
                   component={WholesaleOrders}
-                />
-                <ProtectedRoute
-                  userService={userService}
-                  path="/users"
-                  component={Users}
                 />
                 <ProtectedRoute
                   userService={userService}
