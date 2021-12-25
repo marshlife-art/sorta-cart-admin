@@ -38,24 +38,15 @@ function Orders(props: RouteComponentProps) {
   const { data: orders, error } = useSWR<OrderData>(
     'dashboard_orders',
     async () => {
-      const {
-        data,
-        error,
-        count: totalCount
-      } = await supabase
-        .from<Order>('Orders')
-        .select('*', { count: 'exact' })
-        .order('createdAt', { ascending: false })
-        .limit(20)
+      const { data, error } = await supabase.rpc('recent_orders')
 
-      if (!error && data?.length && totalCount) {
+      if (!error && data?.length) {
         return {
           data,
           page: 0,
-          totalCount
+          totalCount: data.length
         }
       }
-
       return {
         data: [],
         page: 0,
