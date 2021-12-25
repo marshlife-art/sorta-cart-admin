@@ -41,13 +41,22 @@ const useStyles = makeStyles((theme: Theme) =>
 )
 
 function usdFormat(num: number | string) {
-  if (num === undefined) {
-    return '0.00'
-  }
-  if (typeof num === 'string') {
-    return `$${parseFloat(num).toFixed(2)}`
-  } else {
-    return `$${num.toFixed(2)}`
+  try {
+    if (num === undefined) {
+      return '$0.00'
+    }
+
+    if (isNaN(parseFloat(`${num}`))) {
+      return '$0.00'
+    }
+
+    if (typeof num === 'string') {
+      return `$${parseFloat(num).toFixed(2)}`
+    } else {
+      return `$${num.toFixed(2)}`
+    }
+  } catch (e) {
+    return '$0.00'
   }
 }
 
@@ -98,7 +107,7 @@ function liPkSize(line_item: LineItem): string {
   return pksize.join(' / ')
 }
 
-function OrderLineItems(props: {
+export default function OrderLineItems(props: {
   line_items: LineItem[]
   onLineItemUpdated: (idx: number, line_item: LineItem) => void
   removeLineItem: (idx: number) => void
@@ -607,5 +616,3 @@ function OrderLineItems(props: {
     </Paper>
   )
 }
-
-export default OrderLineItems

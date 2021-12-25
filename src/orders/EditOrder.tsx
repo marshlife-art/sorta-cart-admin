@@ -121,6 +121,14 @@ export async function fetchStoreCredit(
   setStoreCredit(store_credit)
 }
 
+function tryNumber(input: string | number): number {
+  const str = `${input}`
+  if (isNaN(parseFloat(str))) {
+    return 0.0
+  }
+  return +parseFloat(str).toFixed(2)
+}
+
 interface EditOrderProps {
   userService?: UserService
 }
@@ -857,7 +865,12 @@ function EditOrder(
               )}
             </div>
             <OrderLineItems
-              line_items={order.OrderLineItems}
+              line_items={order.OrderLineItems.map((oli) => ({
+                ...oli,
+                price: tryNumber(oli.price),
+                quantity: tryNumber(oli.quantity),
+                total: tryNumber(oli.total)
+              }))}
               onLineItemUpdated={onLineItemUpdated}
               removeLineItem={removeLineItem}
               onTaxesChange={onTaxesChange}
