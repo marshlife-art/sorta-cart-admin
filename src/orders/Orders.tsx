@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createRef } from 'react'
+import React, { useState, useEffect, createRef, useCallback } from 'react'
 import { withRouter, RouteComponentProps } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import MaterialTable, { Action } from 'material-table'
@@ -12,6 +12,7 @@ import {
 } from '../constants'
 import { formatRelative } from 'date-fns'
 import { supabase } from '../lib/supabaseClient'
+import { getStatusAction, getShipmentStatusAction } from './StatusMenu'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -25,7 +26,19 @@ const useStyles = makeStyles((theme: Theme) =>
 
 function Orders(props: RouteComponentProps) {
   const classes = useStyles()
-  let tableRef = createRef<any>()
+  const tableRef = createRef<any>()
+
+  const [needsRefresh, setNeedsRefresh] = useState(false)
+  const refreshTable = useCallback(() => {
+    tableRef.current && tableRef.current.onQueryChange()
+    setNeedsRefresh(false)
+  }, [tableRef, setNeedsRefresh])
+
+  useEffect(() => {
+    if (needsRefresh) {
+      refreshTable()
+    }
+  }, [needsRefresh, refreshTable])
 
   const [searchExpanded, setSearchExpanded] = useState(false)
   const [isSelecting, setIsSelecting] = useState(false)
@@ -83,14 +96,6 @@ function Orders(props: RouteComponentProps) {
       data[0] && data[0].id && props.history.push(`/orders/edit/${data[0].id}`)
     }
   }
-
-  // const archiveAction = {
-  //   tooltip: 'ARCHIVE',
-  //   icon: 'archive',
-  //   onClick: (e: any, data: Order[]) => {
-  //     console.log('archive these muthafuckaz')
-  //   }
-  // }
 
   const [actions, setActions] = useState<Action<any>[]>([
     searchAction,
@@ -231,7 +236,6 @@ function Orders(props: RouteComponentProps) {
 
             const { data, error, count } = await query
 
-            // console.log('orders count:', count, ' q:', q, 'data:', data)
             if (!data || error) {
               resolve({ data: [], page: 0, totalCount: 0 })
             } else {
@@ -263,9 +267,18 @@ function Orders(props: RouteComponentProps) {
           }
           setIsSelecting(true)
           if (data.length === 1) {
-            setActions([printAction, editAction])
+            setActions([
+              getStatusAction(setNeedsRefresh),
+              getShipmentStatusAction(setNeedsRefresh),
+              printAction,
+              editAction
+            ])
           } else {
-            setActions([printAction])
+            setActions([
+              getStatusAction(setNeedsRefresh),
+              getShipmentStatusAction(setNeedsRefresh),
+              printAction
+            ])
           }
         }}
         actions={actions}
