@@ -109,7 +109,9 @@ function AddWholesaleOrderLineItems(
         .insert(
           {
             vendor: 'New Wholesale Order',
-            status: 'new'
+            status: 'new',
+            payment_status: 'balance_due',
+            shipment_status: 'backorder'
           },
           { returning: 'representation' }
         )

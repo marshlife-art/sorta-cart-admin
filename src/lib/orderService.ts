@@ -43,6 +43,8 @@ export const createOrder = async (
   return data
 
   // #TODO deal with on_hand_count checking like:
+  // mainly tag line items with status 'on_hand' and
+  // split line items between product's count_on_hand and the oli quantity (if necessary)
 
   // order.OrderLineItems.map((oli) => delete oli.id)
   // const createdOrder = await Order.create(order, { include: [OrderLineItem] })

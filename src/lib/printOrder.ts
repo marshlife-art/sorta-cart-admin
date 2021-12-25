@@ -89,6 +89,10 @@ const printTemplate = `
     table {
       font-size: 14px;
     }
+
+    .noprint {
+      display: none;
+    }
   }
 </style>
 
@@ -124,7 +128,7 @@ const printTemplate = `
         <td align="right" colspan="4" class="left-border bottom-border gray-bg header">
           marshcoop.org <br>
           <a href="https://marshlife-art.org/marsh-food-cooperative-schedule/" target="_blank"
-            rel="noopener noreferrer">Order Delivery Schedule</a>
+            rel="noopener noreferrer" class="noprint">Order Delivery Schedule</a>
         </td>
       </tr>
 

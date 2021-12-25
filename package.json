@@ -1,6 +1,6 @@
 {
   "name": "sorta-cart-admin",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "homepage": "https://admin.marshcoop.org/",
   "repository": "github:marshlife-art/sorta-cart-admin",
@@ -25,14 +25,12 @@
     "papaparse": "^5.3.1",
     "react": "latest",
     "react-dom": "latest",
-    "react-markdown": "^7.1.1",
     "react-redux": "^7.2.6",
     "react-router-dom": "^5.1",
     "react-scripts": "^5.0.0",
     "redux": "^4.1.2",
     "redux-logger": "^3.0.6",
     "redux-thunk": "^2.4.1",
-    "remark-gfm": "^3.0.1",
     "swr": "^1.1.1",
     "typescript": "latest"
   },
