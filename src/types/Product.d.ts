@@ -19,4 +19,5 @@ export interface Product {
   count_on_hand?: number
   createdAt?: string
   updatedAt?: string
+  plu?: string
 }

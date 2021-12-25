@@ -5,7 +5,6 @@ import MaterialTable, { Action } from 'material-table'
 import { Order } from '../types/Order'
 import OrderDetailPanel from './OrderDetailPanel'
 import {
-  API_HOST,
   ORDER_STATUSES,
   PAYMENT_STATUSES,
   SHIPMENT_STATUSES

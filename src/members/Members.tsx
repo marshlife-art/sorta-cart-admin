@@ -5,7 +5,6 @@ import MaterialTable from 'material-table'
 
 import { MemberRouterProps } from '../types/Member'
 // import { Member } from '../types/Member'
-import { API_HOST } from '../constants'
 import { formatRelative } from 'date-fns'
 import { supabase } from '../lib/supabaseClient'
 import { SupaMember as Member } from '../types/SupaTypes'

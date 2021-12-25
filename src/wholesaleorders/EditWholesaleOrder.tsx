@@ -19,7 +19,6 @@ import {
 } from '../types/WholesaleOrder'
 import { OrderStatus, ShipmentStatus, PaymentStatus } from '../types/Order'
 import {
-  API_HOST,
   ORDER_STATUSES,
   PAYMENT_STATUSES,
   SHIPMENT_STATUSES
@@ -280,6 +279,7 @@ function EditWholesaleOrder(
       fields: [
         { value: 'product.unf', label: 'unf' },
         { value: 'product.upc_code', label: 'upc_code' },
+        { value: 'product.plu', label: 'plu' },
         { value: 'vendor', label: 'vendor' },
         { value: 'description', label: 'description' },
         { value: 'qtySum', label: 'qtySum' },

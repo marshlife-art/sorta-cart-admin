@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 
 import { Service } from '../types/Service'
 import { WholesaleOrder } from '../types/WholesaleOrder'
-import { API_HOST } from '../constants'
 import { OrderStatus } from '../types/Order'
 import { supabase } from '../lib/supabaseClient'
 import useSWR from 'swr'

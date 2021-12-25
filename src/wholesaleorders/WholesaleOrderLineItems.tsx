@@ -202,7 +202,7 @@ function WholesaleOrderLineItems(
       <TableHead>
         <TableRow>
           <TableCell className={classes.deleteBtn} />
-          <TableCell className={classes.unf}>unf</TableCell>
+          <TableCell className={classes.unf}>unf / upc / plu</TableCell>
           <TableCell>description</TableCell>
           <TableCell>price</TableCell>
           <TableCell>cost</TableCell>
@@ -237,12 +237,20 @@ function WholesaleOrderLineItems(
                   </Tooltip>
                 </TableCell>
                 <TableCell>
-                  {item.product &&
-                    `${
-                      item.product.unf
-                        ? item.product.unf
-                        : item.product.upc_code
-                    } `}
+                  {item.product && item.product.unf && item.product.unf}
+
+                  {item.product && item.product.upc_code && (
+                    <div>
+                      <br />
+                      {`  ${item.product.upc_code}`}
+                    </div>
+                  )}
+                  {item.product && item.product.plu && (
+                    <div>
+                      <br />
+                      {`  ${item.product.plu}`}
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell>
                   {item.product &&
@@ -250,7 +258,7 @@ function WholesaleOrderLineItems(
                   {item.product && (
                     <>
                       <br />
-                      {`${item.product.upc_code} ${item.product.category} > ${item.product.sub_category}`}{' '}
+                      {`${item.product.category} > ${item.product.sub_category}`}{' '}
                     </>
                   )}
                 </TableCell>
