@@ -200,10 +200,12 @@ function Orders(props: RouteComponentProps) {
               })
             }
             if (q.search) {
-              query = query.textSearch('fts', q.search, {
-                type: 'websearch',
-                config: 'english'
-              })
+              // #todo consider q.search.split(' ')
+              query = query.or(
+                ['name', 'email', 'phone', 'address', 'notes']
+                  .map((f) => `${f}.ilike.%${q.search}%`)
+                  .join(',')
+              )
             }
             if (q.page) {
               query = query.range(

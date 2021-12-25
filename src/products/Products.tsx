@@ -3,9 +3,9 @@ import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import MaterialTable, { Query } from 'material-table'
 
 import { Product } from '../types/Product'
-import { API_HOST } from '../constants'
 import { supabase } from '../lib/supabaseClient'
 import { getCategories, getSubCategories, getVendors } from './productsService'
+import { getNoBackorderAction } from './TableActionMenu'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -59,6 +59,8 @@ function Products() {
       refreshTable()
     }
   }, [needsRefresh, refreshTable])
+
+  const [searchExpanded, setSearchExpanded] = useState(true)
 
   const [categoryLookup, setCategoryLookup] = useState<object>(() => {
     getCategories().then((result) => setCategoryLookup(result))
@@ -195,26 +197,28 @@ function Products() {
           {
             title: 'price',
             field: 'ws_price',
-            type: 'currency',
-            filtering: false
+            type: 'string',
+            filtering: false,
+            render: (row) => {
+              return `$${row.ws_price} ${
+                row.u_price && row.ws_price !== row.u_price
+                  ? `(${row.u_price} ea)`
+                  : ''
+              }`
+            }
           },
           {
-            title: '',
-            field: 'u_price',
-            type: 'currency',
-            filtering: false
+            title: 'count',
+            field: 'count_on_hand',
+            type: 'boolean',
+            filtering: true,
+            render: (row) => row.count_on_hand
           },
-          // {
-          //   title: 'count',
-          //   field: 'count_on_hand',
-          //   type: 'numeric',
-          //   filtering: false
-          // },
-          // {
-          //   title: 'no_backorder',
-          //   field: 'no_backorder',
-          //   type: 'boolean'
-          // },
+          {
+            title: 'no backorder',
+            field: 'no_backorder',
+            type: 'boolean'
+          },
           { title: 'upc', field: 'upc_code', type: 'string', hidden: true },
           // { title: 'unf', field: 'unf', type: 'string' },
           { title: 'id', field: 'id', type: 'string', hidden: true }
@@ -228,7 +232,19 @@ function Products() {
 
             if (q.filters.length) {
               q.filters.forEach((filter) => {
-                if (filter.column.field && filter.value) {
+                console.log('zomg filter:', filter)
+                if (filter.column.field === 'no_backorder') {
+                  query = query.or(
+                    `no_backorder.eq.${filter.value === 'checked'}`
+                  )
+                } else if (filter.column.field === 'count_on_hand') {
+                  const or = `count_on_hand.${
+                    filter.value === 'checked'
+                      ? 'gt.0'
+                      : 'is.null,count_on_hand.lte.0'
+                  }`
+                  query = query.or(or)
+                } else if (filter.column.field && filter.value) {
                   if (filter.value instanceof Array && filter.value.length) {
                     const or = filter.value
                       .map((v) => `${String(filter.column.field)}.eq.${v}`)
@@ -243,10 +259,12 @@ function Products() {
               })
             }
             if (q.search) {
-              query = query.textSearch('fts', q.search, {
-                type: 'websearch',
-                config: 'english'
-              })
+              // #todo consider q.search.split(' ')
+              query = query.or(
+                ['name', 'description', 'id']
+                  .map((f) => `${f}.ilike.%${q.search}%`)
+                  .join(',')
+              )
             }
             if (q.page) {
               query = query.range(
@@ -280,11 +298,15 @@ function Products() {
           pageSizeOptions: [50, 100, 500],
           debounceInterval: 750,
           filtering: true,
-          search: true,
+          search: searchExpanded,
           emptyRowsWhenPaging: false,
           selection: true
         }}
-        actions={[deleteAction]}
+        onSelectionChange={(data: Product[], rowData?: Product | undefined) => {
+          searchExpanded && setSearchExpanded(false)
+          setSearchExpanded(data.length === 0)
+        }}
+        actions={[getNoBackorderAction(setNeedsRefresh), deleteAction]}
       />
     </div>
   )
