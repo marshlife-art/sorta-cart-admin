@@ -32,7 +32,7 @@ export default function MemberAutocomplete(props: MemberAutocompleteProps) {
     if (q) {
       query = query.or(
         ['name', 'registration_email', 'phone']
-          .map((f) => `${f}.ilike.%${q}%`)
+          .map((f) => `${f}.ilike."%${q}%"`)
           .join(',')
       )
     }

@@ -40,7 +40,7 @@ export default function LineItemAutocomplete(props: LineItemAutocompleteProps) {
           'upc_code',
           'plu'
         ]
-          .map((f) => `${f}.ilike.%${q}%`)
+          .map((f) => `${f}.ilike."%${q}%"`)
           .join(',')
       )
     }

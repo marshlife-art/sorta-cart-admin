@@ -134,15 +134,15 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
                       return filter.value.map((v) => {
                         // NOTE: ilike only seems to work on string fields
                         if (filter.column.field === 'member_type') {
-                          return `${filter.column.field}.ilike.%${v}%`
+                          return `${filter.column.field}.ilike."%${v}%"`
                         }
                         return `${filter.column.field}.eq.${v}`
                       })
                     } else if (filter.value.length) {
                       if (filter.column.field === 'member_type') {
-                        return `${filter.column.field}.ilike.%${filter.value}%`
+                        return `${filter.column.field}.ilike."%${filter.value}%"`
                       } else {
-                        return `${filter.column.field}.eq.${filter.value}`
+                        return `${filter.column.field}.eq."${filter.value}"`
                       }
                     }
                   }
@@ -154,7 +154,7 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
             if (q.search) {
               query = query.or(
                 ['name', 'phone', 'address', 'registration_email']
-                  .map((f) => `${f}.ilike.%${q.search}%`)
+                  .map((f) => `${f}.ilike."%${q.search}%"`)
                   .join(',')
               )
             }

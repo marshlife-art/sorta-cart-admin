@@ -188,12 +188,12 @@ function Orders(props: RouteComponentProps) {
                 if (filter.column.field && filter.value) {
                   if (filter.value instanceof Array && filter.value.length) {
                     const or = filter.value
-                      .map((v) => `${filter.column.field}.eq.${v}`)
+                      .map((v) => `${filter.column.field}.eq."${v}"`)
                       .join(',')
                     query = query.or(or)
                   } else if (filter.value.length) {
                     query = query.or(
-                      `${filter.column.field}.eq.${filter.value}`
+                      `${filter.column.field}.eq."${filter.value}"`
                     )
                   }
                 }
@@ -203,7 +203,7 @@ function Orders(props: RouteComponentProps) {
               // #todo consider q.search.split(' ')
               query = query.or(
                 ['name', 'email', 'phone', 'address', 'notes']
-                  .map((f) => `${f}.ilike.%${q.search}%`)
+                  .map((f) => `${f}.ilike."%${q.search}%"`)
                   .join(',')
               )
             }
