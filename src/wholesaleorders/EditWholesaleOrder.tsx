@@ -16,6 +16,7 @@ import { Parser } from 'json2csv'
 import { LineItem } from '../types/Order'
 import { Product } from '../types/Product'
 import {
+  SquareStatus,
   WholesaleOrder,
   WholesaleOrderRouterProps
 } from '../types/WholesaleOrder'
@@ -23,7 +24,8 @@ import { OrderStatus, ShipmentStatus, PaymentStatus } from '../types/Order'
 import {
   ORDER_STATUSES,
   PAYMENT_STATUSES,
-  SHIPMENT_STATUSES
+  SHIPMENT_STATUSES,
+  SQUARE_STATUSES
 } from '../constants'
 import Loading from '../Loading'
 import {
@@ -33,6 +35,7 @@ import {
 import EditMenu from './EditMenu'
 import WholesaleOrderLineItems from './WholesaleOrderLineItems'
 import { supabase } from '../lib/supabaseClient'
+import { formatDistance, formatRelative } from 'date-fns'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -42,7 +45,9 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     editMenu: {
       padding: `${theme.spacing(2)}px 0`,
-      textAlign: 'right'
+      display: 'flex',
+      justifyContent: 'space-around',
+      alignItems: 'center'
     }
   })
 )
@@ -82,7 +87,6 @@ function EditWholesaleOrder(
   const [loading, setLoading] = useState(true)
   const [doSave, setDoSave] = useState(false)
   const [reload, setReload] = useState(true)
-  const [calcAdjustments, setCalcAdjustments] = useState(true)
 
   const [lineItemData, setLineItemData] = useState<LineItemData>({
     groupedLineItems: {},
@@ -164,6 +168,39 @@ function EditWholesaleOrder(
     })
   }
 
+  const handleCalcAdjustmentsChange = (calc_adjustments: boolean) => {
+    setWholesaleOrder((prevOrder) => {
+      if (prevOrder) {
+        return {
+          ...prevOrder,
+          calc_adjustments
+        }
+      }
+    })
+  }
+
+  const handleSquareStatusChange = (square_status: SquareStatus) => {
+    setWholesaleOrder((prevOrder) => {
+      if (prevOrder) {
+        return {
+          ...prevOrder,
+          square_status
+        }
+      }
+    })
+  }
+
+  const handleDataChange = (data: object) => {
+    setWholesaleOrder((prevOrder) => {
+      if (prevOrder) {
+        return {
+          ...prevOrder,
+          data
+        }
+      }
+    })
+  }
+
   const handleSnackClose = (
     event: React.SyntheticEvent | React.MouseEvent,
     reason?: string
@@ -173,6 +210,12 @@ function EditWholesaleOrder(
     }
     setSnackOpen(false)
   }
+
+  useEffect(() => {
+    if (lineItemData) {
+      handleDataChange(lineItemData)
+    }
+  }, [lineItemData])
 
   const id = props.match.params.id
 
@@ -305,6 +348,13 @@ function EditWholesaleOrder(
     saveStreamCSV(`${vendor}.csv`, csvout)
   }
 
+  const onImportToSquare = (): void => {
+    handleSquareStatusChange('ready_to_import')
+    handleStatusChange('pending')
+    setDoSave(true)
+    props.setReloadOrders(true)
+  }
+
   function valueFor(field: keyof WholesaleOrder) {
     return wholesaleOrder && wholesaleOrder[field] ? wholesaleOrder[field] : ''
   }
@@ -391,18 +441,61 @@ function EditWholesaleOrder(
                   ))}
                 </Select>
               </FormControl>
+
+              <FormControl fullWidth>
+                <InputLabel id="square-status-select-label">
+                  square status
+                </InputLabel>
+                <Select
+                  labelId="square-status-select-label"
+                  id="square-status-select"
+                  value={valueFor('square_status')}
+                  onChange={(event) =>
+                    handleSquareStatusChange(event.target.value as SquareStatus)
+                  }
+                >
+                  {Object.keys(SQUARE_STATUSES).map((status) => (
+                    <MenuItem key={`ship-sel-${status}`} value={status}>
+                      {SQUARE_STATUSES[status as SquareStatus]}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid item sm={7}>
               <TextField
                 label="notes"
                 multiline
                 fullWidth
-                rows={4}
+                rows={9}
                 rowsMax={28}
                 value={valueFor('notes')}
                 onChange={(event) => handleOrderNotesChange(event.target.value)}
               />
               <div className={classes.editMenu}>
+                <div>
+                  {wholesaleOrder.updatedAt && (
+                    <div>
+                      last updated:{' '}
+                      {formatRelative(
+                        new Date(wholesaleOrder.updatedAt),
+                        Date.now()
+                      )}
+                    </div>
+                  )}
+                  {wholesaleOrder.square_loaded_at && (
+                    <div>
+                      square loaded:{' '}
+                      {formatDistance(
+                        new Date(wholesaleOrder.square_loaded_at),
+                        Date.now(),
+                        {
+                          addSuffix: true
+                        }
+                      )}
+                    </div>
+                  )}
+                </div>
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -410,9 +503,9 @@ function EditWholesaleOrder(
                         event: React.ChangeEvent<HTMLInputElement>,
                         checked: boolean
                       ) => {
-                        setCalcAdjustments(checked)
+                        handleCalcAdjustmentsChange(checked)
                       }}
-                      checked={calcAdjustments}
+                      checked={!!valueFor('calc_adjustments')}
                       value="calc_adjustments"
                     />
                   }
@@ -423,6 +516,7 @@ function EditWholesaleOrder(
                   onSaveBtnClick={onSaveBtnClick}
                   onDeleteBtnClick={onDeleteBtnClick}
                   onProductsExportToCsv={onProductsExportToCsv}
+                  onImportToSquare={onImportToSquare}
                 />
               </div>
             </Grid>
@@ -434,7 +528,7 @@ function EditWholesaleOrder(
             setLineItemData={setLineItemData}
             setSnackMsg={setSnackMsg}
             setSnackOpen={setSnackOpen}
-            calcAdjustments={calcAdjustments}
+            calcAdjustments={!!valueFor('calc_adjustments')}
           />
         </>
       )}

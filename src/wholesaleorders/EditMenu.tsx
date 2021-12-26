@@ -9,7 +9,7 @@ import ListItemIcon from '@material-ui/core/ListItemIcon'
 import DeleteIcon from '@material-ui/icons/Delete'
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
 import FileIcon from '@material-ui/icons/FileCopy'
-
+import SquareIcon from '@material-ui/icons/CropSquare'
 import { WholesaleOrder } from '../types/WholesaleOrder'
 
 const StyledMenu = (props: MenuProps) => (
@@ -44,6 +44,7 @@ interface EditWholesaleOrderMenuProps {
   onSaveBtnClick: () => void
   onDeleteBtnClick: () => void
   onProductsExportToCsv: () => void
+  onImportToSquare: () => void
 }
 
 export default function EditMenu(props: EditWholesaleOrderMenuProps) {
@@ -116,6 +117,23 @@ export default function EditMenu(props: EditWholesaleOrderMenuProps) {
             <FileIcon />
           </ListItemIcon>
           <ListItemText primary="export products to .csv" />
+        </StyledMenuItem>
+
+        <StyledMenuItem
+          onClick={() => {
+            props.onImportToSquare()
+            handleClose()
+          }}
+          disabled={
+            !!props.wholesaleOrder.square_loaded_at ||
+            props.wholesaleOrder.square_status === 'ready_to_import' ||
+            props.wholesaleOrder.square_status === 'complete'
+          }
+        >
+          <ListItemIcon>
+            <SquareIcon />
+          </ListItemIcon>
+          <ListItemText primary="import to Square catalog" />
         </StyledMenuItem>
       </StyledMenu>
     </>

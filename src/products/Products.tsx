@@ -232,7 +232,6 @@ function Products() {
 
             if (q.filters.length) {
               q.filters.forEach((filter) => {
-                console.log('zomg filter:', filter)
                 if (filter.column.field === 'no_backorder') {
                   query = query.or(
                     `no_backorder.eq.${filter.value === 'checked'}`

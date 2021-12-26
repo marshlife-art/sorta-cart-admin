@@ -429,6 +429,10 @@ export interface paths {
           shipment_status?: parameters["rowFilter.WholesaleOrders.shipment_status"];
           createdAt?: parameters["rowFilter.WholesaleOrders.createdAt"];
           updatedAt?: parameters["rowFilter.WholesaleOrders.updatedAt"];
+          calc_adjustments?: parameters["rowFilter.WholesaleOrders.calc_adjustments"];
+          square_status?: parameters["rowFilter.WholesaleOrders.square_status"];
+          square_loaded_at?: parameters["rowFilter.WholesaleOrders.square_loaded_at"];
+          data?: parameters["rowFilter.WholesaleOrders.data"];
           /** Filtering Columns */
           select?: parameters["select"];
           /** Ordering */
@@ -487,6 +491,10 @@ export interface paths {
           shipment_status?: parameters["rowFilter.WholesaleOrders.shipment_status"];
           createdAt?: parameters["rowFilter.WholesaleOrders.createdAt"];
           updatedAt?: parameters["rowFilter.WholesaleOrders.updatedAt"];
+          calc_adjustments?: parameters["rowFilter.WholesaleOrders.calc_adjustments"];
+          square_status?: parameters["rowFilter.WholesaleOrders.square_status"];
+          square_loaded_at?: parameters["rowFilter.WholesaleOrders.square_loaded_at"];
+          data?: parameters["rowFilter.WholesaleOrders.data"];
         };
         header: {
           /** Preference */
@@ -509,6 +517,10 @@ export interface paths {
           shipment_status?: parameters["rowFilter.WholesaleOrders.shipment_status"];
           createdAt?: parameters["rowFilter.WholesaleOrders.createdAt"];
           updatedAt?: parameters["rowFilter.WholesaleOrders.updatedAt"];
+          calc_adjustments?: parameters["rowFilter.WholesaleOrders.calc_adjustments"];
+          square_status?: parameters["rowFilter.WholesaleOrders.square_status"];
+          square_loaded_at?: parameters["rowFilter.WholesaleOrders.square_loaded_at"];
+          data?: parameters["rowFilter.WholesaleOrders.data"];
         };
         body: {
           /** WholesaleOrders */
@@ -999,6 +1011,10 @@ export interface definitions {
     shipment_status?: string;
     createdAt?: string;
     updatedAt?: string;
+    calc_adjustments?: boolean;
+    square_status?: string;
+    square_loaded_at?: string;
+    data?: string;
   };
   products: {
     unf?: string;
@@ -1138,6 +1154,10 @@ export interface parameters {
   "rowFilter.WholesaleOrders.shipment_status": string;
   "rowFilter.WholesaleOrders.createdAt": string;
   "rowFilter.WholesaleOrders.updatedAt": string;
+  "rowFilter.WholesaleOrders.calc_adjustments": string;
+  "rowFilter.WholesaleOrders.square_status": string;
+  "rowFilter.WholesaleOrders.square_loaded_at": string;
+  "rowFilter.WholesaleOrders.data": string;
   /** products */
   "body.products": definitions["products"];
   "rowFilter.products.unf": string;
