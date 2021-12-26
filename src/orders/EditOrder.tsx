@@ -636,18 +636,7 @@ function EditOrder(
               )}
             </div>
 
-            {order.status !== 'new' && order.status !== 'needs_review' && (
-              <Box color="error.main">
-                <Typography variant="overline" display="block">
-                  ohey!
-                </Typography>
-                <Typography variant="body1" display="block" gutterBottom>
-                  this order status is not "new" or "needs review" so making
-                  changes might not be great...
-                </Typography>
-              </Box>
-            )}
-            {order.Members && order.Members.discount && (
+            {order.Members && order.Members.discount > 0 && (
               <Box color="info.main">
                 <Typography variant="overline" display="block" gutterBottom>
                   Member has discount:{' '}
