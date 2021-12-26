@@ -10,6 +10,8 @@ import Select from '@material-ui/core/Select'
 import Snackbar from '@material-ui/core/Snackbar'
 import IconButton from '@material-ui/core/IconButton'
 import CloseIcon from '@material-ui/icons/Close'
+import { FormControlLabel, Checkbox } from '@material-ui/core'
+import { Parser } from 'json2csv'
 
 import { LineItem } from '../types/Order'
 import { Product } from '../types/Product'
@@ -31,8 +33,6 @@ import {
 import EditMenu from './EditMenu'
 import WholesaleOrderLineItems from './WholesaleOrderLineItems'
 import { supabase } from '../lib/supabaseClient'
-
-const { Parser } = require('json2csv')
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -82,6 +82,7 @@ function EditWholesaleOrder(
   const [loading, setLoading] = useState(true)
   const [doSave, setDoSave] = useState(false)
   const [reload, setReload] = useState(true)
+  const [calcAdjustments, setCalcAdjustments] = useState(true)
 
   const [lineItemData, setLineItemData] = useState<LineItemData>({
     groupedLineItems: {},
@@ -402,6 +403,21 @@ function EditWholesaleOrder(
                 onChange={(event) => handleOrderNotesChange(event.target.value)}
               />
               <div className={classes.editMenu}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      onChange={(
+                        event: React.ChangeEvent<HTMLInputElement>,
+                        checked: boolean
+                      ) => {
+                        setCalcAdjustments(checked)
+                      }}
+                      checked={calcAdjustments}
+                      value="calc_adjustments"
+                    />
+                  }
+                  label="Calculate Adjustments"
+                />
                 <EditMenu
                   wholesaleOrder={wholesaleOrder}
                   onSaveBtnClick={onSaveBtnClick}
@@ -418,6 +434,7 @@ function EditWholesaleOrder(
             setLineItemData={setLineItemData}
             setSnackMsg={setSnackMsg}
             setSnackOpen={setSnackOpen}
+            calcAdjustments={calcAdjustments}
           />
         </>
       )}

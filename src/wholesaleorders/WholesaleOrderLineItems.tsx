@@ -50,11 +50,18 @@ function WholesaleOrderLineItems(
     setLineItemData: React.Dispatch<React.SetStateAction<LineItemData>>
     setSnackMsg: (value: React.SetStateAction<string>) => void
     setSnackOpen: React.Dispatch<React.SetStateAction<boolean>>
+    calcAdjustments: boolean
   } & RouteComponentProps
 ) {
   const classes = useStyles()
   const lineItems = props?.wholesaleOrder?.OrderLineItems
-  const { lineItemData, setLineItemData, setSnackMsg, setSnackOpen } = props
+  const {
+    lineItemData,
+    setLineItemData,
+    setSnackMsg,
+    setSnackOpen,
+    calcAdjustments
+  } = props
 
   function calc() {
     let groupedLineItems: {
@@ -110,40 +117,42 @@ function WholesaleOrderLineItems(
       }))
     })
 
-    Object.values(groupedLineItems).forEach((item) => {
-      // check if qtySum is not a round number (i.e. a partial case)
-      if (item.qtySum % 1 !== 0 && item.product) {
-        const pk = item.product.pk
-        const qty = item.line_items.reduce(
-          (acc, v) => acc + (v.selected_unit === 'EA' ? v.quantity : 0),
-          0
-        )
-        // quantity needed to complete a case
-        const quantity = Math.abs((qty % pk) - pk)
-        const price = +(
-          quantity * parseFloat(item.product.u_price_cost)
-        ).toFixed(2)
+    if (calcAdjustments) {
+      Object.values(groupedLineItems).forEach((item) => {
+        // check if qtySum is not a round number (i.e. a partial case)
+        if (item.qtySum % 1 !== 0 && item.product) {
+          const pk = item.product.pk
+          const qty = item.line_items.reduce(
+            (acc, v) => acc + (v.selected_unit === 'EA' ? v.quantity : 0),
+            0
+          )
+          // quantity needed to complete a case
+          const quantity = Math.abs((qty % pk) - pk)
+          const price = +(
+            quantity * parseFloat(item.product.u_price_cost)
+          ).toFixed(2)
 
-        const total = price
-        item.line_items.push({
-          quantity,
-          price,
-          total,
-          kind: 'adjustment',
-          description: `add ${quantity} EA`
-        })
-        // also add to the sums when creating this adjustment.
-        item.totalSum = toMoney(item.totalSum + total)
-        item.qtySum = Math.round(item.qtySum + quantity / pk)
-        item.qtyAdjustments = quantity
+          const total = price
+          item.line_items.push({
+            quantity,
+            price,
+            total,
+            kind: 'adjustment',
+            description: `add ${quantity} EA`
+          })
+          // also add to the sums when creating this adjustment.
+          item.totalSum = toMoney(item.totalSum + total)
+          item.qtySum = Math.round(item.qtySum + quantity / pk)
+          item.qtyAdjustments = quantity
 
-        setLineItemData((prevData) => ({
-          ...prevData,
-          adjustmentTotal: prevData.adjustmentTotal + +total,
-          orderTotal: prevData.orderTotal + total
-        }))
-      }
-    })
+          setLineItemData((prevData) => ({
+            ...prevData,
+            adjustmentTotal: prevData.adjustmentTotal + +total,
+            orderTotal: prevData.orderTotal + total
+          }))
+        }
+      })
+    }
 
     setLineItemData((prevData) => ({
       ...prevData,
@@ -152,7 +161,7 @@ function WholesaleOrderLineItems(
   }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(calc, [lineItems])
+  useEffect(calc, [lineItems, calcAdjustments])
 
   async function removeLineItem(item: GroupedItem) {
     const ids = item.line_items.map((li) => li.id).filter((a) => a)
@@ -334,14 +343,14 @@ function WholesaleOrderLineItems(
         )}
 
         <TableRow>
-          <TableCell colSpan={2} align="center">
+          <TableCell colSpan={2} align="left">
             ITEM COUNT
           </TableCell>
           <TableCell colSpan={2} align="right">
             PRODUCT TOTAL
           </TableCell>
           <TableCell colSpan={2} align="right">
-            ADJUSTMENTS TOTAL
+            {calcAdjustments && 'ADJUSTMENTS TOTAL'}
           </TableCell>
           <TableCell
             colSpan={2}
@@ -352,14 +361,14 @@ function WholesaleOrderLineItems(
           </TableCell>
         </TableRow>
         <TableRow>
-          <TableCell colSpan={2} align="center">
+          <TableCell colSpan={2} align="left">
             {Object.keys(lineItemData.groupedLineItems).length}
           </TableCell>
           <TableCell colSpan={2} align="right">
             {lineItemData.productTotal.toFixed(2)}
           </TableCell>
           <TableCell colSpan={2} align="right">
-            {lineItemData.adjustmentTotal.toFixed(2)}
+            {calcAdjustments && lineItemData.adjustmentTotal.toFixed(2)}
           </TableCell>
           <TableCell
             colSpan={2}
