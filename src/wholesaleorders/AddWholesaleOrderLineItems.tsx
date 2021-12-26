@@ -72,14 +72,16 @@ function AddWholesaleOrderLineItems(
   useEffect(() => {
     if (allWholesaleOrders.status === 'loaded') {
       setWholesaleOrderLookup(
-        allWholesaleOrders.payload.map(
-          (order: { id: string; vendor: string; createdAt: string }) => ({
+        allWholesaleOrders.payload
+          .filter((wo: { status: OrderStatus }) =>
+            ['new', 'needs_review'].includes(wo.status)
+          )
+          .map((order: { id: string; vendor: string; createdAt: string }) => ({
             id: order.id,
             name: `${order.vendor} ${new Date(
               order.createdAt
             ).toLocaleDateString()}`
-          })
-        )
+          }))
       )
     }
   }, [allWholesaleOrders])

@@ -353,6 +353,7 @@ function EditWholesaleOrder(
     handleStatusChange('pending')
     setDoSave(true)
     props.setReloadOrders(true)
+    // #TODO: call out to API_HOST, here? or can it be listening to this square_status change?
   }
 
   function valueFor(field: keyof WholesaleOrder) {
@@ -453,6 +454,11 @@ function EditWholesaleOrder(
                   onChange={(event) =>
                     handleSquareStatusChange(event.target.value as SquareStatus)
                   }
+                  disabled={
+                    !!wholesaleOrder.square_loaded_at ||
+                    wholesaleOrder.square_status === 'ready_to_import' ||
+                    wholesaleOrder.square_status === 'complete'
+                  }
                 >
                   {Object.keys(SQUARE_STATUSES).map((status) => (
                     <MenuItem key={`ship-sel-${status}`} value={status}>
@@ -507,6 +513,12 @@ function EditWholesaleOrder(
                       }}
                       checked={!!valueFor('calc_adjustments')}
                       value="calc_adjustments"
+                      disabled={
+                        !!wholesaleOrder.square_loaded_at ||
+                        wholesaleOrder.status === 'pending' ||
+                        wholesaleOrder.square_status === 'ready_to_import' ||
+                        wholesaleOrder.square_status === 'complete'
+                      }
                     />
                   }
                   label="Calculate Adjustments"

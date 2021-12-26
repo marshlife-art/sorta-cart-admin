@@ -98,7 +98,11 @@ export default function EditMenu(props: EditWholesaleOrderMenuProps) {
             }
             handleClose()
           }}
-          disabled={!props.wholesaleOrder.id}
+          disabled={
+            !props.wholesaleOrder.id ||
+            props.wholesaleOrder.status === 'pending' ||
+            props.wholesaleOrder.square_status === 'ready_to_import'
+          }
         >
           <ListItemIcon>
             <DeleteIcon fontSize="small" />
