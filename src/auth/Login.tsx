@@ -75,7 +75,7 @@ function Login(props: Props) {
       <form onSubmit={doLogin} className={classes.form}>
         <div className={classes.title}>
           <Typography variant="h2" display="block">
-            MARSH COOP
+            SORTA-CART
           </Typography>
           <Typography variant="overline" display="inline">
             admin

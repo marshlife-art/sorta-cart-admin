@@ -2,11 +2,12 @@
   "name": "sorta-cart-admin",
   "version": "0.2.0",
   "private": true,
-  "homepage": "https://admin.marshcoop.org/",
+  "homepage": "/admin",
   "repository": "github:marshlife-art/sorta-cart-admin",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build-admin": "PUBLIC_URL=/admin BUILD_PATH='./admin' npm run build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build && cp CNAME build/",

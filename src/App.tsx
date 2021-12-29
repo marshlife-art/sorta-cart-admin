@@ -177,7 +177,7 @@ export function App(props: Props) {
     <ThemeProvider theme={theme}>
       <CssBaseline />
 
-      <Router>
+      <Router basename={process.env.PUBLIC_URL}>
         <div className={classes.root}>
           <CssBaseline />
 

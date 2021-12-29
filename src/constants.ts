@@ -1,7 +1,7 @@
 import { OrderStatus, PaymentStatus, ShipmentStatus } from './types/Order'
 import { SquareStatus } from './types/WholesaleOrder'
 
-export const API_HOST = 'http://localhost:3000'
+export const API_HOST = process.env.API_HOST || 'http://localhost:3000'
 // process.env.NODE_ENV === 'production'
 //   ? 'https://api.marshcoop.org'
 //   : 'https://api.marsh.dev'
