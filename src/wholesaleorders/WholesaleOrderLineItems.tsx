@@ -398,35 +398,33 @@ function WholesaleOrderLineItems(
                         Order #{li.OrderId}
                       </Link>
                     ) : (
-                      <i>(Manually Added Line Item)</i>
+                      li.kind === 'product' && <i>(Manually Added Line Item)</i>
                     )}
                   </TableCell>
                   <TableCell />
                   <TableCell />
                   <TableCell>
-                    {li.OrderId ? (
-                      li.kind === 'adjustment' ? (
-                        `${li.quantity} EA`
-                      ) : (
-                        `${li.quantity} ${li.selected_unit}`
-                      )
-                    ) : (
-                      <TextField
-                        className={classes.qtyinput}
-                        type="number"
-                        InputLabelProps={{
-                          shrink: true
-                        }}
-                        margin="dense"
-                        fullWidth
-                        value={li.quantity}
-                        onChange={(event: any) =>
-                          handleQtyChange(li, event.target.value, idx)
-                        }
-                        inputProps={{ min: '1', step: '1' }}
-                        disabled
-                      />
-                    )}
+                    {li.OrderId
+                      ? li.kind === 'adjustment'
+                        ? `${li.quantity} EA`
+                        : `${li.quantity} ${li.selected_unit}`
+                      : li.kind !== 'adjustment' && (
+                          <TextField
+                            className={classes.qtyinput}
+                            type="number"
+                            InputLabelProps={{
+                              shrink: true
+                            }}
+                            margin="dense"
+                            fullWidth
+                            value={li.quantity}
+                            onChange={(event: any) =>
+                              handleQtyChange(li, event.target.value, idx)
+                            }
+                            inputProps={{ min: '1', step: '1' }}
+                            disabled
+                          />
+                        )}
                   </TableCell>
                   <TableCell align="center">
                     {li.data && li.data.product && li.selected_unit === 'EA'
