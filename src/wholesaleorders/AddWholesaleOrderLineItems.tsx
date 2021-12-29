@@ -11,6 +11,14 @@ import { supabase } from '../lib/supabaseClient'
 import { useAllWholesaleOrdersService } from './useWholesaleOrderService'
 import { SupaOrderLineItem, SupaWholesaleOrder } from '../types/SupaTypes'
 
+function tryParseData(data: string) {
+  try {
+    return JSON.parse(data)
+  } catch (e) {
+    return data
+  }
+}
+
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
@@ -254,7 +262,7 @@ function AddWholesaleOrderLineItems(
               orderLineItems &&
               (orderLineItems.map(({ data, ...rest }: { data: string }) => ({
                 ...rest,
-                data: JSON.parse(data)
+                data: tryParseData(data)
               })) as LineItem[])
 
             if (!data || error) {

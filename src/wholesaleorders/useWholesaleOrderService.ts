@@ -17,6 +17,14 @@ const blankWholesaleOrder: WholesaleOrder = {
   updatedAt: ''
 }
 
+function tryParseData(data: string) {
+  try {
+    return JSON.parse(data)
+  } catch (e) {
+    return data
+  }
+}
+
 const useWholesaleOrderService = (
   id: string | undefined,
   setLoading: (value: boolean) => void,
@@ -62,16 +70,14 @@ const useWholesaleOrderService = (
       OrderLineItems: OrderLineItems.map(
         ({ data, ...rest }: { data: string }) => ({
           ...rest,
-          data: JSON.parse(data)
+          data: tryParseData(data)
         })
       )
     }
-
     setResult({
       status: 'loaded',
       payload: wholesaleOrder as WholesaleOrder
     })
-
     setReload(false)
     setLoading(false)
   })

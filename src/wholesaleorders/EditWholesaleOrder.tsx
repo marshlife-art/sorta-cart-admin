@@ -10,7 +10,9 @@ import Select from '@material-ui/core/Select'
 import Snackbar from '@material-ui/core/Snackbar'
 import IconButton from '@material-ui/core/IconButton'
 import CloseIcon from '@material-ui/icons/Close'
-import { FormControlLabel, Checkbox } from '@material-ui/core'
+import AddIcon from '@material-ui/icons/Add'
+import ClearIcon from '@material-ui/icons/Clear'
+import { FormControlLabel, Checkbox, Button, Tooltip } from '@material-ui/core'
 import { Parser } from 'json2csv'
 
 import { LineItem } from '../types/Order'
@@ -36,6 +38,7 @@ import EditMenu from './EditMenu'
 import WholesaleOrderLineItems from './WholesaleOrderLineItems'
 import { supabase } from '../lib/supabaseClient'
 import { formatDistance, formatRelative } from 'date-fns'
+import LineItemAutocomplete from '../orders/LineItemAutocomplete'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -87,6 +90,7 @@ function EditWholesaleOrder(
   const [loading, setLoading] = useState(true)
   const [doSave, setDoSave] = useState(false)
   const [reload, setReload] = useState(true)
+  const [showLiAutocomplete, setShowLiAutocomplete] = useState(false)
 
   const [lineItemData, setLineItemData] = useState<LineItemData>({
     groupedLineItems: {},
@@ -360,6 +364,34 @@ function EditWholesaleOrder(
     return wholesaleOrder && wholesaleOrder[field] ? wholesaleOrder[field] : ''
   }
 
+  async function onAddLineitem(value: { name: string; product: Product }) {
+    const wsOrderId = parseInt(wholesaleOrderId)
+    if (!value || !value.product || isNaN(wsOrderId)) {
+      return
+    }
+    const { product } = value
+
+    const lineItem: LineItem = {
+      WholesaleOrderId: wsOrderId,
+      description: `${product.name} ${product.description}`,
+      quantity: 1,
+      selected_unit: product.unit_type || 'CS',
+      price: parseFloat(product.ws_price),
+      total: parseFloat(product.ws_price),
+      kind: 'product',
+      vendor: product.vendor,
+      data: { product }
+    }
+
+    const { error } = await supabase.from('OrderLineItems').insert(lineItem)
+    if (error) {
+      setSnackMsg(`error adding line item: ${error.message}`)
+      setSnackOpen(true)
+      return
+    }
+    setReload(true)
+  }
+
   return wholesaleOrder ? (
     <>
       {loading ? (
@@ -478,59 +510,82 @@ function EditWholesaleOrder(
                 value={valueFor('notes')}
                 onChange={(event) => handleOrderNotesChange(event.target.value)}
               />
-              <div className={classes.editMenu}>
-                <div>
-                  {wholesaleOrder.updatedAt && (
-                    <div>
-                      last updated:{' '}
-                      {formatRelative(
-                        new Date(wholesaleOrder.updatedAt),
-                        Date.now()
-                      )}
-                    </div>
-                  )}
-                  {wholesaleOrder.square_loaded_at && (
-                    <div>
-                      square loaded:{' '}
-                      {formatDistance(
-                        new Date(wholesaleOrder.square_loaded_at),
-                        Date.now(),
-                        {
-                          addSuffix: true
-                        }
-                      )}
-                    </div>
-                  )}
-                </div>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      onChange={(
-                        event: React.ChangeEvent<HTMLInputElement>,
-                        checked: boolean
-                      ) => {
-                        handleCalcAdjustmentsChange(checked)
-                      }}
-                      checked={!!valueFor('calc_adjustments')}
-                      value="calc_adjustments"
-                      disabled={
-                        !!wholesaleOrder.square_loaded_at ||
-                        wholesaleOrder.status === 'pending' ||
-                        wholesaleOrder.square_status === 'ready_to_import' ||
-                        wholesaleOrder.square_status === 'complete'
+              <div>
+                {wholesaleOrder.updatedAt && (
+                  <div>
+                    last updated:{' '}
+                    {formatRelative(
+                      new Date(wholesaleOrder.updatedAt),
+                      Date.now()
+                    )}
+                  </div>
+                )}
+                {wholesaleOrder.square_loaded_at && (
+                  <div>
+                    square loaded:{' '}
+                    {formatDistance(
+                      new Date(wholesaleOrder.square_loaded_at),
+                      Date.now(),
+                      {
+                        addSuffix: true
                       }
-                    />
-                  }
-                  label="Calculate Adjustments"
-                />
-                <EditMenu
-                  wholesaleOrder={wholesaleOrder}
-                  onSaveBtnClick={onSaveBtnClick}
-                  onDeleteBtnClick={onDeleteBtnClick}
-                  onProductsExportToCsv={onProductsExportToCsv}
-                  onImportToSquare={onImportToSquare}
-                />
+                    )}
+                  </div>
+                )}
               </div>
+              {showLiAutocomplete ? (
+                <div style={{ display: 'flex' }}>
+                  <Tooltip title="close">
+                    <IconButton
+                      aria-label="close"
+                      onClick={() => setShowLiAutocomplete(false)}
+                    >
+                      <ClearIcon fontSize="inherit" />
+                    </IconButton>
+                  </Tooltip>
+                  <LineItemAutocomplete onItemSelected={onAddLineitem} />
+                </div>
+              ) : (
+                <div className={classes.editMenu}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>,
+                          checked: boolean
+                        ) => {
+                          handleCalcAdjustmentsChange(checked)
+                        }}
+                        checked={!!valueFor('calc_adjustments')}
+                        value="calc_adjustments"
+                        disabled={
+                          !!wholesaleOrder.square_loaded_at ||
+                          wholesaleOrder.status === 'pending' ||
+                          wholesaleOrder.square_status === 'ready_to_import' ||
+                          wholesaleOrder.square_status === 'complete'
+                        }
+                      />
+                    }
+                    label="Calculate Adjustments"
+                  />
+                  <Button
+                    aria-label="add line items"
+                    size="large"
+                    onClick={() => setShowLiAutocomplete(true)}
+                    disabled={isNaN(parseInt(wholesaleOrderId))}
+                  >
+                    <AddIcon />
+                    LINE ITEMS
+                  </Button>
+                  <EditMenu
+                    wholesaleOrder={wholesaleOrder}
+                    onSaveBtnClick={onSaveBtnClick}
+                    onDeleteBtnClick={onDeleteBtnClick}
+                    onProductsExportToCsv={onProductsExportToCsv}
+                    onImportToSquare={onImportToSquare}
+                  />
+                </div>
+              )}
             </Grid>
           </Grid>
           <WholesaleOrderLineItems
