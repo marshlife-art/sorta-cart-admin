@@ -1,10 +1,10 @@
 import { OrderStatus, PaymentStatus, ShipmentStatus } from './types/Order'
 import { SquareStatus } from './types/WholesaleOrder'
 
-// export const API_HOST =
-//   process.env.NODE_ENV === 'production'
-//     ? 'https://api.marshcoop.org'
-//     : 'https://api.marsh.dev'
+export const API_HOST = 'http://localhost:3000'
+// process.env.NODE_ENV === 'production'
+//   ? 'https://api.marshcoop.org'
+//   : 'https://api.marsh.dev'
 
 export const TAX_RATE = 0.06391
 export const TAX_RATE_STRING = `${(TAX_RATE * 100).toFixed(3)}%`

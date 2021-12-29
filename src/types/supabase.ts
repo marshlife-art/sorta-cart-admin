@@ -433,6 +433,7 @@ export interface paths {
           square_status?: parameters["rowFilter.WholesaleOrders.square_status"];
           square_loaded_at?: parameters["rowFilter.WholesaleOrders.square_loaded_at"];
           data?: parameters["rowFilter.WholesaleOrders.data"];
+          api_key?: parameters["rowFilter.WholesaleOrders.api_key"];
           /** Filtering Columns */
           select?: parameters["select"];
           /** Ordering */
@@ -495,6 +496,7 @@ export interface paths {
           square_status?: parameters["rowFilter.WholesaleOrders.square_status"];
           square_loaded_at?: parameters["rowFilter.WholesaleOrders.square_loaded_at"];
           data?: parameters["rowFilter.WholesaleOrders.data"];
+          api_key?: parameters["rowFilter.WholesaleOrders.api_key"];
         };
         header: {
           /** Preference */
@@ -521,6 +523,7 @@ export interface paths {
           square_status?: parameters["rowFilter.WholesaleOrders.square_status"];
           square_loaded_at?: parameters["rowFilter.WholesaleOrders.square_loaded_at"];
           data?: parameters["rowFilter.WholesaleOrders.data"];
+          api_key?: parameters["rowFilter.WholesaleOrders.api_key"];
         };
         body: {
           /** WholesaleOrders */
@@ -815,6 +818,7 @@ export interface paths {
       parameters: {
         body: {
           args: {
+            /** Format: text */
             category: string;
           };
         };
@@ -914,288 +918,559 @@ export interface paths {
       };
     };
   };
+  "/rpc/default_products": {
+    post: {
+      parameters: {
+        body: {
+          args: { [key: string]: unknown };
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferParams"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: unknown;
+      };
+    };
+  };
 }
 
 export interface definitions {
   Members: {
     /**
-     * Note:
+     * Format: bigint
+     * @description Note:
      * This is a Primary Key.<pk/>
      */
     id: number;
+    /** Format: uuid */
     UserId?: string;
+    /** Format: text */
     registration_email?: string;
+    /** Format: text */
     name?: string;
+    /** Format: text */
     phone?: string;
+    /** Format: text */
     address?: string;
+    /** Format: smallint */
     discount?: number;
+    /** Format: text */
     discount_type?: string;
+    /** Format: real */
     fees_paid?: number;
+    /** Format: real */
     store_credit?: number;
+    /** Format: smallint */
     shares?: number;
+    /** Format: text */
     member_type?: string;
+    /** Format: jsonb */
     data?: string;
+    /**
+     * Format: timestamp with time zone
+     * @default timezone('utc'::text, now())
+     */
     createdAt?: string;
+    /**
+     * Format: timestamp with time zone
+     * @default timezone('utc'::text, now())
+     */
     updatedAt?: string;
-    /** admin user */
+    /**
+     * Format: boolean
+     * @description admin user
+     */
     is_admin: boolean;
+    /**
+     * Format: tsvector
+     * @default to_tsvector('english'::regconfig, ((((((COALESCE(name, ''::text) || ' '::text) || COALESCE(phone, ''::text)) || ' '::text) || COALESCE(address, ''::text)) || ' '::text) || COALESCE(registration_email, ''::text)))
+     */
     fts?: string;
   };
   OrderLineItems: {
     /**
-     * Note:
+     * Format: bigint
+     * @description Note:
      * This is a Primary Key.<pk/>
      */
     id: number;
     /**
-     * Note:
+     * Format: bigint
+     * @description Note:
      * This is a Foreign Key to `Orders.id`.<fk table='Orders' column='id'/>
      */
     OrderId?: number;
     /**
-     * Note:
+     * Format: bigint
+     * @description Note:
      * This is a Foreign Key to `WholesaleOrders.id`.<fk table='WholesaleOrders' column='id'/>
      */
     WholesaleOrderId?: number;
+    /** Format: real */
     price?: number;
+    /** Format: smallint */
     quantity?: number;
+    /** Format: real */
     total?: number;
+    /** Format: text */
     kind?: string;
+    /** Format: text */
     description?: string;
+    /** Format: text */
     vendor?: string;
+    /** Format: text */
     selected_unit?: string;
+    /** Format: jsonb */
     data?: string;
+    /**
+     * Format: timestamp with time zone
+     * @default timezone('utc'::text, now())
+     */
     createdAt?: string;
+    /**
+     * Format: timestamp with time zone
+     * @default timezone('utc'::text, now())
+     */
     updatedAt?: string;
+    /** Format: text */
     status?: string;
   };
   Orders: {
     /**
-     * Note:
+     * Format: bigint
+     * @description Note:
      * This is a Primary Key.<pk/>
      */
     id: number;
+    /** Format: uuid */
     UserId?: string;
+    /** Format: text */
     status?: string;
+    /** Format: text */
     payment_status?: string;
+    /** Format: text */
     shipment_status?: string;
+    /** Format: real */
     total?: number;
+    /** Format: real */
     subtotal?: number;
+    /** Format: text */
     name?: string;
+    /** Format: text */
     email?: string;
+    /** Format: text */
     phone?: string;
+    /** Format: text */
     address?: string;
+    /** Format: text */
     notes?: string;
+    /** Format: boolean */
     email_sent?: boolean;
+    /** Format: smallint */
     item_count?: number;
+    /** Format: jsonb */
     history?: string;
+    /**
+     * Format: timestamp with time zone
+     * @default timezone('utc'::text, now())
+     */
     createdAt?: string;
+    /**
+     * Format: timestamp with time zone
+     * @default timezone('utc'::text, now())
+     */
     updatedAt?: string;
     /**
-     * Note:
+     * Format: bigint
+     * @description Note:
      * This is a Foreign Key to `Members.id`.<fk table='Members' column='id'/>
      */
     MemberId?: number;
+    /**
+     * Format: tsvector
+     * @default to_tsvector('english'::regconfig, ((((((((COALESCE(name, ''::text) || ' '::text) || COALESCE(email, ''::text)) || ' '::text) || COALESCE(phone, ''::text)) || ' '::text) || COALESCE(address, ''::text)) || ' '::text) || COALESCE(notes, ''::text)))
+     */
     fts?: string;
   };
   WholesaleOrders: {
     /**
-     * Note:
+     * Format: bigint
+     * @description Note:
      * This is a Primary Key.<pk/>
      */
     id: number;
+    /** Format: text */
     vendor?: string;
+    /** Format: text */
     notes?: string;
+    /** Format: text */
     status?: string;
+    /** Format: text */
     payment_status?: string;
+    /** Format: text */
     shipment_status?: string;
+    /**
+     * Format: timestamp with time zone
+     * @default timezone('utc'::text, now())
+     */
     createdAt?: string;
+    /**
+     * Format: timestamp with time zone
+     * @default timezone('utc'::text, now())
+     */
     updatedAt?: string;
+    /** Format: boolean */
     calc_adjustments?: boolean;
+    /** Format: text */
     square_status?: string;
+    /** Format: timestamp with time zone */
     square_loaded_at?: string;
+    /** Format: jsonb */
     data?: string;
+    /**
+     * Format: uuid
+     * @default extensions.uuid_generate_v4()
+     */
+    api_key: string;
   };
   products: {
+    /** Format: text */
     unf?: string;
+    /** Format: text */
     upc_code?: string;
+    /** Format: text */
     category?: string;
+    /** Format: text */
     sub_category?: string;
+    /** Format: text */
     name?: string;
+    /** Format: integer */
     pk?: number;
+    /** Format: text */
     size?: string;
+    /** Format: text */
     unit_type?: string;
+    /** Format: double precision */
     ws_price?: number;
+    /** Format: double precision */
     u_price?: number;
+    /** Format: double precision */
     ws_price_cost?: number;
+    /** Format: double precision */
     u_price_cost?: number;
+    /** Format: text */
     codes?: string;
+    /** Format: text */
     vendor?: string;
+    /** Format: text */
     import_tag?: string;
+    /**
+     * Format: timestamp with time zone
+     * @default timezone('utc'::text, now())
+     */
     createdAt?: string;
+    /**
+     * Format: timestamp with time zone
+     * @default timezone('utc'::text, now())
+     */
     updatedAt?: string;
+    /** Format: integer */
     count_on_hand?: number;
+    /** Format: boolean */
     no_backorder?: boolean;
+    /** Format: text */
     plu?: string;
     /**
-     * Note:
+     * Format: text
+     * @description Note:
      * This is a Primary Key.<pk/>
      */
     id: string;
-    /** original description from vendor pricesheet */
+    /**
+     * Format: text
+     * @description original description from vendor pricesheet
+     */
     description_orig?: string;
-    /** hand-edited description, intended to persist after upsert */
+    /**
+     * Format: text
+     * @description hand-edited description, intended to persist after upsert
+     */
     description_edit?: string;
+    /**
+     * Format: text
+     * @default COALESCE(description_edit, description_orig)
+     */
     description?: string;
   };
-  /** square on-hand inventory */
+  /** @description square on-hand inventory */
   stock: {
     /**
-     * Note:
+     * Format: text
+     * @description Note:
      * This is a Primary Key.<pk/>
      */
     variation_id: string;
+    /** Format: text */
     name?: string;
+    /** Format: text */
     description?: string;
+    /** Format: integer */
     price?: number;
+    /** Format: text */
     unit?: string;
+    /** Format: smallint */
     quantity?: number;
+    /** Format: text */
     sku?: string;
+    /** Format: text */
     item_id?: string;
+    /**
+     * Format: timestamp with time zone
+     * @default now()
+     */
     created_at?: string;
   };
 }
 
 export interface parameters {
-  /** Preference */
+  /** @description Preference */
   preferParams: "params=single-object";
-  /** Preference */
+  /** @description Preference */
   preferReturn: "return=representation" | "return=minimal" | "return=none";
-  /** Preference */
+  /** @description Preference */
   preferCount: "count=none";
-  /** Filtering Columns */
+  /** @description Filtering Columns */
   select: string;
-  /** On Conflict */
+  /** @description On Conflict */
   on_conflict: string;
-  /** Ordering */
+  /** @description Ordering */
   order: string;
-  /** Limiting and Pagination */
+  /** @description Limiting and Pagination */
   range: string;
-  /** Limiting and Pagination */
+  /**
+   * @description Limiting and Pagination
+   * @default items
+   */
   rangeUnit: string;
-  /** Limiting and Pagination */
+  /** @description Limiting and Pagination */
   offset: string;
-  /** Limiting and Pagination */
+  /** @description Limiting and Pagination */
   limit: string;
-  /** Members */
+  /** @description Members */
   "body.Members": definitions["Members"];
+  /** Format: bigint */
   "rowFilter.Members.id": string;
+  /** Format: uuid */
   "rowFilter.Members.UserId": string;
+  /** Format: text */
   "rowFilter.Members.registration_email": string;
+  /** Format: text */
   "rowFilter.Members.name": string;
+  /** Format: text */
   "rowFilter.Members.phone": string;
+  /** Format: text */
   "rowFilter.Members.address": string;
+  /** Format: smallint */
   "rowFilter.Members.discount": string;
+  /** Format: text */
   "rowFilter.Members.discount_type": string;
+  /** Format: real */
   "rowFilter.Members.fees_paid": string;
+  /** Format: real */
   "rowFilter.Members.store_credit": string;
+  /** Format: smallint */
   "rowFilter.Members.shares": string;
+  /** Format: text */
   "rowFilter.Members.member_type": string;
+  /** Format: jsonb */
   "rowFilter.Members.data": string;
+  /** Format: timestamp with time zone */
   "rowFilter.Members.createdAt": string;
+  /** Format: timestamp with time zone */
   "rowFilter.Members.updatedAt": string;
-  /** admin user */
+  /**
+   * Format: boolean
+   * @description admin user
+   */
   "rowFilter.Members.is_admin": string;
+  /** Format: tsvector */
   "rowFilter.Members.fts": string;
-  /** OrderLineItems */
+  /** @description OrderLineItems */
   "body.OrderLineItems": definitions["OrderLineItems"];
+  /** Format: bigint */
   "rowFilter.OrderLineItems.id": string;
+  /** Format: bigint */
   "rowFilter.OrderLineItems.OrderId": string;
+  /** Format: bigint */
   "rowFilter.OrderLineItems.WholesaleOrderId": string;
+  /** Format: real */
   "rowFilter.OrderLineItems.price": string;
+  /** Format: smallint */
   "rowFilter.OrderLineItems.quantity": string;
+  /** Format: real */
   "rowFilter.OrderLineItems.total": string;
+  /** Format: text */
   "rowFilter.OrderLineItems.kind": string;
+  /** Format: text */
   "rowFilter.OrderLineItems.description": string;
+  /** Format: text */
   "rowFilter.OrderLineItems.vendor": string;
+  /** Format: text */
   "rowFilter.OrderLineItems.selected_unit": string;
+  /** Format: jsonb */
   "rowFilter.OrderLineItems.data": string;
+  /** Format: timestamp with time zone */
   "rowFilter.OrderLineItems.createdAt": string;
+  /** Format: timestamp with time zone */
   "rowFilter.OrderLineItems.updatedAt": string;
+  /** Format: text */
   "rowFilter.OrderLineItems.status": string;
-  /** Orders */
+  /** @description Orders */
   "body.Orders": definitions["Orders"];
+  /** Format: bigint */
   "rowFilter.Orders.id": string;
+  /** Format: uuid */
   "rowFilter.Orders.UserId": string;
+  /** Format: text */
   "rowFilter.Orders.status": string;
+  /** Format: text */
   "rowFilter.Orders.payment_status": string;
+  /** Format: text */
   "rowFilter.Orders.shipment_status": string;
+  /** Format: real */
   "rowFilter.Orders.total": string;
+  /** Format: real */
   "rowFilter.Orders.subtotal": string;
+  /** Format: text */
   "rowFilter.Orders.name": string;
+  /** Format: text */
   "rowFilter.Orders.email": string;
+  /** Format: text */
   "rowFilter.Orders.phone": string;
+  /** Format: text */
   "rowFilter.Orders.address": string;
+  /** Format: text */
   "rowFilter.Orders.notes": string;
+  /** Format: boolean */
   "rowFilter.Orders.email_sent": string;
+  /** Format: smallint */
   "rowFilter.Orders.item_count": string;
+  /** Format: jsonb */
   "rowFilter.Orders.history": string;
+  /** Format: timestamp with time zone */
   "rowFilter.Orders.createdAt": string;
+  /** Format: timestamp with time zone */
   "rowFilter.Orders.updatedAt": string;
+  /** Format: bigint */
   "rowFilter.Orders.MemberId": string;
+  /** Format: tsvector */
   "rowFilter.Orders.fts": string;
-  /** WholesaleOrders */
+  /** @description WholesaleOrders */
   "body.WholesaleOrders": definitions["WholesaleOrders"];
+  /** Format: bigint */
   "rowFilter.WholesaleOrders.id": string;
+  /** Format: text */
   "rowFilter.WholesaleOrders.vendor": string;
+  /** Format: text */
   "rowFilter.WholesaleOrders.notes": string;
+  /** Format: text */
   "rowFilter.WholesaleOrders.status": string;
+  /** Format: text */
   "rowFilter.WholesaleOrders.payment_status": string;
+  /** Format: text */
   "rowFilter.WholesaleOrders.shipment_status": string;
+  /** Format: timestamp with time zone */
   "rowFilter.WholesaleOrders.createdAt": string;
+  /** Format: timestamp with time zone */
   "rowFilter.WholesaleOrders.updatedAt": string;
+  /** Format: boolean */
   "rowFilter.WholesaleOrders.calc_adjustments": string;
+  /** Format: text */
   "rowFilter.WholesaleOrders.square_status": string;
+  /** Format: timestamp with time zone */
   "rowFilter.WholesaleOrders.square_loaded_at": string;
+  /** Format: jsonb */
   "rowFilter.WholesaleOrders.data": string;
-  /** products */
+  /** Format: uuid */
+  "rowFilter.WholesaleOrders.api_key": string;
+  /** @description products */
   "body.products": definitions["products"];
+  /** Format: text */
   "rowFilter.products.unf": string;
+  /** Format: text */
   "rowFilter.products.upc_code": string;
+  /** Format: text */
   "rowFilter.products.category": string;
+  /** Format: text */
   "rowFilter.products.sub_category": string;
+  /** Format: text */
   "rowFilter.products.name": string;
+  /** Format: integer */
   "rowFilter.products.pk": string;
+  /** Format: text */
   "rowFilter.products.size": string;
+  /** Format: text */
   "rowFilter.products.unit_type": string;
+  /** Format: double precision */
   "rowFilter.products.ws_price": string;
+  /** Format: double precision */
   "rowFilter.products.u_price": string;
+  /** Format: double precision */
   "rowFilter.products.ws_price_cost": string;
+  /** Format: double precision */
   "rowFilter.products.u_price_cost": string;
+  /** Format: text */
   "rowFilter.products.codes": string;
+  /** Format: text */
   "rowFilter.products.vendor": string;
+  /** Format: text */
   "rowFilter.products.import_tag": string;
+  /** Format: timestamp with time zone */
   "rowFilter.products.createdAt": string;
+  /** Format: timestamp with time zone */
   "rowFilter.products.updatedAt": string;
+  /** Format: integer */
   "rowFilter.products.count_on_hand": string;
+  /** Format: boolean */
   "rowFilter.products.no_backorder": string;
+  /** Format: text */
   "rowFilter.products.plu": string;
+  /** Format: text */
   "rowFilter.products.id": string;
-  /** original description from vendor pricesheet */
+  /**
+   * Format: text
+   * @description original description from vendor pricesheet
+   */
   "rowFilter.products.description_orig": string;
-  /** hand-edited description, intended to persist after upsert */
+  /**
+   * Format: text
+   * @description hand-edited description, intended to persist after upsert
+   */
   "rowFilter.products.description_edit": string;
+  /** Format: text */
   "rowFilter.products.description": string;
-  /** stock */
+  /** @description stock */
   "body.stock": definitions["stock"];
+  /** Format: text */
   "rowFilter.stock.variation_id": string;
+  /** Format: text */
   "rowFilter.stock.name": string;
+  /** Format: text */
   "rowFilter.stock.description": string;
+  /** Format: integer */
   "rowFilter.stock.price": string;
+  /** Format: text */
   "rowFilter.stock.unit": string;
+  /** Format: smallint */
   "rowFilter.stock.quantity": string;
+  /** Format: text */
   "rowFilter.stock.sku": string;
+  /** Format: text */
   "rowFilter.stock.item_id": string;
+  /** Format: timestamp with time zone */
   "rowFilter.stock.created_at": string;
 }
 

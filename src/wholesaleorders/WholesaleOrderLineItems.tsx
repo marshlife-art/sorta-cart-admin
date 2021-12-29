@@ -16,6 +16,8 @@ import { LineItemData, GroupedItem } from './EditWholesaleOrder'
 import { WholesaleOrder } from '../types/WholesaleOrder'
 import { supabase } from '../lib/supabaseClient'
 import { createOrderCredits, OrderCreditItem } from '../lib/orderService'
+import { TextField } from '@material-ui/core'
+import { LineItem } from '../types/Order'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -31,7 +33,10 @@ const useStyles = makeStyles((theme: Theme) =>
     groupedRow: {
       backgroundColor: theme.palette.background.default
     },
-    groupedRowTotals: theme.typography.h6
+    groupedRowTotals: theme.typography.h6,
+    qtyinput: {
+      width: '50px'
+    }
   })
 )
 
@@ -55,6 +60,7 @@ function WholesaleOrderLineItems(
 ) {
   const classes = useStyles()
   const lineItems = props?.wholesaleOrder?.OrderLineItems
+
   const {
     lineItemData,
     setLineItemData,
@@ -76,6 +82,7 @@ function WholesaleOrderLineItems(
     }))
 
     lineItems?.forEach((li) => {
+      // console.log('zomg the li', li)
       const id =
         li.data &&
         li.data.product &&
@@ -99,6 +106,14 @@ function WholesaleOrderLineItems(
           ? +(parseFloat(li.data.product.ws_price_cost) * qty).toFixed(2)
           : li.total) || 0
 
+      console.log(
+        li.description,
+        'ooookay qty, qtyUnits, liTotal',
+        qty,
+        qtyUnits,
+        liTotal
+      )
+
       groupedLineItems[key] = {
         qtySum: acc ? acc.qtySum + qty : qty,
         qtyUnits: acc ? acc.qtyUnits + qtyUnits : qtyUnits,
@@ -117,22 +132,23 @@ function WholesaleOrderLineItems(
       }))
     })
 
-    if (calcAdjustments) {
-      Object.values(groupedLineItems).forEach((item) => {
-        // check if qtySum is not a round number (i.e. a partial case)
-        if (item.qtySum % 1 !== 0 && item.product) {
-          const pk = item.product.pk
-          const qty = item.line_items.reduce(
-            (acc, v) => acc + (v.selected_unit === 'EA' ? v.quantity : 0),
-            0
-          )
-          // quantity needed to complete a case
-          const quantity = Math.abs((qty % pk) - pk)
-          const price = +(
-            quantity * parseFloat(item.product.u_price_cost)
-          ).toFixed(2)
+    Object.values(groupedLineItems).forEach((item) => {
+      // check if qtySum is not a round number (i.e. a partial case)
+      if (item.qtySum % 1 !== 0 && item.product) {
+        console.log('fucck rounding?!>?!?!')
+        const pk = item.product.pk
+        const qty = item.line_items.reduce(
+          (acc, v) => acc + (v.selected_unit === 'EA' ? v.quantity : 0),
+          0
+        )
+        // quantity needed to complete a case
+        const quantity = Math.abs((qty % pk) - pk)
+        const price = +(
+          quantity * parseFloat(item.product.u_price_cost)
+        ).toFixed(2)
 
-          const total = price
+        const total = price
+        if (calcAdjustments) {
           item.line_items.push({
             quantity,
             price,
@@ -140,19 +156,32 @@ function WholesaleOrderLineItems(
             kind: 'adjustment',
             description: `add ${quantity} EA`
           })
-          // also add to the sums when creating this adjustment.
-          item.totalSum = toMoney(item.totalSum + total)
-          item.qtySum = Math.round(item.qtySum + quantity / pk)
-          item.qtyAdjustments = quantity
-
-          setLineItemData((prevData) => ({
-            ...prevData,
-            adjustmentTotal: prevData.adjustmentTotal + +total,
-            orderTotal: prevData.orderTotal + total
-          }))
         }
-      })
-    }
+        // also add to the sums when creating this adjustment.
+        item.totalSum = toMoney(item.totalSum + total)
+        item.qtySum = Math.round(item.qtySum + quantity / pk)
+        item.qtyAdjustments = quantity
+
+        setLineItemData((prevData) => ({
+          ...prevData,
+          adjustmentTotal: prevData.adjustmentTotal + +total,
+          orderTotal: prevData.orderTotal + total
+        }))
+      } else if (item.line_items && item.product) {
+        // okay, so try to figure out if this is a manually added line item (i.e. no orderId)
+        const qtyAdjustments = item.line_items.reduce((acc, li) => {
+          if (!li.OrderId) {
+            const pk = item.product?.pk || 1
+            const qty = li.quantity
+            acc += pk * qty
+          }
+          return acc
+        }, 0)
+        if (qtyAdjustments) {
+          item.qtyAdjustments = qtyAdjustments
+        }
+      }
+    })
 
     setLineItemData((prevData) => ({
       ...prevData,
@@ -202,6 +231,53 @@ function WholesaleOrderLineItems(
         console.warn('createOrderCredits caught error:', e)
         setSnackMsg(`onoz! error creating credits: ${e}`)
         setSnackOpen(true)
+      }
+    }
+  }
+
+  function handleQtyChange(li: LineItem, qtyString: string, idx: number) {
+    const qty = isNaN(parseInt(qtyString)) ? 1 : parseInt(qtyString)
+    console.log('handleQtyChange qty, idx, li:', qty, idx, li)
+    const quantity = qty > 0 ? qty : 1
+
+    const id =
+      li.data &&
+      li.data.product &&
+      `${li.data.product.unf}${li.data.product.upc_code}`
+    const key = id ? id : li.description
+
+    const groupedItem = lineItemData.groupedLineItems[key]
+
+    if (groupedItem) {
+      if (groupedItem.line_items[idx]) {
+        // odang dis ugly :/
+
+        const { totalSum } = groupedItem
+        groupedItem.line_items[idx].quantity = quantity
+        groupedItem.line_items[idx].total =
+          quantity * groupedItem.line_items[idx].price
+        groupedItem.qtySum = groupedItem.line_items.reduce(
+          (acc, li) => acc + li.quantity,
+          0
+        )
+
+        groupedItem.totalSum = groupedItem.line_items.reduce(
+          (acc, li) => acc + li.total,
+          0
+        )
+
+        setLineItemData((prevData) => ({
+          ...prevData,
+          groupedLineItems: {
+            ...prevData.groupedLineItems,
+            // qtySum,
+            [key]: {
+              ...groupedItem
+            }
+          }
+        }))
+        // props.setReload(true)
+        // calc()
       }
     }
   }
@@ -302,7 +378,7 @@ function WholesaleOrderLineItems(
                   {item.totalSum.toFixed(2)}
                 </TableCell>
               </TableRow>
-              {item.line_items.map((li) => (
+              {item.line_items.map((li, idx) => (
                 <TableRow key={`wsli${li.id}`}>
                   <TableCell colSpan={2} />
                   <TableCell>
@@ -310,7 +386,7 @@ function WholesaleOrderLineItems(
                     {li.data && li.data.product && li.data.product.import_tag
                       ? li.data.product.import_tag
                       : li.description}{' '}
-                    {li.OrderId && (
+                    {li.OrderId ? (
                       <Link
                         color="secondary"
                         href={`/orders/edit/${li.OrderId}`}
@@ -321,14 +397,36 @@ function WholesaleOrderLineItems(
                       >
                         Order #{li.OrderId}
                       </Link>
+                    ) : (
+                      <i>(Manually Added Line Item)</i>
                     )}
                   </TableCell>
                   <TableCell />
                   <TableCell />
                   <TableCell>
-                    {li.kind === 'adjustment'
-                      ? `${li.quantity} EA`
-                      : `${li.quantity} ${li.selected_unit}`}
+                    {li.OrderId ? (
+                      li.kind === 'adjustment' ? (
+                        `${li.quantity} EA`
+                      ) : (
+                        `${li.quantity} ${li.selected_unit}`
+                      )
+                    ) : (
+                      <TextField
+                        className={classes.qtyinput}
+                        type="number"
+                        InputLabelProps={{
+                          shrink: true
+                        }}
+                        margin="dense"
+                        fullWidth
+                        value={li.quantity}
+                        onChange={(event: any) =>
+                          handleQtyChange(li, event.target.value, idx)
+                        }
+                        inputProps={{ min: '1', step: '1' }}
+                        disabled
+                      />
+                    )}
                   </TableCell>
                   <TableCell align="center">
                     {li.data && li.data.product && li.selected_unit === 'EA'

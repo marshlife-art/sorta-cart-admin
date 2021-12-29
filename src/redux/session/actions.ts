@@ -53,6 +53,7 @@ export const checkSession = (): ThunkAction<
       dispatch(isFetching(true))
 
       const session = supabase.auth.session()
+      // console.log('zomg session:', session)
       if (session?.user) {
         dispatch(set({ ...session.user, role: 'admin' })) // #TODO: don't hard-code admin role :/
       } else {

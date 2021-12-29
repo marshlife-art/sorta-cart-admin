@@ -17,6 +17,7 @@ export interface WholesaleOrder {
   square_status?: string
   square_loaded_at?: string
   data?: object
+  api_key?: string
 }
 
 export interface WholesaleOrderRouterProps {

@@ -24,6 +24,7 @@ import {
 } from '../types/WholesaleOrder'
 import { OrderStatus, ShipmentStatus, PaymentStatus } from '../types/Order'
 import {
+  API_HOST,
   ORDER_STATUSES,
   PAYMENT_STATUSES,
   SHIPMENT_STATUSES,
@@ -353,11 +354,23 @@ function EditWholesaleOrder(
   }
 
   const onImportToSquare = (): void => {
-    handleSquareStatusChange('ready_to_import')
-    handleStatusChange('pending')
+    // handleSquareStatusChange('ready_to_import')
+    // handleStatusChange('pending')
     setDoSave(true)
     props.setReloadOrders(true)
     // #TODO: call out to API_HOST, here? or can it be listening to this square_status change?
+
+    fetch(`${API_HOST}/api/wholesaleorders/ready-to-import`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ api_key: wholesaleOrder?.api_key })
+    })
+      .then((r) => r.json())
+      .then((response) => {
+        console.log('zomggg the response!')
+      })
   }
 
   function valueFor(field: keyof WholesaleOrder) {
