@@ -8,9 +8,12 @@ import {
   DialogContentText,
   DialogActions,
   TextField,
-  Typography
+  Typography,
+  Tooltip,
+  IconButton
 } from '@material-ui/core'
 import ArrowRightIcon from '@material-ui/icons/ArrowRight'
+import ClearIcon from '@material-ui/icons/Clear'
 
 import {
   IParseProductCatzCSV,
@@ -94,6 +97,14 @@ export default function CatMapDialog(props: {
     }
   }
 
+  async function handleDeleteMap(from: string) {
+    await supabase
+      .from<SupaCatmap>('catmap')
+      .delete({ returning: 'minimal' })
+      .eq('from', from)
+    mutate()
+  }
+
   useEffect(() => {
     if (open && props.file) {
       parseProductsDistinctCatzCSV(props.file)
@@ -153,11 +164,23 @@ export default function CatMapDialog(props: {
                 >
                   <Typography>{cat}</Typography>
                   <ArrowRightIcon />
-                  <TextField
-                    label={`${getCatMap(cat) || 'New Category Name'}`}
-                    helperText={`${cat} will change to`}
-                    onChange={(e) => handleChange(cat, e.target.value)}
-                  />
+                  <div>
+                    <TextField
+                      label={`${getCatMap(cat) || 'New Category Name'}`}
+                      // helperText={`will change to`}
+                      onChange={(e) => handleChange(cat, e.target.value)}
+                    />
+                    {getCatMap(cat) !== undefined && (
+                      <Tooltip title="delete mapping">
+                        <IconButton
+                          aria-label="delete mapping"
+                          onClick={() => handleDeleteMap(cat)}
+                        >
+                          <ClearIcon fontSize="inherit" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </div>
                 </div>
                 {sub_catz.length > 0 && (
                   <h2>Sub Categories ({sub_catz.length})</h2>
@@ -174,11 +197,25 @@ export default function CatMapDialog(props: {
                   >
                     <Typography>{subcat}</Typography>
                     <ArrowRightIcon />
-                    <TextField
-                      label={`${getCatMap(subcat) || 'New Sub Category Name'}`}
-                      helperText={`sub category will change to`}
-                      onChange={(e) => handleChange(subcat, e.target.value)}
-                    />
+                    <div>
+                      <TextField
+                        label={`${
+                          getCatMap(subcat) || 'New Sub Category Name'
+                        }`}
+                        // helperText={`${subcat} will change to`}
+                        onChange={(e) => handleChange(subcat, e.target.value)}
+                      />
+                      {getCatMap(subcat) !== undefined && (
+                        <Tooltip title="delete mapping">
+                          <IconButton
+                            aria-label="delete mapping"
+                            onClick={() => handleDeleteMap(subcat)}
+                          >
+                            <ClearIcon fontSize="inherit" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </div>
                   </div>
                 ))}
               </>
