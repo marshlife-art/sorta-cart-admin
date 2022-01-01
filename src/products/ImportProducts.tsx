@@ -154,7 +154,7 @@ export default function ImportProducts() {
 
     await supabase
       .from<SupaProduct>('products')
-      .update({ no_backorder: true, featured: false })
+      .update({ no_backorder: true })
       .eq('import_tag', prevImportTag)
 
     const itemsPerChunk = 1000 // items per chunk
@@ -316,8 +316,7 @@ export default function ImportProducts() {
             </Select>
             <FormHelperText>
               If updating, products with the tag you select here will first be
-              set as <b>no_backorder</b>=<i>true</i> and <b>featured</b>=
-              <i>false</i>.
+              set as <b>no_backorder</b>=<i>true</i>.
             </FormHelperText>
           </FormControl>
           <TextField
