@@ -7,6 +7,7 @@ import ListSubheader from '@material-ui/core/ListSubheader'
 import DashboardIcon from '@material-ui/icons/Dashboard'
 import ViewListIcon from '@material-ui/icons/ViewList'
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart'
+import UpdateIcon from '@material-ui/icons/Update'
 // import TagFacesIcon from '@material-ui/icons/TagFaces'
 import PeopleIcon from '@material-ui/icons/People'
 import AssignmentIcon from '@material-ui/icons/Assignment'
@@ -33,6 +34,12 @@ export const mainListItems = (
         <OpenInBrowserIcon />
       </ListItemIcon>
       <ListItemText primary="Import Products" />
+    </ListItem>
+    <ListItem button component={Link} to="/products/update">
+      <ListItemIcon>
+        <UpdateIcon />
+      </ListItemIcon>
+      <ListItemText primary="Update Products" />
     </ListItem>
     <ListItem button component={Link} to="/orders">
       <ListItemIcon>

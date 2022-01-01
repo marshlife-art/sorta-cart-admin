@@ -5,7 +5,7 @@ import MaterialTable, { Query } from 'material-table'
 import { Product } from '../types/Product'
 import { supabase } from '../lib/supabaseClient'
 import { getCategories, getSubCategories, getVendors } from './productsService'
-import { getNoBackorderAction } from './TableActionMenu'
+import { getNoBackorderAction, getFeaturedAction } from './TableActionMenu'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -57,6 +57,7 @@ function Products() {
   useEffect(() => {
     if (needsRefresh) {
       refreshTable()
+      setSearchExpanded(true)
     }
   }, [needsRefresh, refreshTable])
 
@@ -219,6 +220,11 @@ function Products() {
             field: 'no_backorder',
             type: 'boolean'
           },
+          {
+            title: 'featured',
+            field: 'featured',
+            type: 'boolean'
+          },
           { title: 'upc', field: 'upc_code', type: 'string', hidden: true },
           // { title: 'unf', field: 'unf', type: 'string' },
           { title: 'id', field: 'id', type: 'string', hidden: true }
@@ -236,6 +242,8 @@ function Products() {
                   query = query.or(
                     `no_backorder.eq.${filter.value === 'checked'}`
                   )
+                } else if (filter.column.field === 'featured') {
+                  query = query.or(`featured.eq.${filter.value === 'checked'}`)
                 } else if (filter.column.field === 'count_on_hand') {
                   const or = `count_on_hand.${
                     filter.value === 'checked'
@@ -305,7 +313,11 @@ function Products() {
           searchExpanded && setSearchExpanded(false)
           setSearchExpanded(data.length === 0)
         }}
-        actions={[getNoBackorderAction(setNeedsRefresh), deleteAction]}
+        actions={[
+          getFeaturedAction(setNeedsRefresh),
+          getNoBackorderAction(setNeedsRefresh),
+          deleteAction
+        ]}
       />
     </div>
   )

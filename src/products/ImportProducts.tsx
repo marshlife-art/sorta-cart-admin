@@ -19,7 +19,8 @@ import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
 import Loading from '../Loading'
 import { supabase } from '../lib/supabaseClient'
 import parseProductsCSV from '../lib/parseProductsCSV'
-import { SupaProduct } from '../types/SupaTypes'
+import { SupaCatmap, SupaProduct } from '../types/SupaTypes'
+import CatMapDialog from './CatMapDialog'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -38,6 +39,14 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     preFormat: {
       whiteSpace: 'pre-wrap'
+    },
+    info: {
+      '& dt': {
+        fontWeight: 'bolder'
+      },
+      '& dd': {
+        marginBottom: '2em'
+      }
     }
   })
 )
@@ -52,8 +61,8 @@ export default function ImportProducts() {
   const [ignoreDuplicates, setIgnoreDuplicates] = useState(false)
   const [defaultCat, setDefaultCat] = useState('')
   const [defaultSubCat, setDefaultSubCat] = useState('')
+  const [mapCatz, setMapCatz] = useState(true)
   const [dryRun, setDryRun] = useState(false)
-  const [formData, setFormData] = useState<FormData>()
   const [error, setError] = useState('')
   const [response, setResponse] = useState('')
 
@@ -90,6 +99,26 @@ export default function ImportProducts() {
     return []
   })
 
+  const {
+    data: catmap,
+    error: catmapError,
+    mutate
+  } = useSWR<SupaCatmap[]>('import_catmapz', async () => {
+    const { data, error } = await supabase
+      .from<SupaCatmap>('catmap')
+      .select('*')
+
+    if (!error && data?.length) {
+      return data
+    }
+
+    return []
+  })
+
+  function getCatMap(from: string): string | undefined {
+    return catmap && catmap.find((m) => m.from === from)?.to
+  }
+
   async function submitData() {
     setError('')
     setResponse('')
@@ -105,8 +134,11 @@ export default function ImportProducts() {
       vendor,
       markup,
       defaultCat,
-      defaultSubCat
+      defaultSubCat,
+      getCatMap
     )
+
+    console.log('parseProductsCSV result:', result)
 
     if (result.problems.length) {
       setError(result.problems.join('\n '))
@@ -119,6 +151,11 @@ export default function ImportProducts() {
       setLoading(false)
       return
     }
+
+    await supabase
+      .from<SupaProduct>('products')
+      .update({ no_backorder: true, featured: false })
+      .eq('import_tag', prevImportTag)
 
     const itemsPerChunk = 1000 // items per chunk
     const chunkedProducts = result.products.reduce((acc, item, index) => {
@@ -180,14 +217,10 @@ export default function ImportProducts() {
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     setLoading(true)
     if (event.target.files && event.target.files.length) {
-      let data = new FormData()
-      data.append('file', event.target.files[0])
-      setFormData(data)
-
       setFile(event.target.files[0])
       setLoading(false)
     } else {
-      setFormData(undefined)
+      setFile(undefined)
       setLoading(false)
     }
   }
@@ -283,12 +316,13 @@ export default function ImportProducts() {
             </Select>
             <FormHelperText>
               If updating, products with the tag you select here will first be
-              marked inactive.
+              set as <b>no_backorder</b>=<i>true</i> and <b>featured</b>=
+              <i>false</i>.
             </FormHelperText>
           </FormControl>
           <TextField
             label="Import Tag"
-            helperText="Required. This should be unique."
+            helperText="Required."
             fullWidth
             value={importTag}
             onChange={(event) => setImportTag(event.target.value)}
@@ -341,6 +375,33 @@ export default function ImportProducts() {
                     event: React.ChangeEvent<HTMLInputElement>,
                     checked: boolean
                   ) => {
+                    setMapCatz(checked)
+                  }}
+                  checked={mapCatz}
+                  value="map_catz"
+                />
+              }
+              label="Map Categories"
+            />
+          </FormControl>
+
+          {mapCatz && (
+            <CatMapDialog
+              file={file}
+              buttonText={`${
+                !file ? 'Upload .csv file to' : ''
+              } Set Category Mapping`}
+            />
+          )}
+
+          <FormControl fullWidth className={classes.gridItem}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  onChange={(
+                    event: React.ChangeEvent<HTMLInputElement>,
+                    checked: boolean
+                  ) => {
                     setIgnoreDuplicates(checked)
                   }}
                   checked={ignoreDuplicates}
@@ -380,9 +441,7 @@ export default function ImportProducts() {
 
           <div className={classes.gridItem}>
             <Button
-              disabled={
-                loading || !importTag || !vendor || formData === undefined
-              }
+              disabled={loading || !importTag || !vendor}
               onClick={() => submitData()}
               variant="contained"
               color="primary"
@@ -413,9 +472,47 @@ export default function ImportProducts() {
             Helpful Information
           </Typography>
           <Typography variant="body1" gutterBottom component="div">
-            <dl>
+            <dl className={classes.info}>
               <dt>What kind of file should be uploaded?</dt>
               <dd>Comma separated value files with the extension .csv</dd>
+
+              <dt>Import Tag</dt>
+              <dd>
+                This field is used to track changes to new price sheets that are
+                meant to update products that have already been imported once. A
+                use-case for this is when uploading partial lists of product for
+                a vendor. So for example if a sub-set of products are imported,
+                then a while later a new sheet of products can be imported
+                without having to destroy and re-import all the products for a
+                vendor. If uploading a complete list of all products for a
+                particular vendor then it would be reasonable to use the same
+                value as the Vendor field.
+                <br />
+                <br />
+                <b>NOTE:</b> it can be useful to include the current date in the
+                value for the Import Tag field (or otherwise make this a unique
+                value). When creating wholesale orders it might be useful to
+                know which price sheet a product that was ordered came from.
+                <br />
+                <br />
+                When the Previous Import Tag is specified, products with that
+                tag are first marked inactive before new products are created.
+              </dd>
+
+              <dt>How is markup applied?</dt>
+              <dd>
+                Markup is a percentage in decimal format so 0.10 will markup
+                products by 10%. The formula is: <i>PRICE + (PRICE * MARKUP)</i>{' '}
+                so if the value of <b>ws_price</b> is 10.00 and the markup
+                specified is 0.10 the the markup price will be 11.00.
+                <br />
+                <br />
+                If any rows of the price sheet has a non-empty, non-zero value
+                in the <b>ws_price_markup</b> or <b>u_price_markup</b> then that
+                will be used as the markup price. This means only some rows of
+                the price sheet can contain special markups while the rest of
+                the sheet can have a single markup applied.
+              </dd>
 
               <dt>What columns will get processed?</dt>
               <dd>
@@ -542,44 +639,6 @@ export default function ImportProducts() {
                     </tr>
                   </tbody>
                 </table>
-              </dd>
-
-              <dt>How is markup applied?</dt>
-              <dd>
-                Markup is a percentage in decimal format so 0.10 will markup
-                products by 10%. The formula is: <i>PRICE + (PRICE * MARKUP)</i>{' '}
-                so if the value of <b>ws_price</b> is 10.00 and the markup
-                specified is 0.10 the the markup price will be 11.00.
-                <br />
-                <br />
-                If any rows of the price sheet has a non-empty, non-zero value
-                in the <b>ws_price_markup</b> or <b>u_price_markup</b> then that
-                will be used as the markup price. This means only some rows of
-                the price sheet can contain special markups while the rest of
-                the sheet can have a single markup applied.
-              </dd>
-
-              <dt>Import Tag</dt>
-              <dd>
-                This field is used to track changes to new price sheets that are
-                meant to update products that have already been imported once. A
-                use-case for this is when uploading partial lists of product for
-                a vendor. So for example if a sub-set of products are imported,
-                then a while later a new sheet of products can be imported
-                without having to destroy and re-import all the products for a
-                vendor. If uploading a complete list of all products for a
-                particular vendor then it would be reasonable to use the same
-                value as the Vendor field.
-                <br />
-                <br />
-                <b>NOTE:</b> it can be useful to include the current date in the
-                value for the Import Tag field (or otherwise make this a unique
-                value). When creating wholesale orders it might be useful to
-                know which price sheet a product that was ordered came from.
-                <br />
-                <br />
-                When the Previous Import Tag is specified, products with that
-                tag are first marked inactive before new products are created.
               </dd>
             </dl>
           </Typography>

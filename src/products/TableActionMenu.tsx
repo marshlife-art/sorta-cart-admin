@@ -1,16 +1,21 @@
-import React, { useState } from 'react'
+import React, { Component, useState } from 'react'
 import { Action } from 'material-table'
-import { IconButton, Menu, MenuItem } from '@material-ui/core'
+import { IconButton, Menu, MenuItem, SvgIconTypeMap } from '@material-ui/core'
+import { OverridableComponent } from '@material-ui/core/OverridableComponent'
 import NoBackorderIcon from '@material-ui/icons/LocalShipping'
+import FeaturedIcon from '@material-ui/icons/Star'
 
 import { supabase } from '../lib/supabaseClient'
 import { Product } from '../types/Product'
 import { SupaProduct } from '../types/SupaTypes'
+import { PostgrestResponse } from '@supabase/supabase-js'
 
 // this global var isn't great, but there doesn't seem to be a better option :/
 let selectedProducts: Product[]
 
-async function updateProductNoBackorder(v: string) {
+async function updateProductNoBackorder(
+  v: string
+): Promise<PostgrestResponse<SupaProduct>> {
   const no_backorder: boolean = v === 'true'
   return await supabase
     .from<SupaProduct>('products')
@@ -21,10 +26,25 @@ async function updateProductNoBackorder(v: string) {
     )
 }
 
+async function updateProductFeatured(
+  v: string
+): Promise<PostgrestResponse<SupaProduct>> {
+  const featured: boolean = v === 'true'
+  return await supabase
+    .from<SupaProduct>('products')
+    .update({ featured })
+    .in(
+      'id',
+      selectedProducts.map((p) => p.id)
+    )
+}
+
 function TableActionMenu(props: {
   setNeedsRefresh: React.Dispatch<React.SetStateAction<boolean>>
+  onItemClick: (v: string) => Promise<PostgrestResponse<SupaProduct>>
+  Icon: OverridableComponent<SvgIconTypeMap<{}, 'svg'>>
 }) {
-  const { setNeedsRefresh } = props
+  const { setNeedsRefresh, onItemClick, Icon } = props
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -43,7 +63,7 @@ function TableActionMenu(props: {
         aria-expanded={open ? 'true' : undefined}
         onClick={handleClick}
       >
-        <NoBackorderIcon />
+        <Icon />
       </IconButton>
 
       <Menu
@@ -63,7 +83,7 @@ function TableActionMenu(props: {
                 console.warn('ugh no selectedOrders')
                 return
               }
-              updateProductNoBackorder(v).then((response) => {
+              onItemClick(v).then((response) => {
                 setNeedsRefresh(true)
                 handleClose()
               })
@@ -82,7 +102,31 @@ export function getNoBackorderAction(
 ): Action<Product> {
   return {
     tooltip: 'SET NO BACKORDER',
-    icon: () => <TableActionMenu setNeedsRefresh={setNeedsRefresh} />,
+    icon: () => (
+      <TableActionMenu
+        setNeedsRefresh={setNeedsRefresh}
+        onItemClick={updateProductNoBackorder}
+        Icon={NoBackorderIcon}
+      />
+    ),
+    onClick: (e, data) => {
+      selectedProducts = data as Product[]
+    }
+  }
+}
+
+export function getFeaturedAction(
+  setNeedsRefresh: React.Dispatch<React.SetStateAction<boolean>>
+): Action<Product> {
+  return {
+    tooltip: 'SET FEATURED',
+    icon: () => (
+      <TableActionMenu
+        setNeedsRefresh={setNeedsRefresh}
+        onItemClick={updateProductFeatured}
+        Icon={FeaturedIcon}
+      />
+    ),
     onClick: (e, data) => {
       selectedProducts = data as Product[]
     }

@@ -89,11 +89,20 @@ function step(props: {
   vendor: string
   markup: number
   defaultSubCat?: string
+  getCatMap?: (from: string) => string | undefined
   products: SupaProduct[]
   problems: string[]
 }): void {
-  const { row, import_tag, vendor, markup, defaultSubCat, products, problems } =
-    props
+  const {
+    row,
+    import_tag,
+    vendor,
+    markup,
+    defaultSubCat,
+    products,
+    problems,
+    getCatMap
+  } = props
   const { data, errors } = row
 
   if (errors.length) {
@@ -109,7 +118,8 @@ function step(props: {
       data['unf']
     ) {
       // if the first and only field is something, then it's probably a category.
-      cat = data['unf']
+
+      cat = (getCatMap && getCatMap(data['unf'])) || data['unf']
       return
     }
     if (!Object.values(data).filter(String).length) {
@@ -124,28 +134,25 @@ function step(props: {
     }
 
     // there could probably be a better way to pull out known Product properties
-    const {
-      unf,
-      upc_code,
-      name,
-      description,
-      size,
-      unit_type,
-      sub_category,
-      plu
-    } = data
+    const { unf, upc_code, name, description, size, unit_type, plu } = data
 
     const product: SupaProduct = {
-      id: `${unf ? unf : ''}__${upc_code ? upc_code : ''}__${plu ? plu : ''}`, // "natural" pk
+      id: `${unf ? unf : ''}__${upc_code ? upc_code : ''}`, // "natural" pk
       unf,
       upc_code: upc_code ? upc_code.replace(/-/g, '') : upc_code, // strip dashes (-) from upc_code
       name,
       description,
       size,
       unit_type,
-      sub_category: data['sub_category'] || defaultSubCat,
+      sub_category:
+        (getCatMap && getCatMap(data['sub_category'] || defaultSubCat)) ||
+        data['sub_category'] ||
+        defaultSubCat,
       plu,
-      category: data['category'] || cat
+      category:
+        (getCatMap && getCatMap(data['category'] || cat)) ||
+        data['category'] ||
+        cat
     }
 
     // aggregate codes cols into single col
@@ -231,8 +238,11 @@ function step(props: {
     product.pk = pk && !isNaN(parseInt(pk)) ? parseInt(pk) : 1 // i guess default 1 makes sense here
 
     // no_backorder is BOOLEAN type
-    product.no_backorder =
-      data['no_backorder'] === 'FALSE' ? false : !!data['no_backorder']
+    // product.no_backorder =
+    //   data['no_backorder'] === 'FALSE' ? false : !!data['no_backorder']
+    // manually set no_backorder to false because this is a pricesheet import, so assume it's available
+    // and the first step in the import process is to set all existing products to no_backorder=true
+    product.no_backorder = false
 
     product.import_tag = import_tag
     product.vendor = vendor
@@ -273,7 +283,8 @@ export default function parseProductsCSV(
   vendor: string = 'default',
   markup: number = 0.0,
   defaultCat?: string,
-  defaultSubCat?: string
+  defaultSubCat?: string,
+  getCatMap?: (from: string) => string | undefined
 ): Promise<IParseProductsCSV> {
   const products: SupaProduct[] = []
   const problems: string[] = []
@@ -301,7 +312,96 @@ export default function parseProductsCSV(
           vendor,
           markup,
           defaultSubCat,
+          getCatMap,
           products,
+          problems
+        })
+    })
+  })
+}
+
+interface Catz {
+  [index: string]: string[]
+}
+export interface IParseProductCatzCSV {
+  catz: Catz
+  problems: string[]
+}
+function catStep(props: {
+  row: ParseStepResult<any>
+  catz: Catz
+  problems: string[]
+}): void {
+  const { row, catz, problems } = props
+  const { data, errors } = row
+
+  if (errors.length) {
+    console.warn('onoz! parse catStep row errors:', errors)
+    return
+  }
+
+  try {
+    if (
+      data['upc_code'] === '' &&
+      data['name'] === '' &&
+      data['description'] === '' &&
+      data['unf']
+    ) {
+      // if the first and only field is something, then it's probably a category.
+      cat = data['unf']
+      if (cat && !catz[cat]) {
+        catz[cat] = []
+      }
+      return
+    }
+    if (!Object.values(data).filter(String).length) {
+      console.warn('parseProductsCSV row was empty?! row:', row)
+      return
+    }
+    // UNFI pricesheets have multiple warehouse location colz.
+    // MARSH can only order IOW products.
+    // so if there's an IOW column and it has an empty string value, skip it.
+    if (data['iow'] === '') {
+      return
+    }
+
+    const d_cat = data['category'] || cat
+
+    if (d_cat && !catz[d_cat]) {
+      catz[d_cat] = []
+    }
+    const sub_cat = data['sub_category']
+    // only push distinct sub_catz
+    if (sub_cat && d_cat && !catz[d_cat].includes(sub_cat)) {
+      catz[d_cat].push(sub_cat)
+    }
+  } catch (e) {
+    problems.push(`error (${e}) processing row: ${data}`)
+  }
+}
+
+export async function parseProductsDistinctCatzCSV(
+  file: File
+): Promise<IParseProductCatzCSV> {
+  const catz: Catz = {}
+  const problems: string[] = []
+
+  return new Promise((resolve, reject) => {
+    // any cuz getting tsc is squaks: Argument of type 'File' is not assignable to parameter of type 'unique symbol'
+    parse(file as any, {
+      complete: () => {
+        cat = null
+        resolve({ catz, problems })
+      },
+      error: reject,
+      skipEmptyLines: 'greedy',
+      header: true,
+      transformHeader,
+      transform,
+      step: (row) =>
+        catStep({
+          row,
+          catz,
           problems
         })
     })

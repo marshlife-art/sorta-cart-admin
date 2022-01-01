@@ -8,3 +8,4 @@ export type SupaOrderWithLineItems = SupaOrder & {
   OrderLineItems: SupaOrderLineItem[]
 }
 export type SupaWholesaleOrder = definitions['WholesaleOrders']
+export type SupaCatmap = definitions['catmap']
