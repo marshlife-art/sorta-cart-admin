@@ -75,7 +75,10 @@ export const login = (
       dispatch(isFetching(true))
 
       supabase.auth
-        .signIn({ email, password })
+        .signIn(
+          { email, password },
+          { redirectTo: 'https://sorta-cart.vercel.app/admin' }
+        )
         .then((response) => {
           if (response.user && response.user.id) {
             dispatch(set({ ...response.user, role: 'admin' })) // #TODO: don't hard-code admin role :/
