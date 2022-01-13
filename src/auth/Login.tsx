@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { connect } from 'react-redux'
-import { ThunkDispatch } from 'redux-thunk'
+import { useDispatch, useSelector } from 'react-redux'
 import { withRouter, RouteComponentProps } from 'react-router-dom'
 import { Container, Button, TextField } from '@material-ui/core'
 import Box from '@material-ui/core/Box'
@@ -9,15 +8,10 @@ import { makeStyles } from '@material-ui/core/styles'
 
 import { RootState } from '../redux'
 import { login } from '../redux/session/actions'
-import { UserServiceProps } from '../redux/session/reducers'
+import { UserService } from '../redux/session/reducers'
 
-interface OwnProps {}
-
-interface DispatchProps {
-  login: (email: string, password: string) => void
-}
-
-type Props = UserServiceProps & OwnProps & DispatchProps & RouteComponentProps
+// #TODO: deal with useRouter()
+type Props = RouteComponentProps
 
 const useStyles = makeStyles((theme) => ({
   form: {
@@ -39,6 +33,11 @@ const useStyles = makeStyles((theme) => ({
 }))
 
 function Login(props: Props) {
+  const userService = useSelector<RootState, UserService>(
+    (state) => state.session.userService
+  )
+  const dispatch = useDispatch()
+
   const doLogin = (event: React.FormEvent) => {
     event.preventDefault()
     setError('')
@@ -46,11 +45,11 @@ function Login(props: Props) {
     const emailEl = target.elements.namedItem('email') as HTMLInputElement
 
     if (emailEl && emailEl.value.length > 0) {
-      props.login(emailEl.value, password)
+      dispatch(login(emailEl.value, password))
     }
   }
 
-  const { userService, history } = props
+  const { history } = props
   const classes = useStyles()
   const [error, setError] = useState('')
   const [password, setPassword] = useState('')
@@ -104,7 +103,7 @@ function Login(props: Props) {
             fullWidth
             variant="contained"
             color="primary"
-            disabled={props.userService.isFetching}
+            disabled={userService.isFetching}
             className={classes.submit}
           >
             {!password ? 'Email Magic Link' : 'Login'}
@@ -112,20 +111,20 @@ function Login(props: Props) {
         </div>
 
         <Box>
-          {props.userService.message && (
+          {userService.message && (
             <Typography variant="body1" display="block" gutterBottom>
-              {props.userService.message.message}
+              {userService.message.message}
             </Typography>
           )}
         </Box>
         <Box color="error.main">
-          {props.userService.error && (
+          {userService.error && (
             <>
               <Typography variant="overline" display="block">
                 onoz! an error!
               </Typography>
               <Typography variant="body1" display="block" gutterBottom>
-                {props.userService.error.reason}
+                {userService.error.reason}
               </Typography>
             </>
           )}
@@ -145,22 +144,4 @@ function Login(props: Props) {
   )
 }
 
-const mapStateToProps = (
-  states: RootState,
-  ownProps: OwnProps
-): UserServiceProps => {
-  return {
-    userService: states.session.userService
-  }
-}
-
-const mapDispatchToProps = (
-  dispatch: ThunkDispatch<{}, {}, any>,
-  ownProps: OwnProps
-): DispatchProps => {
-  return {
-    login: (email, password) => dispatch(login(email, password))
-  }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(withRouter(Login))
+export default withRouter(Login)

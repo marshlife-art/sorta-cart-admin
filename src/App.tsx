@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom'
-import { connect } from 'react-redux'
-import { ThunkDispatch } from 'redux-thunk'
+import { useDispatch, useSelector } from 'react-redux'
 import clsx from 'clsx'
 
 import { ThemeProvider } from '@material-ui/core/styles'
@@ -23,11 +22,10 @@ import { darkTheme, lightTheme } from './theme'
 import { mainListItems } from './listItems' // secondaryListItems
 
 import { RootState } from './redux'
-import { UserServiceProps } from './redux/session/reducers'
+import { UserService } from './redux/session/reducers'
 import { checkSession, logout } from './redux/session/actions'
 
-import { Preferences } from './types/Preferences'
-import { PreferencesServiceProps } from './redux/preferences/reducers'
+import { PreferencesService } from './redux/preferences/reducers'
 import { getPreferences, setPreferences } from './redux/preferences/actions'
 
 import Loading from './Loading'
@@ -100,32 +98,23 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 )
 
-interface DispatchProps {
-  checkSession: () => void
-  getPreferences: () => void
-  setPreferences: (preferences: Preferences) => void
-  logout: () => void
-}
+export function App() {
+  const userService = useSelector<RootState, UserService>(
+    (state) => state.session.userService
+  )
 
-type Props = UserServiceProps & PreferencesServiceProps & DispatchProps
+  const preferencesService = useSelector<RootState, PreferencesService>(
+    (state) => state.preferences.preferencesService
+  )
 
-export function App(props: Props) {
+  const dispatch = useDispatch()
+
   const [loading, setLoading] = useState(true)
   const [useDarkTheme, setUseDarkTheme] = useState<null | boolean>(null)
 
-  // checkSession is destructured from props and passed into useEffect
-  // which is a bit confusing since checkSession is also imported. ah scope.
-  const {
-    checkSession,
-    userService,
-    getPreferences,
-    preferencesService,
-    setPreferences
-  } = props
-
   useEffect(() => {
-    getPreferences && getPreferences()
-  }, [getPreferences])
+    dispatch(getPreferences())
+  }, [])
 
   useEffect(() => {
     if (
@@ -149,14 +138,14 @@ export function App(props: Props) {
       (preferencesService.preferences.dark_mode === 'true' ? true : false) !==
         useDarkTheme
     ) {
-      setPreferences({ dark_mode: useDarkTheme ? 'true' : 'false' })
+      dispatch(setPreferences({ dark_mode: useDarkTheme ? 'true' : 'false' }))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [useDarkTheme])
 
   useEffect(() => {
-    checkSession && checkSession()
-  }, [checkSession])
+    dispatch(checkSession())
+  }, [])
 
   useEffect(() => {
     if (userService) {
@@ -243,7 +232,7 @@ export function App(props: Props) {
                   </ListItemText>
                 </ListItem>
                 <Divider />
-                <ListItem button onClick={() => props.logout()}>
+                <ListItem button onClick={() => dispatch(logout())}>
                   <ListItemIcon>
                     <FaceIcon />
                   </ListItemIcon>
@@ -349,25 +338,4 @@ export function App(props: Props) {
   )
 }
 
-const mapStateToProps = (
-  states: RootState
-): UserServiceProps & PreferencesServiceProps => {
-  return {
-    userService: states.session.userService,
-    preferencesService: states.preferences.preferencesService
-  }
-}
-
-const mapDispatchToProps = (
-  dispatch: ThunkDispatch<{}, {}, any>
-): DispatchProps => {
-  return {
-    checkSession: () => dispatch(checkSession()),
-    getPreferences: () => dispatch(getPreferences()),
-    setPreferences: (preferences: Preferences) =>
-      dispatch(setPreferences(preferences)),
-    logout: () => dispatch(logout())
-  }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(App)
+export default App

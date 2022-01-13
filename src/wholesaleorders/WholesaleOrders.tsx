@@ -13,11 +13,11 @@ import IconButton from '@material-ui/core/IconButton'
 import CloseIcon from '@material-ui/icons/Close'
 import Typography from '@material-ui/core/Typography'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
-import { connect } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { Switch } from 'react-router'
 import ProtectedRoute from '../auth/ProtectedRoute'
 import { RootState } from '../redux'
-import { UserService, UserServiceProps } from '../redux/session/reducers'
+import { UserService } from '../redux/session/reducers'
 import EditWholesaleOrder from './EditWholesaleOrder'
 import { useAllWholesaleOrdersService } from './useWholesaleOrderService'
 import { WholesaleOrderRouterProps } from '../types/WholesaleOrder'
@@ -122,8 +122,11 @@ interface Props {
 function WholesaleOrders(
   props: Props & RouteComponentProps<WholesaleOrderRouterProps>
 ) {
+  const userService = useSelector<RootState, UserService>(
+    (state) => state.session.userService
+  )
+
   const classes = useStyles()
-  const { userService } = props
 
   const [wholesaleOrders, setWholesaleOrders] = useState<WholesaleOrder[]>([])
   const [reloadOrders, setReloadOrders] = useState(true)
@@ -310,10 +313,4 @@ function WholesaleOrders(
   ) : null
 }
 
-const mapStateToProps = (states: RootState): UserServiceProps => {
-  return {
-    userService: states.session.userService
-  }
-}
-
-export default connect(mapStateToProps, undefined)(withRouter(WholesaleOrders))
+export default withRouter(WholesaleOrders)

@@ -4,24 +4,18 @@ import MenuItem from '@material-ui/core/MenuItem'
 import IconButton from '@material-ui/core/IconButton'
 import Badge from '@material-ui/core/Badge'
 import TagFaces from '@material-ui/icons/TagFaces'
-import { connect } from 'react-redux'
-import { ThunkDispatch } from 'redux-thunk'
+import { useDispatch, useSelector } from 'react-redux'
 
 import { RootState } from '../redux'
 import { UserService } from '../redux/session/reducers'
-// import { UserServiceProps } from '../redux/session/reducers'
 import { logout } from '../redux/session/actions'
 
-interface UserServiceProps {
-  userService?: UserService
-}
+function UserMenu() {
+  const userService = useSelector<RootState, UserService>(
+    (state) => state.session.userService
+  )
+  const dispatch = useDispatch()
 
-interface DispatchProps {
-  logout: () => void
-}
-
-function UserMenu(props: UserServiceProps & DispatchProps) {
-  const { userService, logout } = props
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -33,7 +27,7 @@ function UserMenu(props: UserServiceProps & DispatchProps) {
   }
 
   const handleLogout = () => {
-    logout()
+    dispatch(logout())
     handleClose()
   }
 
@@ -75,18 +69,4 @@ function UserMenu(props: UserServiceProps & DispatchProps) {
   )
 }
 
-const mapStateToProps = (states: RootState): UserServiceProps => {
-  return {
-    userService: states.session.userService
-  }
-}
-
-const mapDispatchToProps = (
-  dispatch: ThunkDispatch<{}, {}, any>
-): DispatchProps => {
-  return {
-    logout: () => dispatch(logout())
-  }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(UserMenu)
+export default UserMenu

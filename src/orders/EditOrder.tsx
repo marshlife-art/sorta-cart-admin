@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { withRouter, RouteComponentProps } from 'react-router-dom'
-import { connect } from 'react-redux'
+import { useSelector } from 'react-redux'
 
 import TextField from '@material-ui/core/TextField'
 import Grid from '@material-ui/core/Grid'
@@ -22,7 +22,7 @@ import Box from '@material-ui/core/Box'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 
 import { RootState } from '../redux'
-import { UserService, UserServiceProps } from '../redux/session/reducers'
+import { UserService } from '../redux/session/reducers'
 import Loading from '../Loading'
 import { useOrderService } from './useOrderService'
 import {
@@ -129,13 +129,11 @@ function tryNumber(input: string | number): number {
   return +parseFloat(str).toFixed(2)
 }
 
-interface EditOrderProps {
-  userService?: UserService
-}
+function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
+  const userService = useSelector<RootState, UserService>(
+    (state) => state.session.userService
+  )
 
-function EditOrder(
-  props: EditOrderProps & RouteComponentProps<OrderRouterProps>
-) {
   const classes = useStyles()
 
   const [orderId, setOrderId] = useState('')
@@ -183,18 +181,18 @@ function EditOrder(
     if (
       order &&
       !order.UserId &&
-      props.userService &&
-      props.userService.user &&
-      props.userService.user.id
+      userService &&
+      userService.user &&
+      userService.user.id
     ) {
-      const UserId = props.userService.user.id
+      const UserId = userService.user.id
       UserId &&
         setOrder((prevOrder) => ({
           ...prevOrder,
           UserId
         }))
     }
-  }, [props.userService, order])
+  }, [userService, order])
 
   useEffect(() => {
     if (!needToCheckForDiscounts || !order) {
@@ -892,10 +890,4 @@ function EditOrder(
   )
 }
 
-const mapStateToProps = (states: RootState): UserServiceProps => {
-  return {
-    userService: states.session.userService
-  }
-}
-
-export default connect(mapStateToProps, undefined)(withRouter(EditOrder))
+export default withRouter(EditOrder)
