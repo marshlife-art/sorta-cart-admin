@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Table from '@material-ui/core/Table'
 import TableBody from '@material-ui/core/TableBody'
@@ -18,6 +18,7 @@ import { supabase } from '../lib/supabaseClient'
 import { createOrderCredits, OrderCreditItem } from '../lib/orderService'
 import { TextField } from '@material-ui/core'
 import { LineItem } from '../types/Order'
+import { SupaOrderLineItem } from '../types/SupaTypes'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -69,6 +70,8 @@ export default function WholesaleOrderLineItems(props: {
     calcAdjustments
   } = props
 
+  const [loading, setLoading] = useState(false)
+
   function calc() {
     let groupedLineItems: {
       [key: string]: GroupedItem
@@ -82,7 +85,6 @@ export default function WholesaleOrderLineItems(props: {
     }))
 
     lineItems?.forEach((li) => {
-      // console.log('zomg the li', li)
       const id =
         li.data &&
         li.data.product &&
@@ -106,14 +108,6 @@ export default function WholesaleOrderLineItems(props: {
           ? +(parseFloat(li.data.product.ws_price_cost) * qty).toFixed(2)
           : li.total) || 0
 
-      console.log(
-        li.description,
-        'ooookay qty, qtyUnits, liTotal',
-        qty,
-        qtyUnits,
-        liTotal
-      )
-
       groupedLineItems[key] = {
         qtySum: acc ? acc.qtySum + qty : qty,
         qtyUnits: acc ? acc.qtyUnits + qtyUnits : qtyUnits,
@@ -135,7 +129,6 @@ export default function WholesaleOrderLineItems(props: {
     Object.values(groupedLineItems).forEach((item) => {
       // check if qtySum is not a round number (i.e. a partial case)
       if (item.qtySum % 1 !== 0 && item.product) {
-        console.log('fucck rounding?!>?!?!')
         const pk = item.product.pk
         const qty = item.line_items.reduce(
           (acc, v) => acc + (v.selected_unit === 'EA' ? v.quantity : 0),
@@ -235,51 +228,24 @@ export default function WholesaleOrderLineItems(props: {
     }
   }
 
-  function handleQtyChange(li: LineItem, qtyString: string, idx: number) {
+  async function handleQtyChange(li: LineItem, qtyString: string, idx: number) {
+    setLoading(true)
     const qty = isNaN(parseInt(qtyString)) ? 1 : parseInt(qtyString)
-    console.log('handleQtyChange qty, idx, li:', qty, idx, li)
+
     const quantity = qty > 0 ? qty : 1
 
-    const id =
-      li.data &&
-      li.data.product &&
-      `${li.data.product.unf}${li.data.product.upc_code}`
-    const key = id ? id : li.description
-
-    const groupedItem = lineItemData.groupedLineItems[key]
-
-    if (groupedItem) {
-      if (groupedItem.line_items[idx]) {
-        // odang dis ugly :/
-
-        const { totalSum } = groupedItem
-        groupedItem.line_items[idx].quantity = quantity
-        groupedItem.line_items[idx].total =
-          quantity * groupedItem.line_items[idx].price
-        groupedItem.qtySum = groupedItem.line_items.reduce(
-          (acc, li) => acc + li.quantity,
-          0
-        )
-
-        groupedItem.totalSum = groupedItem.line_items.reduce(
-          (acc, li) => acc + li.total,
-          0
-        )
-
-        setLineItemData((prevData) => ({
-          ...prevData,
-          groupedLineItems: {
-            ...prevData.groupedLineItems,
-            // qtySum,
-            [key]: {
-              ...groupedItem
-            }
-          }
-        }))
-        // props.setReload(true)
-        // calc()
-      }
+    const { error } = await supabase
+      .from<SupaOrderLineItem>('OrderLineItems')
+      .update({ quantity })
+      .eq('id', li.id)
+    if (error) {
+      setSnackMsg(`error updating line item: ${error.message}`)
+      setSnackOpen(true)
+    } else {
+      props.setReload(true)
     }
+    // forgive me for my sinz, this is weird :/
+    setTimeout(() => setLoading(false), 2000)
   }
 
   return (
@@ -418,11 +384,11 @@ export default function WholesaleOrderLineItems(props: {
                             margin="dense"
                             fullWidth
                             value={li.quantity}
-                            onChange={(event: any) =>
-                              handleQtyChange(li, event.target.value, idx)
+                            onChange={async (event: any) =>
+                              await handleQtyChange(li, event.target.value, idx)
                             }
                             inputProps={{ min: '1', step: '1' }}
-                            disabled
+                            disabled={loading}
                           />
                         )}
                   </TableCell>
