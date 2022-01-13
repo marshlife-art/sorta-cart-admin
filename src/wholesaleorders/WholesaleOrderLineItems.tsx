@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import Table from '@material-ui/core/Table'
 import TableBody from '@material-ui/core/TableBody'
 import TableCell from '@material-ui/core/TableCell'
@@ -47,17 +47,17 @@ function toMoney(input: any) {
   return +parseFloat(input).toFixed(2)
 }
 
-function WholesaleOrderLineItems(
-  props: {
-    wholesaleOrder?: WholesaleOrder
-    setReload: React.Dispatch<React.SetStateAction<boolean>>
-    lineItemData: LineItemData
-    setLineItemData: React.Dispatch<React.SetStateAction<LineItemData>>
-    setSnackMsg: (value: React.SetStateAction<string>) => void
-    setSnackOpen: React.Dispatch<React.SetStateAction<boolean>>
-    calcAdjustments: boolean
-  } & RouteComponentProps
-) {
+export default function WholesaleOrderLineItems(props: {
+  wholesaleOrder?: WholesaleOrder
+  setReload: React.Dispatch<React.SetStateAction<boolean>>
+  lineItemData: LineItemData
+  setLineItemData: React.Dispatch<React.SetStateAction<LineItemData>>
+  setSnackMsg: (value: React.SetStateAction<string>) => void
+  setSnackOpen: React.Dispatch<React.SetStateAction<boolean>>
+  calcAdjustments: boolean
+}) {
+  const navigate = useNavigate()
+
   const classes = useStyles()
   const lineItems = props?.wholesaleOrder?.OrderLineItems
 
@@ -392,7 +392,7 @@ function WholesaleOrderLineItems(
                         href={`/orders/edit/${li.OrderId}`}
                         onClick={(e: any) => {
                           e.preventDefault()
-                          props.history.push(`/orders/edit/${li.OrderId}`)
+                          navigate(`/orders/edit/${li.OrderId}`)
                         }}
                       >
                         Order #{li.OrderId}
@@ -478,5 +478,3 @@ function WholesaleOrderLineItems(
     </Table>
   )
 }
-
-export default withRouter(WholesaleOrderLineItems)

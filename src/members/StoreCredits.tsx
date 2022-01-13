@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { makeStyles, withStyles } from '@material-ui/core/styles'
 import Paper from '@material-ui/core/Paper'
 import Table from '@material-ui/core/Table'
@@ -103,7 +103,8 @@ type StoreCreditRow = Member & {
   store_credit: number
 }
 
-function StoreCredits(props: RouteComponentProps) {
+export default function StoreCredits() {
+  const navigate = useNavigate()
   const classes = useStyles()
   // const tableRef = createRef<any>()
 
@@ -133,11 +134,7 @@ function StoreCredits(props: RouteComponentProps) {
               >
                 <div className={classes.row}>
                   <Tooltip title="edit member">
-                    <Button
-                      onClick={() =>
-                        props.history.push(`/members/${member.id}`)
-                      }
-                    >
+                    <Button onClick={() => navigate(`/members/${member.id}`)}>
                       {member.name}
                     </Button>
                   </Tooltip>
@@ -181,7 +178,7 @@ function StoreCredits(props: RouteComponentProps) {
                           <Tooltip title="edit order">
                             <Button
                               onClick={() =>
-                                props.history.push(`/orders/edit/${li.OrderId}`)
+                                navigate(`/orders/edit/${li.OrderId}`)
                               }
                             >
                               #{li.OrderId}
@@ -215,7 +212,7 @@ function StoreCredits(props: RouteComponentProps) {
                           <Tooltip title="edit order">
                             <Button
                               onClick={() =>
-                                props.history.push(`/orders/edit/${li.OrderId}`)
+                                navigate(`/orders/edit/${li.OrderId}`)
                               }
                             >
                               #{li.OrderId}
@@ -236,5 +233,3 @@ function StoreCredits(props: RouteComponentProps) {
     </Paper>
   )
 }
-
-export default withRouter(StoreCredits)

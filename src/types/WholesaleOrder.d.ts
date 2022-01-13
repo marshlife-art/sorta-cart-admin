@@ -19,7 +19,3 @@ export interface WholesaleOrder {
   data?: object
   api_key?: string
 }
-
-export interface WholesaleOrderRouterProps {
-  id: string
-}

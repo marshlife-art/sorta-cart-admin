@@ -7,12 +7,12 @@ import TableCell from '@material-ui/core/TableCell'
 import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 import Title from './Title'
-import { RouteComponentProps, withRouter } from 'react-router-dom'
 import { formatDistance } from 'date-fns/esm'
 import useSWR from 'swr'
 
 import { Order } from '../types/Order'
 import { supabase } from '../lib/supabaseClient'
+import { useNavigate } from 'react-router-dom'
 
 interface OrderData {
   data: Order[]
@@ -32,7 +32,8 @@ const useStyles = makeStyles((theme) => ({
   }
 }))
 
-function Orders(props: RouteComponentProps) {
+export default function Orders() {
+  const navigate = useNavigate()
   const classes = useStyles()
 
   const { data: orders, error } = useSWR<OrderData>(
@@ -78,7 +79,7 @@ function Orders(props: RouteComponentProps) {
             <TableRow
               key={order.id}
               className={classes.rowHover}
-              onClick={() => props.history.push(`/orders/edit/${order.id}`)}
+              onClick={() => navigate(`/orders/edit/${order.id}`)}
             >
               <TableCell
                 title={
@@ -105,7 +106,7 @@ function Orders(props: RouteComponentProps) {
           variant="contained"
           color="primary"
           onClick={(event: any) => {
-            props.history.push('/orders')
+            navigate('/orders')
           }}
         >
           ALL ORDERS
@@ -114,5 +115,3 @@ function Orders(props: RouteComponentProps) {
     </React.Fragment>
   )
 }
-
-export default withRouter(Orders)

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, createRef } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import { Menu, MenuItem } from '@material-ui/core'
 import Divider from '@material-ui/core/Divider'
@@ -31,9 +31,10 @@ interface AddWholesaleOrderLineItemsProps {
   setReloadOrders: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-function AddWholesaleOrderLineItems(
-  props: AddWholesaleOrderLineItemsProps & RouteComponentProps
+export default function AddWholesaleOrderLineItems(
+  props: AddWholesaleOrderLineItemsProps
 ) {
+  const navigate = useNavigate()
   const classes = useStyles()
   let tableRef = createRef<any>()
 
@@ -174,7 +175,7 @@ function AddWholesaleOrderLineItems(
                 href={`/orders/edit/${row.OrderId}`}
                 onClick={(e: any) => {
                   e.preventDefault()
-                  props.history.push(`/orders/edit/${row.OrderId}`)
+                  navigate(`/orders/edit/${row.OrderId}`)
                 }}
               >
                 Order #{row.OrderId}
@@ -313,5 +314,3 @@ function AddWholesaleOrderLineItems(
     </div>
   )
 }
-
-export default withRouter(AddWholesaleOrderLineItems)

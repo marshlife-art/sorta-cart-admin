@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
+import { useNavigate, useMatch } from 'react-router-dom'
 import { makeStyles, Theme, createStyles } from '@material-ui/core'
 import Paper from '@material-ui/core/Paper'
 import Grid from '@material-ui/core/Grid'
@@ -21,7 +21,7 @@ import ListItem from '@material-ui/core/ListItem'
 import ListSubheader from '@material-ui/core/ListSubheader'
 import ListItemText from '@material-ui/core/ListItemText'
 
-import { Member, MemberRouterProps } from '../types/Member'
+import { Member } from '../types/Member'
 import Loading from '../Loading'
 import { fetchStoreCredit } from '../orders/EditOrder'
 import { Order } from '../types/Order'
@@ -84,14 +84,16 @@ async function fetchMemberOrders(
   }
 }
 
-function EditMember(props: RouteComponentProps<MemberRouterProps>) {
+export default function EditMember() {
+  const navigate = useNavigate()
+  const match = useMatch('/members/:id')
   const classes = useStyles()
   const [loadingMember, setLoadingMember] = useState(true)
   const [loading, setLoading] = useState(false)
 
   const [error, setError] = useState('')
   const [response, setResponse] = useState('')
-  const memberId = props.match.params.id
+  const memberId = match?.params?.id
 
   const [member, setMember] = useState<Member>(blankMember)
   const [createNewUser, setCreateNewUser] = useState(false)
@@ -174,7 +176,7 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
               <Tooltip title="BACK TO MEMBERS">
                 <IconButton
                   aria-label="back to members"
-                  onClick={() => props.history.push('/members')}
+                  onClick={() => navigate('/members')}
                 >
                   <ArrowBackIcon />
                 </IconButton>
@@ -406,9 +408,7 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
                     key={order.id}
                     button
                     href={`/orders/edit/${order.id}`}
-                    onClick={() =>
-                      props.history.push(`/orders/edit/${order.id}`)
-                    }
+                    onClick={() => navigate(`/orders/edit/${order.id}`)}
                   >
                     <ListItemText
                       primary={`#${order.id} $${order.total} (${order.item_count})`}
@@ -427,5 +427,3 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
     </Paper>
   )
 }
-
-export default withRouter(EditMember)

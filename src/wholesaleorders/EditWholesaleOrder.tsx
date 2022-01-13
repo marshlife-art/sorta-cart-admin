@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
+import { useNavigate, useMatch } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import Grid from '@material-ui/core/Grid'
 import TextField from '@material-ui/core/TextField'
@@ -17,11 +17,7 @@ import { Parser } from 'json2csv'
 
 import { LineItem } from '../types/Order'
 import { Product } from '../types/Product'
-import {
-  SquareStatus,
-  WholesaleOrder,
-  WholesaleOrderRouterProps
-} from '../types/WholesaleOrder'
+import { SquareStatus, WholesaleOrder } from '../types/WholesaleOrder'
 import { OrderStatus, ShipmentStatus, PaymentStatus } from '../types/Order'
 import {
   API_HOST,
@@ -80,10 +76,9 @@ interface EditWholesaleOrderProps {
   setReloadOrders: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-function EditWholesaleOrder(
-  props: EditWholesaleOrderProps &
-    RouteComponentProps<WholesaleOrderRouterProps>
-) {
+export default function EditWholesaleOrder(props: EditWholesaleOrderProps) {
+  const navigate = useNavigate()
+  const match = useMatch('wholesaleorders/edit/:id')
   const classes = useStyles()
 
   const [wholesaleOrderId, setWholesaleOrderId] = useState('')
@@ -222,7 +217,7 @@ function EditWholesaleOrder(
     }
   }, [lineItemData])
 
-  const id = props.match.params.id
+  const id = match?.params?.id
 
   useEffect(() => {
     if (id) {
@@ -283,7 +278,7 @@ function EditWholesaleOrder(
       setSnackMsg(result.error.message)
       setSnackOpen(true)
     } else {
-      props.history.replace('/wholesaleorders')
+      navigate('/wholesaleorders')
     }
   }
 
@@ -636,5 +631,3 @@ function EditWholesaleOrder(
     <Loading />
   )
 }
-
-export default withRouter(EditWholesaleOrder)

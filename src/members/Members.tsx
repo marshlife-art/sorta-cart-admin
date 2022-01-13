@@ -1,11 +1,9 @@
 import React, { createRef } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import MaterialTable from 'material-table'
-
-import { MemberRouterProps } from '../types/Member'
-// import { Member } from '../types/Member'
 import { formatRelative } from 'date-fns'
+
 import { supabase } from '../lib/supabaseClient'
 import { SupaMember as Member } from '../types/SupaTypes'
 
@@ -19,7 +17,8 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 )
 
-function Members(props: RouteComponentProps<MemberRouterProps>) {
+export default function Members() {
+  const navigate = useNavigate()
   const classes = useStyles()
   const tableRef = createRef<any>()
 
@@ -27,7 +26,7 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
     icon: 'add',
     tooltip: 'add new member',
     isFreeAction: true,
-    onClick: () => props.history.push('/members/new')
+    onClick: () => navigate('/members/new')
   }
 
   const deleteAction = {
@@ -65,7 +64,7 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
       } else {
         member = members
       }
-      member.id && props.history.push(`/members/${member.id}`)
+      member.id && navigate(`/members/${member.id}`)
     }
   }
 
@@ -208,5 +207,3 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
     </div>
   )
 }
-
-export default withRouter(Members)

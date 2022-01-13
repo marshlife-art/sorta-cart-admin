@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
 import { Container, Button, TextField } from '@material-ui/core'
 import Box from '@material-ui/core/Box'
 import Typography from '@material-ui/core/Typography'
@@ -9,9 +9,6 @@ import { makeStyles } from '@material-ui/core/styles'
 import { RootState } from '../redux'
 import { login } from '../redux/session/actions'
 import { UserService } from '../redux/session/reducers'
-
-// #TODO: deal with useRouter()
-type Props = RouteComponentProps
 
 const useStyles = makeStyles((theme) => ({
   form: {
@@ -32,7 +29,8 @@ const useStyles = makeStyles((theme) => ({
   }
 }))
 
-function Login(props: Props) {
+export default function Login() {
+  const navigate = useNavigate()
   const userService = useSelector<RootState, UserService>(
     (state) => state.session.userService
   )
@@ -49,7 +47,6 @@ function Login(props: Props) {
     }
   }
 
-  const { history } = props
   const classes = useStyles()
   const [error, setError] = useState('')
   const [password, setPassword] = useState('')
@@ -62,12 +59,12 @@ function Login(props: Props) {
       userService.user.role &&
       userService.user.role === 'admin'
     ) {
-      history.push('/')
+      navigate('/')
     }
     // else if (userService.user && !userService.isFetching) {
     //   setError('o noz! error! ...hmm, not an admin?')
     // }
-  }, [userService, history])
+  }, [userService])
 
   return (
     <Container maxWidth="sm">
@@ -143,5 +140,3 @@ function Login(props: Props) {
     </Container>
   )
 }
-
-export default withRouter(Login)

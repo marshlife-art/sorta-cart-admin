@@ -77,7 +77,12 @@ export const login = (
       supabase.auth
         .signIn(
           { email, password },
-          { redirectTo: 'https://sorta-cart.vercel.app/admin' }
+          {
+            redirectTo:
+              process.env.NODE_ENV === 'production'
+                ? 'https://sorta-cart.vercel.app/admin'
+                : `${window.location.origin}/admin`
+          }
         )
         .then((response) => {
           if (response.user && response.user.id) {

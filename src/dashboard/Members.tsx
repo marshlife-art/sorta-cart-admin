@@ -7,7 +7,7 @@ import TableCell from '@material-ui/core/TableCell'
 import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 import Title from './Title'
-import { RouteComponentProps, withRouter } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { formatDistance } from 'date-fns'
 import useSWR from 'swr'
 
@@ -32,7 +32,8 @@ const useStyles = makeStyles((theme) => ({
   }
 }))
 
-function Members(props: RouteComponentProps) {
+export default function Members() {
+  const navigate = useNavigate()
   const classes = useStyles()
 
   const { data: members, error } = useSWR<MemberData>(
@@ -84,7 +85,7 @@ function Members(props: RouteComponentProps) {
             <TableRow
               key={member.id}
               className={classes.rowHover}
-              onClick={() => props.history.push(`/members/${member.id}`)}
+              onClick={() => navigate(`/members/${member.id}`)}
             >
               <TableCell
                 title={
@@ -109,7 +110,7 @@ function Members(props: RouteComponentProps) {
           variant="contained"
           color="primary"
           onClick={(event: any) => {
-            props.history.push('/members')
+            navigate('/members')
           }}
         >
           ALL MEMBERS
@@ -118,5 +119,3 @@ function Members(props: RouteComponentProps) {
     </React.Fragment>
   )
 }
-
-export default withRouter(Members)

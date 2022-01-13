@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Switch, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import clsx from 'clsx'
 
@@ -267,67 +267,63 @@ export function App() {
             {loading ? (
               <Loading />
             ) : (
-              <Switch>
-                <Route path="/login" component={Login} />
-                <ProtectedRoute
-                  userService={userService}
+              // <ProtectedRoute path="/" element={< />} />
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route
                   path="/products"
-                  component={Products}
-                  exact
+                  element={<ProtectedRoute path="/" element={<Products />} />}
                 />
-                <ProtectedRoute
-                  userService={userService}
+                <Route
                   path="/products/import"
-                  component={ImportProducts}
+                  element={
+                    <ProtectedRoute path="/" element={<ImportProducts />} />
+                  }
                 />
-                <ProtectedRoute
-                  userService={userService}
+                <Route
                   path="/products/update"
-                  component={UpdateProducts}
+                  element={
+                    <ProtectedRoute path="/" element={<UpdateProducts />} />
+                  }
                 />
-                <ProtectedRoute
-                  userService={userService}
+                <Route
                   path="/orders"
-                  exact
-                  component={Orders}
+                  element={<ProtectedRoute path="/" element={<Orders />} />}
                 />
-                <ProtectedRoute
-                  userService={userService}
+                <Route
                   path="/orders/edit/:id"
-                  component={EditOrder}
+                  element={<ProtectedRoute path="/" element={<EditOrder />} />}
                 />
-                <ProtectedRoute
-                  userService={userService}
+                <Route
                   path="/orders/create"
-                  component={EditOrder}
+                  element={<ProtectedRoute path="/" element={<EditOrder />} />}
                 />
-                <ProtectedRoute
-                  userService={userService}
-                  path="/wholesaleorders"
-                  component={WholesaleOrders}
+                <Route
+                  path="/wholesaleorders/*"
+                  element={
+                    <ProtectedRoute path="/" element={<WholesaleOrders />} />
+                  }
                 />
-                <ProtectedRoute
-                  userService={userService}
+                <Route
                   path="/members"
-                  component={Members}
-                  exact
+                  element={<ProtectedRoute path="/" element={<Members />} />}
                 />
-                <ProtectedRoute
-                  userService={userService}
+                <Route
                   path="/members/:id"
-                  component={EditMember}
+                  element={<ProtectedRoute path="/" element={<EditMember />} />}
                 />
-                <ProtectedRoute
-                  userService={userService}
+                <Route
                   path="/storecredits"
-                  component={StoreCredits}
+                  element={
+                    <ProtectedRoute path="/" element={<StoreCredits />} />
+                  }
                 />
-                <ProtectedRoute
-                  userService={userService}
+                <Route
                   path="/"
-                  component={Dashboard}
+                  element={<ProtectedRoute path="/" element={<Dashboard />} />}
                 />
-              </Switch>
+                {/* <ProtectedRoute path="/" element={<Dashboard />} /> */}
+              </Routes>
             )}
 
             {/* <Box pt={4}>FOOT'r</Box> */}

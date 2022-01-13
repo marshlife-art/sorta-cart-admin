@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link, withRouter, RouteComponentProps } from 'react-router-dom'
+import { useMatch, useNavigate } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import MUILink from '@material-ui/core/Link'
 import Paper from '@material-ui/core/Paper'
@@ -14,13 +14,10 @@ import CloseIcon from '@material-ui/icons/Close'
 import Typography from '@material-ui/core/Typography'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import { useSelector } from 'react-redux'
-import { Switch } from 'react-router'
-import ProtectedRoute from '../auth/ProtectedRoute'
 import { RootState } from '../redux'
 import { UserService } from '../redux/session/reducers'
 import EditWholesaleOrder from './EditWholesaleOrder'
 import { useAllWholesaleOrdersService } from './useWholesaleOrderService'
-import { WholesaleOrderRouterProps } from '../types/WholesaleOrder'
 import { WholesaleOrder } from '../types/WholesaleOrder'
 
 import MuiExpansionPanel from '@material-ui/core/ExpansionPanel'
@@ -31,6 +28,7 @@ import { OrderStatus } from '../types/Order'
 import Loading from '../Loading'
 import { ORDER_STATUSES } from '../constants'
 import AddWholesaleOrderLineItems from './AddWholesaleOrderLineItems'
+import Link from '@material-ui/core/Link'
 
 const ExpansionPanel = withStyles({
   root: {
@@ -119,9 +117,9 @@ interface Props {
   userService?: UserService
 }
 
-function WholesaleOrders(
-  props: Props & RouteComponentProps<WholesaleOrderRouterProps>
-) {
+export default function WholesaleOrders(props: Props) {
+  const navigate = useNavigate()
+  const match = useMatch('/wholesaleorders/edit/:id')
   const userService = useSelector<RootState, UserService>(
     (state) => state.session.userService
   )
@@ -156,7 +154,7 @@ function WholesaleOrders(
   }
 
   function addWholesaleOrder() {
-    props.history.push('/wholesaleorders/edit/new')
+    navigate('/wholesaleorders/edit/new')
     setSnackOpen(true)
   }
 
@@ -192,10 +190,10 @@ function WholesaleOrders(
             <div className={classes.title}>
               <MUILink
                 color="textPrimary"
-                href=""
+                href="/wholesaleorders"
                 onClick={(e: any) => {
                   e.preventDefault()
-                  props.history.push('/wholesaleorders')
+                  navigate('/wholesaleorders')
                 }}
                 className={classes.titleText}
               >
@@ -239,8 +237,6 @@ function WholesaleOrders(
                           (order: WholesaleOrder, idx: number) => (
                             <ListItem
                               button
-                              component={Link}
-                              to={`/wholesaleorders/edit/${order.id}`}
                               key={`wsorder${idx}`}
                               className={
                                 // eslint-disable-next-line
@@ -248,6 +244,14 @@ function WholesaleOrders(
                                   ? classes.selectedListItem
                                   : undefined
                               }
+                              component="a"
+                              href={`/wholesaleorders/edit/${order.id}`}
+                              onClick={(
+                                event: React.MouseEvent<HTMLAnchorElement>
+                              ) => {
+                                event.preventDefault()
+                                navigate(`/wholesaleorders/edit/${order.id}`)
+                              }}
                             >
                               <ListItemText
                                 primary={order.vendor}
@@ -272,23 +276,13 @@ function WholesaleOrders(
         </Grid>
 
         <Grid sm={12} md={9} lg={10} item>
-          <Switch>
-            <ProtectedRoute
-              userService={userService}
-              path="/wholesaleorders"
-              exact
-            >
-              <AddWholesaleOrderLineItems setReloadOrders={setReloadOrders} />
-            </ProtectedRoute>
-            <ProtectedRoute
-              userService={userService}
-              path="/wholesaleorders/edit/:id"
-            >
-              <Paper className={classes.paper}>
-                <EditWholesaleOrder setReloadOrders={setReloadOrders} />
-              </Paper>
-            </ProtectedRoute>
-          </Switch>
+          {match?.params?.id ? (
+            <Paper className={classes.paper}>
+              <EditWholesaleOrder setReloadOrders={setReloadOrders} />
+            </Paper>
+          ) : (
+            <AddWholesaleOrderLineItems setReloadOrders={setReloadOrders} />
+          )}
         </Grid>
       </Grid>
       <Snackbar
@@ -312,5 +306,3 @@ function WholesaleOrders(
     </>
   ) : null
 }
-
-export default withRouter(WholesaleOrders)

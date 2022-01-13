@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
+import { useNavigate, useMatch } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 
 import TextField from '@material-ui/core/TextField'
@@ -27,7 +27,6 @@ import Loading from '../Loading'
 import { useOrderService } from './useOrderService'
 import {
   Order,
-  OrderRouterProps,
   OrderStatus,
   ShipmentStatus,
   PaymentStatus
@@ -129,7 +128,9 @@ function tryNumber(input: string | number): number {
   return +parseFloat(str).toFixed(2)
 }
 
-function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
+export default function EditOrder() {
+  const navigate = useNavigate()
+  const match = useMatch('/orders/edit/:id')
   const userService = useSelector<RootState, UserService>(
     (state) => state.session.userService
   )
@@ -169,7 +170,7 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
     }
   }, [orderService])
 
-  const pOrderId = props.match.params.id
+  const pOrderId = match?.params?.id
 
   useEffect(() => {
     if (pOrderId && pOrderId !== 'new') {
@@ -459,7 +460,7 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
       setSnackMsg('Saved order!')
       setSaving(false)
       if (result && result.id) {
-        props.history.replace(`/orders/edit/${result.id}`)
+        navigate(`/orders/edit/${result.id}`)
       }
     } else {
       const result = await updateOrder(
@@ -593,7 +594,7 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
                   <Tooltip title="BACK TO ORDERS">
                     <IconButton
                       aria-label="back to orders"
-                      onClick={() => props.history.push('/orders')}
+                      onClick={() => navigate('/orders')}
                     >
                       <ArrowBackIcon />
                     </IconButton>
@@ -889,5 +890,3 @@ function EditOrder(props: RouteComponentProps<OrderRouterProps>) {
     </div>
   )
 }
-
-export default withRouter(EditOrder)

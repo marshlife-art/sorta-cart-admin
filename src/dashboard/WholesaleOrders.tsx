@@ -1,4 +1,7 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
+import { formatDistance } from 'date-fns'
+import useSWR from 'swr'
 import Button from '@material-ui/core/Button'
 import { makeStyles } from '@material-ui/core/styles'
 import Table from '@material-ui/core/Table'
@@ -6,11 +9,8 @@ import TableBody from '@material-ui/core/TableBody'
 import TableCell from '@material-ui/core/TableCell'
 import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
-import Title from './Title'
-import { RouteComponentProps, withRouter } from 'react-router-dom'
-import { formatDistance } from 'date-fns'
-import useSWR from 'swr'
 
+import Title from './Title'
 import { WholesaleOrder } from '../types/WholesaleOrder'
 import { supabase } from '../lib/supabaseClient'
 
@@ -32,7 +32,8 @@ const useStyles = makeStyles((theme) => ({
   }
 }))
 
-function WholesaleOrders(props: RouteComponentProps) {
+export default function WholesaleOrders() {
+  const navigate = useNavigate()
   const classes = useStyles()
 
   const { data: orders, error } = useSWR<WholesaleOrderData>(
@@ -88,9 +89,7 @@ function WholesaleOrders(props: RouteComponentProps) {
             <TableRow
               key={order.id}
               className={classes.rowHover}
-              onClick={() =>
-                props.history.push(`/wholesaleorders/edit/${order.id}`)
-              }
+              onClick={() => navigate(`/wholesaleorders/edit/${order.id}`)}
             >
               <TableCell
                 title={
@@ -118,7 +117,7 @@ function WholesaleOrders(props: RouteComponentProps) {
           variant="contained"
           color="primary"
           onClick={(event: any) => {
-            props.history.push('/wholesaleorders')
+            navigate('/wholesaleorders')
           }}
         >
           SEE MORE
@@ -127,5 +126,3 @@ function WholesaleOrders(props: RouteComponentProps) {
     </React.Fragment>
   )
 }
-
-export default withRouter(WholesaleOrders)

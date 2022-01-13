@@ -51,10 +51,6 @@ export interface Order {
 
 export type PartialOrder = Partial<Order>
 
-export interface OrderRouterProps {
-  id: string
-}
-
 export interface LineItem {
   id?: string | number
   createdAt?: string

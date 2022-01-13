@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createRef, useCallback } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import MaterialTable, { Action } from 'material-table'
 import { Order } from '../types/Order'
@@ -24,7 +24,8 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 )
 
-function Orders(props: RouteComponentProps) {
+export default function Orders() {
+  const navigate = useNavigate()
   const classes = useStyles()
   const tableRef = createRef<any>()
 
@@ -54,7 +55,7 @@ function Orders(props: RouteComponentProps) {
     icon: 'add',
     tooltip: 'NEW ORDER',
     isFreeAction: true,
-    onClick: () => props.history.push('/orders/create')
+    onClick: () => navigate('/orders/create')
   }
 
   const printAction = {
@@ -80,7 +81,7 @@ function Orders(props: RouteComponentProps) {
     tooltip: 'EDIT',
     icon: 'edit',
     onClick: (e: any, data: Order[]) => {
-      data[0] && data[0].id && props.history.push(`/orders/edit/${data[0].id}`)
+      data[0] && data[0].id && navigate(`/orders/edit/${data[0].id}`)
     }
   }
 
@@ -275,5 +276,3 @@ function Orders(props: RouteComponentProps) {
     </div>
   )
 }
-
-export default withRouter(Orders)
