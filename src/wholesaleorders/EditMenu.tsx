@@ -6,10 +6,8 @@ import Menu, { MenuProps } from '@material-ui/core/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
 import ListItemText from '@material-ui/core/ListItemText'
 import ListItemIcon from '@material-ui/core/ListItemIcon'
-import DeleteIcon from '@material-ui/icons/Delete'
-import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
-import FileIcon from '@material-ui/icons/FileCopy'
-import SquareIcon from '@material-ui/icons/CropSquare'
+import { Icon } from '@material-ui/core'
+
 import { SupaWholesaleOrder as WholesaleOrder } from '../types/SupaTypes'
 
 const StyledMenu = (props: MenuProps) => (
@@ -80,7 +78,7 @@ export default function EditMenu(props: EditWholesaleOrderMenuProps) {
           size="small"
           onClick={handleClick}
         >
-          <ArrowDropDownIcon />
+          <Icon>arrow_drop_down</Icon>
         </Button>
       </ButtonGroup>
 
@@ -105,7 +103,7 @@ export default function EditMenu(props: EditWholesaleOrderMenuProps) {
           }
         >
           <ListItemIcon>
-            <DeleteIcon fontSize="small" />
+            <Icon>delete</Icon>
           </ListItemIcon>
           <ListItemText primary="delete wholesale order" />
         </StyledMenuItem>
@@ -118,7 +116,7 @@ export default function EditMenu(props: EditWholesaleOrderMenuProps) {
           disabled={!props.wholesaleOrder.id}
         >
           <ListItemIcon>
-            <FileIcon />
+            <Icon>file_copy</Icon>
           </ListItemIcon>
           <ListItemText primary="export products to .csv" />
         </StyledMenuItem>
@@ -135,7 +133,7 @@ export default function EditMenu(props: EditWholesaleOrderMenuProps) {
           }
         >
           <ListItemIcon>
-            <SquareIcon />
+            <Icon>crop_square</Icon>
           </ListItemIcon>
           <ListItemText primary="import to Square catalog" />
         </StyledMenuItem>

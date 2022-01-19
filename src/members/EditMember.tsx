@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useMatch } from 'react-router-dom'
-import { makeStyles, Theme, createStyles } from '@material-ui/core'
+import { makeStyles, Theme, createStyles, Icon } from '@material-ui/core'
 import Paper from '@material-ui/core/Paper'
 import Grid from '@material-ui/core/Grid'
 import TextField from '@material-ui/core/TextField'
@@ -15,7 +15,6 @@ import Select from '@material-ui/core/Select'
 import Button from '@material-ui/core/Button'
 import IconButton from '@material-ui/core/IconButton'
 import Tooltip from '@material-ui/core/Tooltip'
-import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListSubheader from '@material-ui/core/ListSubheader'
@@ -177,7 +176,7 @@ export default function EditMember() {
                   aria-label="back to members"
                   onClick={() => navigate('/members')}
                 >
-                  <ArrowBackIcon />
+                  <Icon>arrow_back</Icon>
                 </IconButton>
               </Tooltip>
 

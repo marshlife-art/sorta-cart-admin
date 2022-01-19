@@ -12,12 +12,12 @@ import Select from '@material-ui/core/Select'
 import MenuItem from '@material-ui/core/MenuItem'
 import Tooltip from '@material-ui/core/Tooltip'
 import IconButton from '@material-ui/core/IconButton'
-import ClearIcon from '@material-ui/icons/Clear'
-import CreditIcon from '@material-ui/icons/LocalAtm'
+
 import Link from '@material-ui/core/Link'
 
 import { TAX_RATE, TAX_RATE_STRING } from '../constants'
 import { SupaOrderLineItem as LineItem } from '../types/SupaTypes'
+import { Icon } from '@material-ui/core'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -221,7 +221,7 @@ export default function OrderLineItems(props: {
               size="small"
               onClick={(event: any) => removeLineItem(line_item)}
             >
-              <ClearIcon fontSize="inherit" />
+              <Icon>clear</Icon>
             </IconButton>
           </Tooltip>
           <Tooltip title="give order credits">
@@ -229,7 +229,7 @@ export default function OrderLineItems(props: {
               aria-label="issue order credits for this item"
               onClick={() => createLineItemCredit(line_item)}
             >
-              <CreditIcon />
+              <Icon>local_atm</Icon>
             </IconButton>
           </Tooltip>
         </TableCell>
@@ -347,7 +347,7 @@ export default function OrderLineItems(props: {
                     size="small"
                     onClick={(event: any) => removeLineItem(line_item)}
                   >
-                    <ClearIcon fontSize="inherit" />
+                    <Icon>clear</Icon>
                   </IconButton>
                 </Tooltip>
               </TableCell>
@@ -431,7 +431,7 @@ export default function OrderLineItems(props: {
                     size="small"
                     onClick={(event: any) => removeLineItem(line_item)}
                   >
-                    <ClearIcon fontSize="inherit" />
+                    <Icon>clear</Icon>
                   </IconButton>
                 </Tooltip>
               </TableCell>
@@ -520,7 +520,7 @@ export default function OrderLineItems(props: {
                     size="small"
                     onClick={(event: any) => removeLineItem(line_item)}
                   >
-                    <ClearIcon fontSize="inherit" />
+                    <Icon>clear</Icon>
                   </IconButton>
                 </Tooltip>
               </TableCell>

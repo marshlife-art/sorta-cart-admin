@@ -11,11 +11,9 @@ import List from '@material-ui/core/List'
 import Divider from '@material-ui/core/Divider'
 import Fab from '@material-ui/core/Fab'
 import MUISwitch from '@material-ui/core/Switch'
-import MenuIcon from '@material-ui/icons/Menu'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemIcon from '@material-ui/core/ListItemIcon'
 import ListItemText from '@material-ui/core/ListItemText'
-import FaceIcon from '@material-ui/icons/Face'
 import { createStyles, Theme, makeStyles } from '@material-ui/core/styles'
 
 import { darkTheme, lightTheme } from './theme'
@@ -43,6 +41,7 @@ import Members from './members/Members'
 import EditMember from './members/EditMember'
 import { APP_VERSION } from './constants'
 import UpdateProducts from './products/UpdateProducts'
+import { Icon } from '@material-ui/core'
 
 const drawerWidth = 240
 
@@ -188,7 +187,7 @@ export function App() {
                   aria-label="menu"
                   onClick={() => setOpen(true)}
                 >
-                  <MenuIcon />
+                  <Icon>menu</Icon>
                 </Fab>
               </div>
             )}
@@ -234,7 +233,7 @@ export function App() {
                 <Divider />
                 <ListItem button onClick={() => dispatch(logout())}>
                   <ListItemIcon>
-                    <FaceIcon />
+                    <Icon>face</Icon>
                   </ListItemIcon>
                   <ListItemText
                     primary="log out"

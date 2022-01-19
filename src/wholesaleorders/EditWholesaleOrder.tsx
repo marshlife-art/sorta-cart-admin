@@ -9,10 +9,13 @@ import FormControl from '@material-ui/core/FormControl'
 import Select from '@material-ui/core/Select'
 import Snackbar from '@material-ui/core/Snackbar'
 import IconButton from '@material-ui/core/IconButton'
-import CloseIcon from '@material-ui/icons/Close'
-import AddIcon from '@material-ui/icons/Add'
-import ClearIcon from '@material-ui/icons/Clear'
-import { FormControlLabel, Checkbox, Button, Tooltip } from '@material-ui/core'
+import {
+  FormControlLabel,
+  Checkbox,
+  Button,
+  Tooltip,
+  Icon
+} from '@material-ui/core'
 import { Parser } from 'json2csv'
 import { formatDistance, formatRelative } from 'date-fns'
 
@@ -549,7 +552,7 @@ export default function EditWholesaleOrder(props: EditWholesaleOrderProps) {
                       aria-label="close"
                       onClick={() => setShowLiAutocomplete(false)}
                     >
-                      <ClearIcon fontSize="inherit" />
+                      <Icon>clear</Icon>
                     </IconButton>
                   </Tooltip>
                   <LineItemAutocomplete onItemSelected={onAddLineitem} />
@@ -583,7 +586,7 @@ export default function EditWholesaleOrder(props: EditWholesaleOrderProps) {
                     onClick={() => setShowLiAutocomplete(true)}
                     disabled={isNaN(parseInt(wholesaleOrderId))}
                   >
-                    <AddIcon />
+                    <Icon>add</Icon>
                     LINE ITEMS
                   </Button>
                   <EditMenu
@@ -623,7 +626,7 @@ export default function EditWholesaleOrder(props: EditWholesaleOrderProps) {
         message={<span id="message-id">{snackMsg}</span>}
         action={[
           <IconButton key="close" aria-label="close" onClick={handleSnackClose}>
-            <CloseIcon />
+            <Icon>close</Icon>
           </IconButton>
         ]}
       />

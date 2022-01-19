@@ -1,9 +1,13 @@
 import React, { useState } from 'react'
 import { Action } from 'material-table'
-import { IconButton, Menu, MenuItem, SvgIconTypeMap } from '@material-ui/core'
+import {
+  Icon,
+  IconButton,
+  Menu,
+  MenuItem,
+  SvgIconTypeMap
+} from '@material-ui/core'
 import { OverridableComponent } from '@material-ui/core/OverridableComponent'
-import NoBackorderIcon from '@material-ui/icons/LocalShipping'
-import FeaturedIcon from '@material-ui/icons/Star'
 import { PostgrestError } from '@supabase/supabase-js'
 
 import { SupaProduct } from '../types/SupaTypes'
@@ -97,7 +101,7 @@ export function getNoBackorderAction(
       <TableActionMenu
         setNeedsRefresh={setNeedsRefresh}
         onItemClick={updateProductNoBackorder}
-        Icon={NoBackorderIcon}
+        Icon={() => <Icon>local_shipping</Icon>}
       />
     ),
     onClick: (e, data) => {
@@ -115,7 +119,7 @@ export function getFeaturedAction(
       <TableActionMenu
         setNeedsRefresh={setNeedsRefresh}
         onItemClick={updateProductFeatured}
-        Icon={FeaturedIcon}
+        Icon={() => <Icon>star</Icon>}
       />
     ),
     onClick: (e, data) => {

@@ -14,7 +14,7 @@ export interface UserServiceProps {
   userService: UserService
 }
 
-const userService = (
+export const userService = (
   state: UserService = { isFetching: false },
   action: Action
 ): UserService => {

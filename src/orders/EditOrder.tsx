@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, useMatch } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 
+import { Icon } from '@material-ui/core'
 import TextField from '@material-ui/core/TextField'
 import Grid from '@material-ui/core/Grid'
 import Button from '@material-ui/core/Button'
@@ -9,11 +10,6 @@ import Snackbar from '@material-ui/core/Snackbar'
 import IconButton from '@material-ui/core/IconButton'
 import Tooltip from '@material-ui/core/Tooltip'
 import Typography from '@material-ui/core/Typography'
-import CloseIcon from '@material-ui/icons/Close'
-import AddIcon from '@material-ui/icons/Add'
-import ClearIcon from '@material-ui/icons/Clear'
-import PeopleIcon from '@material-ui/icons/People'
-import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import InputLabel from '@material-ui/core/InputLabel'
 import MenuItem from '@material-ui/core/MenuItem'
 import FormControl from '@material-ui/core/FormControl'
@@ -591,7 +587,7 @@ export default function EditOrder() {
                       aria-label="close"
                       onClick={() => setShowMemberAutocomplete(false)}
                     >
-                      <ClearIcon fontSize="inherit" />
+                      <Icon>clear</Icon>
                     </IconButton>
                   </Tooltip>
                   <MemberAutocomplete onItemSelected={onMembertemSelected} />
@@ -603,7 +599,7 @@ export default function EditOrder() {
                       aria-label="back to orders"
                       onClick={() => navigate('/orders')}
                     >
-                      <ArrowBackIcon />
+                      <Icon>arrow_back</Icon>
                     </IconButton>
                   </Tooltip>
 
@@ -634,7 +630,7 @@ export default function EditOrder() {
                         aria-label="add user details"
                         onClick={() => setShowMemberAutocomplete(true)}
                       >
-                        <PeopleIcon />
+                        <Icon>people</Icon>
                       </IconButton>
                     </Tooltip>
                   </div>
@@ -791,7 +787,7 @@ export default function EditOrder() {
                       aria-label="close"
                       onClick={() => setShowLiAutocomplete(false)}
                     >
-                      <ClearIcon fontSize="inherit" />
+                      <Icon>clear</Icon>
                     </IconButton>
                   </Tooltip>
                   <LineItemAutocomplete onItemSelected={onAddLineitem} />
@@ -803,7 +799,7 @@ export default function EditOrder() {
                     size="large"
                     onClick={() => setShowLiAutocomplete(true)}
                   >
-                    <AddIcon />
+                    <Icon>add</Icon>
                     LINE ITEMS
                   </Button>
 
@@ -812,7 +808,7 @@ export default function EditOrder() {
                     size="large"
                     onClick={createAdjustment}
                   >
-                    <AddIcon />
+                    <Icon>add</Icon>
                     ADJUSTMENT
                   </Button>
 
@@ -825,7 +821,7 @@ export default function EditOrder() {
                         setNeedToCheckForDiscounts(true)
                       }}
                     >
-                      <AddIcon />
+                      <Icon>add</Icon>
                       MEMBER DISCOUNT
                     </Button>
                   )}
@@ -835,7 +831,7 @@ export default function EditOrder() {
                     size="large"
                     onClick={createPayment}
                   >
-                    <AddIcon />
+                    <Icon>add</Icon>
                     PAYMENT
                   </Button>
 
@@ -844,7 +840,7 @@ export default function EditOrder() {
                     size="large"
                     onClick={createCreditClick}
                   >
-                    <AddIcon />
+                    <Icon>add</Icon>
                     CREDIT
                   </Button>
 
@@ -890,7 +886,7 @@ export default function EditOrder() {
         message={<span id="message-id">{snackMsg}</span>}
         action={[
           <IconButton key="close" aria-label="close" onClick={handleSnackClose}>
-            <CloseIcon />
+            <Icon>close</Icon>
           </IconButton>
         ]}
       />

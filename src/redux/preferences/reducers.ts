@@ -13,7 +13,7 @@ export interface PreferencesServiceProps {
   preferencesService: PreferencesService
 }
 
-const preferencesService = (
+export const preferencesService = (
   state: PreferencesService = { isFetching: false },
   action: Action
 ): PreferencesService => {

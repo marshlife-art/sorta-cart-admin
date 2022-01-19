@@ -10,10 +10,9 @@ import {
   TextField,
   Typography,
   Tooltip,
-  IconButton
+  IconButton,
+  Icon
 } from '@material-ui/core'
-import ArrowRightIcon from '@material-ui/icons/ArrowRight'
-import ClearIcon from '@material-ui/icons/Clear'
 
 import {
   IParseProductCatzCSV,
@@ -127,7 +126,7 @@ export default function CatMapDialog(props: {
                   }}
                 >
                   <Typography>{cat}</Typography>
-                  <ArrowRightIcon />
+                  <Icon>arrow_right</Icon>
                   <div>
                     <TextField
                       label={`${getCatMap(cat) || 'New Category Name'}`}
@@ -140,7 +139,7 @@ export default function CatMapDialog(props: {
                           aria-label="delete mapping"
                           onClick={() => handleDeleteMap(cat)}
                         >
-                          <ClearIcon fontSize="inherit" />
+                          <Icon>clear</Icon>
                         </IconButton>
                       </Tooltip>
                     )}
@@ -160,7 +159,7 @@ export default function CatMapDialog(props: {
                     }}
                   >
                     <Typography>{subcat}</Typography>
-                    <ArrowRightIcon />
+                    <Icon>arrow_right</Icon>
                     <div>
                       <TextField
                         label={`${
@@ -175,7 +174,7 @@ export default function CatMapDialog(props: {
                             aria-label="delete mapping"
                             onClick={() => handleDeleteMap(subcat)}
                           >
-                            <ClearIcon fontSize="inherit" />
+                            <Icon>clear</Icon>
                           </IconButton>
                         </Tooltip>
                       )}

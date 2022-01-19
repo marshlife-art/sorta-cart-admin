@@ -6,13 +6,10 @@ import Paper from '@material-ui/core/Paper'
 import Grid from '@material-ui/core/Grid'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
-import Add from '@material-ui/icons/Add'
 import ListItemText from '@material-ui/core/ListItemText'
 import Snackbar from '@material-ui/core/Snackbar'
 import IconButton from '@material-ui/core/IconButton'
-import CloseIcon from '@material-ui/icons/Close'
 import Typography from '@material-ui/core/Typography'
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import { useSelector } from 'react-redux'
 import { RootState } from '../redux'
 import { UserService } from '../redux/session/reducers'
@@ -29,6 +26,7 @@ import Loading from '../Loading'
 import { ORDER_STATUSES } from '../constants'
 import AddWholesaleOrderLineItems from './AddWholesaleOrderLineItems'
 import Link from '@material-ui/core/Link'
+import { Icon } from '@material-ui/core'
 
 const ExpansionPanel = withStyles({
   root: {
@@ -204,7 +202,7 @@ export default function WholesaleOrders(props: Props) {
                 title="add wholeslae order"
                 onClick={() => addWholesaleOrder()}
               >
-                <Add />
+                <Icon>add</Icon>
               </IconButton>
             </div>
 
@@ -219,7 +217,7 @@ export default function WholesaleOrders(props: Props) {
                 }
               >
                 <ExpansionPanelSummary
-                  expandIcon={<ExpandMoreIcon />}
+                  expandIcon={<Icon>expand_more</Icon>}
                   aria-controls={`panel${status}-content`}
                   id={`panel${status}-header`}
                 >
@@ -299,7 +297,7 @@ export default function WholesaleOrders(props: Props) {
         message={<span id="message-id">Created new Wholesale Order!</span>}
         action={[
           <IconButton key="close" aria-label="close" onClick={handleSnackClose}>
-            <CloseIcon />
+            <Icon>close</Icon>
           </IconButton>
         ]}
       />

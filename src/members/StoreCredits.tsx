@@ -11,11 +11,11 @@ import MuiExpansionPanel from '@material-ui/core/ExpansionPanel'
 import MuiExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
 import MuiExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails'
 import Typography from '@material-ui/core/Typography'
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import Tooltip from '@material-ui/core/Tooltip'
 import Button from '@material-ui/core/Button'
 import ListSubheader from '@material-ui/core/ListSubheader'
 import List from '@material-ui/core/List'
+import { Icon } from '@material-ui/core'
 
 import { Member } from '../types/Member'
 import { getStoreCreditReport } from '../lib/storeCredit'
@@ -128,7 +128,7 @@ export default function StoreCredits() {
           <React.Fragment key={member.id}>
             <ExpansionPanel square>
               <ExpansionPanelSummary
-                expandIcon={<ExpandMoreIcon />}
+                expandIcon={<Icon>expand_more</Icon>}
                 aria-controls={`panel${member.id}-content`}
                 id={`panel${member.id}-header`}
               >

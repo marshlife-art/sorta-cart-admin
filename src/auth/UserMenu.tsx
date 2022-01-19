@@ -1,10 +1,10 @@
 import React from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import Menu from '@material-ui/core/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
 import IconButton from '@material-ui/core/IconButton'
 import Badge from '@material-ui/core/Badge'
-import TagFaces from '@material-ui/icons/TagFaces'
-import { useDispatch, useSelector } from 'react-redux'
+import { Icon } from '@material-ui/core'
 
 import { RootState } from '../redux'
 import { UserService } from '../redux/session/reducers'
@@ -48,7 +48,7 @@ function UserMenu() {
         onClick={handleClick}
       >
         <Badge badgeContent={0} color="secondary">
-          <TagFaces />
+          <Icon>tag_faces</Icon>
         </Badge>
       </IconButton>
 

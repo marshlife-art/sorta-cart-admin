@@ -7,8 +7,7 @@ import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 import Tooltip from '@material-ui/core/Tooltip'
 import IconButton from '@material-ui/core/IconButton'
-import CloseIcon from '@material-ui/icons/Close'
-import CreditIcon from '@material-ui/icons/LocalAtm'
+import { Icon } from '@material-ui/core'
 import Link from '@material-ui/core/Link'
 import TextField from '@material-ui/core/TextField'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
@@ -288,7 +287,7 @@ export default function WholesaleOrderLineItems(props: {
                       aria-label="remove line item"
                       onClick={() => removeLineItem(item)}
                     >
-                      <CloseIcon />
+                      <Icon>close</Icon>
                     </IconButton>
                   </Tooltip>
 
@@ -297,7 +296,7 @@ export default function WholesaleOrderLineItems(props: {
                       aria-label="issue order credits for this item"
                       onClick={() => issueOrderCredits(item)}
                     >
-                      <CreditIcon />
+                      <Icon>local_atm</Icon>
                     </IconButton>
                   </Tooltip>
                 </TableCell>

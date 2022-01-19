@@ -1,8 +1,6 @@
 import React, { useState } from 'react'
 import { Action } from 'material-table'
-import { IconButton, Menu, MenuItem } from '@material-ui/core'
-import TimelapseIcon from '@material-ui/icons/Timelapse'
-import ShippingIcon from '@material-ui/icons/LocalShipping'
+import { Icon, IconButton, Menu, MenuItem } from '@material-ui/core'
 
 import { SupaOrder as Order } from '../types/SupaTypes'
 import { ORDER_STATUSES, SHIPMENT_STATUSES } from '../constants'
@@ -31,9 +29,9 @@ function StatusMenu(props: {
   const getIcon = () => {
     switch (props.for) {
       case 'status':
-        return <TimelapseIcon />
+        return <Icon>timelapse</Icon>
       case 'shipment_status':
-        return <ShippingIcon />
+        return <Icon>local_shipping</Icon>
     }
   }
 

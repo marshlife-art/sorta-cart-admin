@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { makeStyles, Theme, createStyles } from '@material-ui/core'
+import { makeStyles, Theme, createStyles, Icon } from '@material-ui/core'
 import Paper from '@material-ui/core/Paper'
 import Grid from '@material-ui/core/Grid'
 import TextField from '@material-ui/core/TextField'
@@ -13,7 +13,6 @@ import Select from '@material-ui/core/Select'
 import Button from '@material-ui/core/Button'
 import Menu from '@material-ui/core/Menu'
 import Typography from '@material-ui/core/Typography'
-import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
 
 import Loading from '../Loading'
 import parseProductsCSV from '../lib/parseProductsCSV'
@@ -240,7 +239,7 @@ export default function ImportProducts() {
                 size="small"
                 onClick={handleVendorMenuOpen}
               >
-                <ArrowDropDownIcon />
+                <Icon>arrow_drop_down</Icon>
               </Button>
             </div>
 
