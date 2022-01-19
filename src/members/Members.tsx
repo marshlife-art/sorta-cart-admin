@@ -4,8 +4,9 @@ import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import MaterialTable from 'material-table'
 import { formatRelative } from 'date-fns'
 
-import { supabase } from '../lib/supabaseClient'
 import { SupaMember as Member } from '../types/SupaTypes'
+import { deleteMember } from '../services/mutations'
+import { membersFetcher } from '../services/fetchers'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -32,7 +33,7 @@ export default function Members() {
   const deleteAction = {
     tooltip: 'Remove Member',
     icon: 'delete',
-    onClick: (e: any, member: Member | Member[]) => {
+    onClick: async (e: any, member: Member | Member[]) => {
       let members: Member[]
       if (Array.isArray(member)) {
         members = member
@@ -45,11 +46,10 @@ export default function Members() {
       }
       const id = members[0].id
       if (window.confirm(`Are you sure you want to delete this member?`)) {
-        supabase
-          .from('Members')
-          .delete({ returning: 'minimal' })
-          .eq('id', id)
-          .then(() => tableRef.current && tableRef.current.onQueryChange())
+        const { error } = await deleteMember(id)
+        if (!error && tableRef.current) {
+          tableRef.current.onQueryChange()
+        }
       }
     }
   }
@@ -119,61 +119,7 @@ export default function Members() {
         ]}
         data={(q) =>
           new Promise(async (resolve, reject) => {
-            let query = supabase
-              .from<Member>('Members')
-              .select('*', { count: 'exact' })
-            //, users ( * ) i think need to use service role or otherwise setup rls for users relation?
-
-            if (q.filters.length) {
-              const or = q.filters
-                .map((filter) => {
-                  if (filter.column.field && filter.value) {
-                    if (filter.value instanceof Array && filter.value.length) {
-                      return filter.value.map((v) => {
-                        // NOTE: ilike only seems to work on string fields
-                        if (filter.column.field === 'member_type') {
-                          return `${filter.column.field}.ilike."%${v}%"`
-                        }
-                        return `${filter.column.field}.eq.${v}`
-                      })
-                    } else if (filter.value.length) {
-                      if (filter.column.field === 'member_type') {
-                        return `${filter.column.field}.ilike."%${filter.value}%"`
-                      } else {
-                        return `${filter.column.field}.eq."${filter.value}"`
-                      }
-                    }
-                  }
-                })
-                .join(',')
-
-              query = query.or(or)
-            }
-            if (q.search) {
-              query = query.or(
-                ['name', 'phone', 'address', 'registration_email']
-                  .map((f) => `${f}.ilike."%${q.search}%"`)
-                  .join(',')
-              )
-            }
-            if (q.page) {
-              query = query.range(
-                q.pageSize * q.page,
-                q.pageSize * q.page + q.pageSize
-              )
-            }
-            if (q.pageSize) {
-              query = query.limit(q.pageSize)
-            }
-            if (q.orderBy && q.orderBy.field) {
-              query = query.order(q.orderBy.field as keyof Member, {
-                ascending: q.orderDirection === 'asc'
-              })
-            } else {
-              query = query.order('createdAt', { ascending: false })
-            }
-
-            const { data, error, count: totalCount } = await query
+            const { data, error, count: totalCount } = await membersFetcher(q)
 
             if (!error && data?.length && totalCount) {
               resolve({

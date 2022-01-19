@@ -18,7 +18,7 @@ import { RootState } from '../redux'
 import { UserService } from '../redux/session/reducers'
 import EditWholesaleOrder from './EditWholesaleOrder'
 import { useAllWholesaleOrdersService } from './useWholesaleOrderService'
-import { WholesaleOrder } from '../types/WholesaleOrder'
+import { SupaWholesaleOrder as WholesaleOrder } from '../types/SupaTypes'
 
 import MuiExpansionPanel from '@material-ui/core/ExpansionPanel'
 import MuiExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
@@ -256,7 +256,7 @@ export default function WholesaleOrders(props: Props) {
                               <ListItemText
                                 primary={order.vendor}
                                 secondary={new Date(
-                                  order.createdAt
+                                  order.createdAt || ''
                                 ).toLocaleDateString()}
                               />
                             </ListItem>

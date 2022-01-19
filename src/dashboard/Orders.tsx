@@ -8,11 +8,10 @@ import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 import Title from './Title'
 import { formatDistance } from 'date-fns/esm'
-import useSWR from 'swr'
 
-import { Order } from '../types/Order'
-import { supabase } from '../lib/supabaseClient'
 import { useNavigate } from 'react-router-dom'
+import { useOrdersDashboard } from '../services/hooks/orders'
+import { SuperOrderAndAssoc as Order } from '../types/SupaTypes'
 
 interface OrderData {
   data: Order[]
@@ -36,28 +35,10 @@ export default function Orders() {
   const navigate = useNavigate()
   const classes = useStyles()
 
-  const { data: orders, error } = useSWR<OrderData>(
-    'dashboard_orders',
-    async () => {
-      const { data, error } = await supabase.rpc('recent_orders')
+  const { orders, isError, isLoading } = useOrdersDashboard()
 
-      if (!error && data?.length) {
-        return {
-          data,
-          page: 0,
-          totalCount: data.length
-        }
-      }
-      return {
-        data: [],
-        page: 0,
-        totalCount: 0
-      }
-    }
-  )
-
-  if (error) return <div>failed to load</div>
-  if (!orders) return <div>loading...</div>
+  if (isError) return <div>failed to load</div>
+  if (isLoading) return <div>loading...</div>
 
   return (
     <React.Fragment>
@@ -75,7 +56,7 @@ export default function Orders() {
           </TableRow>
         </TableHead>
         <TableBody>
-          {orders.data.map((order) => (
+          {orders?.data?.map((order) => (
             <TableRow
               key={order.id}
               className={classes.rowHover}

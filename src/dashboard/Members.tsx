@@ -1,4 +1,7 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
+import { formatDistance } from 'date-fns'
+
 import Button from '@material-ui/core/Button'
 import { makeStyles } from '@material-ui/core/styles'
 import Table from '@material-ui/core/Table'
@@ -6,19 +9,9 @@ import TableBody from '@material-ui/core/TableBody'
 import TableCell from '@material-ui/core/TableCell'
 import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
+
+import { useMembersDashboard } from '../services/hooks/members'
 import Title from './Title'
-import { useNavigate } from 'react-router-dom'
-import { formatDistance } from 'date-fns'
-import useSWR from 'swr'
-
-import { Member } from '../types/Member'
-import { supabase } from '../lib/supabaseClient'
-
-interface MemberData {
-  data: Member[]
-  page: number
-  totalCount: number
-}
 
 const useStyles = makeStyles((theme) => ({
   seeMore: {
@@ -36,37 +29,10 @@ export default function Members() {
   const navigate = useNavigate()
   const classes = useStyles()
 
-  const { data: members, error } = useSWR<MemberData>(
-    'dashboard_members',
-    async () => {
-      const {
-        data,
-        error,
-        count: totalCount
-      } = await supabase
-        .from<Member>('Members')
-        .select('*', { count: 'exact' })
-        .order('createdAt', { ascending: false })
-        .limit(10)
+  const { members, isError, isLoading } = useMembersDashboard()
 
-      if (!error && data?.length && totalCount) {
-        return {
-          data,
-          page: 0,
-          totalCount
-        }
-      }
-
-      return {
-        data: [],
-        page: 0,
-        totalCount: 0
-      }
-    }
-  )
-
-  if (error) return <div>failed to load</div>
-  if (!members) return <div>loading...</div>
+  if (isError) return <div>failed to load</div>
+  if (isLoading) return <div>loading...</div>
 
   return (
     <React.Fragment>
@@ -81,7 +47,7 @@ export default function Members() {
           </TableRow>
         </TableHead>
         <TableBody>
-          {members.data.map((member) => (
+          {members?.data?.map((member) => (
             <TableRow
               key={member.id}
               className={classes.rowHover}

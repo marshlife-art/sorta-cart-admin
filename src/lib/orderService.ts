@@ -2,16 +2,24 @@ import { supabase } from './supabaseClient'
 import {
   SupaOrder,
   SupaOrderLineItem,
-  SupaOrderWithLineItems
+  SupaOrderWithLineItems,
+  SuperOrderAndAssoc
 } from '../types/SupaTypes'
-import { Order } from '../types/Order'
+
 import { TAX_RATE } from '../constants'
 
 // supabase
 
+type OrderWithoutId = Omit<SupaOrder, 'id'> & {
+  id?: number
+}
+type SupaOrderLineItemWithOutId = Omit<SupaOrderLineItem, 'id'> & {
+  id?: number
+}
+
 export const createOrder = async (
-  order: SupaOrder,
-  orderLineItems: SupaOrderLineItem[]
+  order: OrderWithoutId,
+  orderLineItems: SupaOrderLineItemWithOutId[]
 ) => {
   const { data, error } = await supabase
     .from<SupaOrder>('Orders')
@@ -122,7 +130,7 @@ export const createOrder = async (
 }
 
 export const updateOrder = async (
-  order: SupaOrder,
+  order: OrderWithoutId,
   orderLineItems: SupaOrderLineItem[]
 ) => {
   if (!order || !order.id) {
@@ -181,7 +189,7 @@ export const updateOrder = async (
 
 export interface OrderCreditItem {
   OrderId: string | number
-  total: number | string
+  total: number
   description: string
 }
 

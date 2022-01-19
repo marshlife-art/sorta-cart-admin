@@ -17,9 +17,9 @@ import Button from '@material-ui/core/Button'
 import ListSubheader from '@material-ui/core/ListSubheader'
 import List from '@material-ui/core/List'
 
-import { LineItem } from '../types/Order'
 import { Member } from '../types/Member'
 import { getStoreCreditReport } from '../lib/storeCredit'
+import { SupaOrderLineItem } from '../types/SupaTypes'
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -96,9 +96,9 @@ const ExpansionPanelDetails = withStyles((theme) => ({
 }))(MuiExpansionPanelDetails)
 
 type StoreCreditRow = Member & {
-  credits: LineItem[]
+  credits: SupaOrderLineItem[]
   credits_sum: number
-  adjustments: LineItem[]
+  adjustments: SupaOrderLineItem[]
   adjustments_sum: number
   store_credit: number
 }

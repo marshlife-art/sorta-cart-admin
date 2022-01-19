@@ -10,7 +10,7 @@ import DeleteIcon from '@material-ui/icons/Delete'
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
 import FileIcon from '@material-ui/icons/FileCopy'
 import SquareIcon from '@material-ui/icons/CropSquare'
-import { WholesaleOrder } from '../types/WholesaleOrder'
+import { SupaWholesaleOrder as WholesaleOrder } from '../types/SupaTypes'
 
 const StyledMenu = (props: MenuProps) => (
   <Menu

@@ -3,68 +3,35 @@ import TextField from '@material-ui/core/TextField'
 import Autocomplete from '@material-ui/lab/Autocomplete'
 import CircularProgress from '@material-ui/core/CircularProgress'
 
-import { Product } from '../types/Product'
-import useSWR from 'swr'
-import { supabase } from '../lib/supabaseClient'
-
-interface ProductOption {
-  name: string
-  product: Product
-}
+import { useProductsAutocomplete } from '../services/hooks/products'
+import { ProductOption } from '../services/fetchers/types'
 
 interface LineItemAutocompleteProps {
-  onItemSelected: (value: { name: string; product: Product }) => void
+  onItemSelected: (value: ProductOption) => void
 }
 
 export default function LineItemAutocomplete(props: LineItemAutocompleteProps) {
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<ProductOption[]>([])
   const [q, setQ] = useState('')
-  const [loading, setLoading] = useState(open && options.length === 0)
+  const [loading, setLoading] = useState(true)
 
-  useSWR({ key: 'lineitem_autocomplete', q }, async ({ q }) => {
-    if (!q) {
-      setOptions([])
+  const { products, isLoading, isError } = useProductsAutocomplete(q)
+
+  useEffect(() => {
+    if (!products) {
       return
     }
-    let query = supabase.from('products').select()
-
-    if (q) {
-      query = query.or(
-        [
-          'name',
-          'description',
-          'vendor',
-          'category',
-          'sub_category',
-          'upc_code',
-          'plu'
-        ]
-          .map((f) => `${f}.ilike."%${q}%"`)
-          .join(',')
-      )
-    }
-
-    const { data: products, error } = await query
-
-    if (error || !products) {
-      return
-    }
-
-    setOptions(
-      products.map((p) => ({
-        name: `${p.name} ${p.description} ${p.pk} ${p.size} $${p.ws_price} ${
-          p.u_price !== p.ws_price ? `($${p.u_price} EA)` : ''
-        }${
-          isNaN(parseInt(`${p.count_on_hand}`))
-            ? ''
-            : ` ${p.count_on_hand} on hand`
-        }`,
-        product: p
-      }))
-    )
+    setOptions(products)
     setLoading(false)
-  })
+  }, [products])
+
+  useEffect(() => {
+    if (isError) {
+      setOptions([])
+    }
+    setLoading(isLoading)
+  }, [isError, isLoading])
 
   useEffect(() => {
     if (!open) {

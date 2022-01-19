@@ -14,10 +14,14 @@ import AddIcon from '@material-ui/icons/Add'
 import ClearIcon from '@material-ui/icons/Clear'
 import { FormControlLabel, Checkbox, Button, Tooltip } from '@material-ui/core'
 import { Parser } from 'json2csv'
+import { formatDistance, formatRelative } from 'date-fns'
 
-import { LineItem } from '../types/Order'
-import { Product } from '../types/Product'
-import { SquareStatus, WholesaleOrder } from '../types/WholesaleOrder'
+import {
+  SupaWholesaleOrder as WholesaleOrder,
+  SupaProduct,
+  SupaOrderLineItem as LineItem
+} from '../types/SupaTypes'
+import { SquareStatus } from '../types/WholesaleOrder'
 import { OrderStatus, ShipmentStatus, PaymentStatus } from '../types/Order'
 import {
   API_HOST,
@@ -27,15 +31,18 @@ import {
   SQUARE_STATUSES
 } from '../constants'
 import Loading from '../Loading'
+import EditMenu from './EditMenu'
+import WholesaleOrderLineItems from './WholesaleOrderLineItems'
+import LineItemAutocomplete from '../orders/LineItemAutocomplete'
 import {
   useWholesaleOrderService,
   useWholesaleOrderSaveService
 } from './useWholesaleOrderService'
-import EditMenu from './EditMenu'
-import WholesaleOrderLineItems from './WholesaleOrderLineItems'
-import { supabase } from '../lib/supabaseClient'
-import { formatDistance, formatRelative } from 'date-fns'
-import LineItemAutocomplete from '../orders/LineItemAutocomplete'
+import {
+  deleteWholesaleOrder,
+  insertOrderLineItem,
+  updateOrderLineItems
+} from '../services/mutations'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -57,7 +64,7 @@ export interface GroupedItem {
   qtyUnits: number
   qtyAdjustments: number
   totalSum: number
-  product: Product | undefined
+  product: SupaProduct | undefined
   vendor: string | undefined
   description: string
   line_items: LineItem[]
@@ -190,7 +197,7 @@ export default function EditWholesaleOrder(props: EditWholesaleOrderProps) {
     })
   }
 
-  const handleDataChange = (data: object) => {
+  const handleDataChange = (data: any) => {
     setWholesaleOrder((prevOrder) => {
       if (prevOrder) {
         return {
@@ -231,7 +238,7 @@ export default function EditWholesaleOrder(props: EditWholesaleOrderProps) {
         if (prevOrder) {
           return {
             ...prevOrder,
-            id: 'new'
+            id: undefined
           }
         }
       })
@@ -249,33 +256,27 @@ export default function EditWholesaleOrder(props: EditWholesaleOrderProps) {
   )
 
   const onDeleteBtnClick = async (): Promise<void> => {
-    if (!wholesaleOrder) {
+    if (!wholesaleOrder || wholesaleOrder.id === undefined) {
       return
     }
 
-    const updateOLIResult = await supabase
-      .from('OrderLineItems')
-      .update({ WholesaleOrderId: null })
-      .eq('WholesaleOrderId', wholesaleOrder.id)
+    const { error, status } = await updateOrderLineItems(
+      { WholesaleOrderId: null },
+      [wholesaleOrder.id]
+    )
 
-    if (updateOLIResult.error && updateOLIResult.status !== 404) {
-      console.warn(
-        'delete wholesale firstUpdateOLI order caught error:',
-        updateOLIResult
-      )
-      setSnackMsg(updateOLIResult.error.message)
+    if (error && status !== 404) {
+      console.warn('delete wholesale firstUpdateOLI order caught error:', error)
+      setSnackMsg(error.message)
       setSnackOpen(true)
       return
     }
 
-    const result = await supabase
-      .from('WholesaleOrders')
-      .delete()
-      .eq('id', wholesaleOrder.id)
+    const { error: deleteError } = await deleteWholesaleOrder(wholesaleOrder.id)
 
-    if (result.error) {
-      console.warn('delete wholesale order caught error:', result.error)
-      setSnackMsg(result.error.message)
+    if (deleteError) {
+      console.warn('delete wholesale order caught error:', deleteError)
+      setSnackMsg(deleteError.message)
       setSnackOpen(true)
     } else {
       navigate('/wholesaleorders')
@@ -372,7 +373,7 @@ export default function EditWholesaleOrder(props: EditWholesaleOrderProps) {
     return wholesaleOrder && wholesaleOrder[field] ? wholesaleOrder[field] : ''
   }
 
-  async function onAddLineitem(value: { name: string; product: Product }) {
+  async function onAddLineitem(value: { name: string; product: SupaProduct }) {
     const wsOrderId = parseInt(wholesaleOrderId)
     if (!value || !value.product || isNaN(wsOrderId)) {
       return
@@ -384,14 +385,14 @@ export default function EditWholesaleOrder(props: EditWholesaleOrderProps) {
       description: `${product.name} ${product.description}`,
       quantity: 1,
       selected_unit: product.unit_type || 'CS',
-      price: parseFloat(product.ws_price),
-      total: parseFloat(product.ws_price),
+      price: parseFloat(`${product.ws_price}`),
+      total: parseFloat(`${product.ws_price}`),
       kind: 'product',
       vendor: product.vendor,
-      data: { product }
+      data: { product } as LineItem['data'] // oh tsc whyyy :/
     }
 
-    const { error } = await supabase.from('OrderLineItems').insert(lineItem)
+    const { error } = await insertOrderLineItem(lineItem)
     if (error) {
       setSnackMsg(`error adding line item: ${error.message}`)
       setSnackOpen(true)

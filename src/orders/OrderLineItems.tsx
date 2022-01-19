@@ -16,8 +16,8 @@ import ClearIcon from '@material-ui/icons/Clear'
 import CreditIcon from '@material-ui/icons/LocalAtm'
 import Link from '@material-ui/core/Link'
 
-import { LineItem } from '../types/Order'
 import { TAX_RATE, TAX_RATE_STRING } from '../constants'
+import { SupaOrderLineItem as LineItem } from '../types/SupaTypes'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -40,7 +40,7 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 )
 
-function usdFormat(num: number | string) {
+function usdFormat(num?: number | string) {
   try {
     if (num === undefined) {
       return '$0.00'
@@ -63,7 +63,7 @@ function usdFormat(num: number | string) {
 function subtotal(items: LineItem[]) {
   return items
     .filter((li) => li.kind === 'product')
-    .map(({ total }) => (typeof total === 'string' ? parseFloat(total) : total))
+    .map(({ total }) => Number(total))
     .reduce((sum, i) => sum + i, 0)
 }
 
@@ -75,22 +75,22 @@ function adjustmentsTotal(items: LineItem[]) {
 }
 
 function liTotal(line_item: LineItem): number {
-  const u_price =
+  const u_price: number =
     line_item.data && line_item.data.product && line_item.data.product.u_price
-      ? parseFloat(line_item.data.product.u_price)
-      : line_item.price
-  const ws_price =
+      ? Number(line_item.data.product.u_price)
+      : line_item.price || 0
+  const ws_price: number =
     line_item.data && line_item.data.product
-      ? parseFloat(line_item.data.product.ws_price)
-      : line_item.price
+      ? Number(line_item.data.product.ws_price)
+      : line_item.price || 0
 
   return line_item.selected_unit === 'EA' && u_price
-    ? isNaN(line_item.quantity * u_price)
+    ? isNaN(Number(line_item.quantity) * u_price)
       ? 0.0
-      : line_item.quantity * u_price
-    : isNaN(line_item.quantity * ws_price)
+      : Number(line_item.quantity) * u_price
+    : isNaN(Number(line_item.quantity) * ws_price)
     ? 0.0
-    : line_item.quantity * ws_price
+    : Number(line_item.quantity) * ws_price
 }
 
 function liPkSize(line_item: LineItem): string {
@@ -144,8 +144,8 @@ export default function OrderLineItems(props: {
     if (line_item.data && line_item.data.product) {
       line_item.price =
         unit === 'CS'
-          ? +line_item.data.product.ws_price
-          : +line_item.data.product.u_price
+          ? Number(line_item.data.product.ws_price)
+          : Number(line_item.data.product.u_price)
     }
     line_item.total = liTotal(line_item)
     const idx = props.line_items.indexOf(line_item)

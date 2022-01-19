@@ -2,7 +2,7 @@ import { ThunkAction, ThunkDispatch } from 'redux-thunk'
 import { AnyAction } from 'redux'
 
 import { User, LoginError, LoginMessage } from '../../types/User'
-import { supabase } from '../../lib/supabaseClient'
+import { getSession, signIn, signOut } from '../../services/auth'
 
 export interface SetAction {
   type: 'SET'
@@ -52,7 +52,7 @@ export const checkSession = (): ThunkAction<
     return new Promise<void>((resolve) => {
       dispatch(isFetching(true))
 
-      const session = supabase.auth.session()
+      const session = getSession()
       // console.log('zomg session:', session)
       if (session?.user) {
         dispatch(set({ ...session.user, role: 'admin' })) // #TODO: don't hard-code admin role :/
@@ -71,19 +71,10 @@ export const login = (
   password: string
 ): ThunkAction<Promise<void>, {}, {}, AnyAction> => {
   return async (dispatch: ThunkDispatch<{}, {}, AnyAction>): Promise<void> => {
-    return new Promise<void>((resolve) => {
+    return new Promise<void>(async (resolve) => {
       dispatch(isFetching(true))
 
-      supabase.auth
-        .signIn(
-          { email, password },
-          {
-            redirectTo:
-              process.env.NODE_ENV === 'production'
-                ? 'https://sorta-cart.vercel.app/admin'
-                : `${window.location.origin}/admin`
-          }
-        )
+      signIn(email, password)
         .then((response) => {
           if (response.user && response.user.id) {
             dispatch(set({ ...response.user, role: 'admin' })) // #TODO: don't hard-code admin role :/
@@ -117,14 +108,10 @@ export const logout = (): ThunkAction<Promise<void>, {}, {}, AnyAction> => {
     return new Promise<void>((resolve) => {
       dispatch(isFetching(true))
 
-      supabase.auth
-        .signOut()
-        .catch(console.warn)
-        .finally(() => {
-          dispatch(set(NULL_USER))
-          dispatch(isFetching(false))
-          resolve()
-        })
+      signOut()
+      dispatch(set(NULL_USER))
+      dispatch(isFetching(false))
+      resolve()
     })
   }
 }

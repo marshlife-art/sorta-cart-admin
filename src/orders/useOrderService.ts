@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 
 import { Service } from '../types/Service'
-import { Order } from '../types/Order'
-import { supabase } from '../lib/supabaseClient'
+import { orderFetcher } from '../services/fetchers'
+import { SuperOrderAndAssoc as Order } from '../types/SupaTypes'
 
 const useOrderService = (
   id: string | undefined,
@@ -18,15 +18,11 @@ const useOrderService = (
       return
     }
 
-    supabase
-      .from<Order>('Orders')
-      .select('*, OrderLineItems ( * ), Members ( * )')
-      .eq('id', id)
-      .single()
-      .then((result) => {
-        result.data && setResult({ status: 'loaded', payload: result.data })
-        setLoading(false)
-      })
+    orderFetcher(Number(id)).then((result) => {
+      result.data &&
+        setResult({ status: 'loaded', payload: result.data as Order })
+      setLoading(false)
+    })
   }, [id, setLoading])
 
   return result

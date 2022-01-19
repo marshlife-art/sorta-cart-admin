@@ -89,7 +89,7 @@ function step(props: {
   vendor: string
   markup: number
   defaultSubCat?: string
-  getCatMap?: (from: string) => string | undefined
+  getCatMap?: (from: string) => string | undefined | null
   products: SupaProduct[]
   problems: string[]
 }): void {
@@ -284,7 +284,7 @@ export default function parseProductsCSV(
   markup: number = 0.0,
   defaultCat?: string,
   defaultSubCat?: string,
-  getCatMap?: (from: string) => string | undefined
+  getCatMap?: (from: string) => string | undefined | null
 ): Promise<IParseProductsCSV> {
   const products: SupaProduct[] = []
   const problems: string[] = []

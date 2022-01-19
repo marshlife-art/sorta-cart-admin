@@ -25,18 +25,10 @@ import { RootState } from '../redux'
 import { UserService } from '../redux/session/reducers'
 import Loading from '../Loading'
 import { useOrderService } from './useOrderService'
-import {
-  Order,
-  OrderStatus,
-  ShipmentStatus,
-  PaymentStatus
-} from '../types/Order'
-import { LineItem } from '../types/Order'
+import { OrderStatus, ShipmentStatus, PaymentStatus } from '../types/Order'
 import OrderLineItems from './OrderLineItems'
 import LineItemAutocomplete from './LineItemAutocomplete'
 import MemberAutocomplete from './MemberAutocomplete'
-import { Product } from '../types/Product'
-import { Member } from '../types/Member'
 import {
   ORDER_STATUSES,
   PAYMENT_STATUSES,
@@ -46,10 +38,22 @@ import {
 } from '../constants'
 import { getMemberCreditsAdjustmentsSums } from '../lib/storeCredit'
 import { createOrder, updateOrder } from '../lib/orderService'
-import { SupaOrder, SupaOrderLineItem } from '../types/SupaTypes'
+import {
+  SuperOrderAndAssoc,
+  SupaOrderLineItem,
+  SupaProduct as Product
+} from '../types/SupaTypes'
+import { MemberOption } from '../services/fetchers/types'
+
+type Order = Omit<SuperOrderAndAssoc, 'id'> & {
+  id?: number
+}
+// type PartialOrder = Partial<Order>
+type LineItem = SupaOrderLineItem
+type PartialLineItem = Partial<SupaOrderLineItem>
 
 const blankOrder: Order = {
-  id: 'new',
+  id: undefined,
   status: 'new',
   payment_status: 'balance_due',
   shipment_status: 'backorder',
@@ -120,7 +124,10 @@ export async function fetchStoreCredit(
   setStoreCredit(store_credit)
 }
 
-function tryNumber(input: string | number): number {
+function tryNumber(input?: string | number): number {
+  if (input === undefined) {
+    return 0.0
+  }
   const str = `${input}`
   if (isNaN(parseFloat(str))) {
     return 0.0
@@ -212,10 +219,12 @@ export default function EditOrder() {
         if (canDiscount && li.data && li.data.product) {
           const price =
             li.selected_unit === 'CS'
-              ? parseFloat(li.data.product.ws_price_cost)
-              : parseFloat(li.data.product.u_price_cost)
+              ? Number(li.data.product.ws_price_cost)
+              : Number(li.data.product.u_price_cost)
 
-          return +(li.total - price * li.quantity).toFixed(2)
+          const total = isNaN(Number(li.total)) ? 0 : Number(li.total)
+          const qty = isNaN(Number(li.quantity)) ? 1 : Number(li.quantity)
+          return +(total - price * qty).toFixed(2)
         } else {
           return 0
         }
@@ -223,15 +232,16 @@ export default function EditOrder() {
 
       if (discountAmt > 0) {
         const discountPrice = -discountAmt.toFixed(2)
-        const discounts = order.OrderLineItems.filter(
+        const discount = order.OrderLineItems.filter(
           (li) =>
             li.kind === 'adjustment' && li.description === 'member discount'
-        )
-        if (discounts[0]) {
-          if (discounts[0].total !== discountPrice) {
-            const idx = order.OrderLineItems.indexOf(discounts[0])
+        )[0]
+        if (discount) {
+          if (discount.total !== discountPrice) {
+            const idx = order.OrderLineItems.indexOf(discount)
+            // const description = discounts[0].description || ''
             updateLineItem(idx, {
-              ...discounts[0],
+              ...discount,
               price: discountPrice,
               total: discountPrice
             })
@@ -275,11 +285,11 @@ export default function EditOrder() {
         description: `${product.name} ${product.description}`,
         quantity: 1,
         selected_unit: 'CS',
-        price: parseFloat(product.ws_price),
-        total: parseFloat(product.ws_price),
+        price: parseFloat(`${product.ws_price}`),
+        total: parseFloat(`${product.ws_price}`),
         kind: 'product',
         vendor: product.vendor,
-        data: { product }
+        data: { product } as LineItem['data'] // ffffuck why tsc, whhhhy
       }
       setOrder((order) => ({
         ...order,
@@ -342,7 +352,7 @@ export default function EditOrder() {
   }
 
   function createPayment(event: any) {
-    const price = parseFloat(order.total.toFixed(2)) || -0.0
+    const price = Number(order.total?.toFixed(2)) || -0.0
     const payment: LineItem = {
       description: 'payment',
       quantity: 1,
@@ -378,7 +388,10 @@ export default function EditOrder() {
   }
 
   function createCreditFromLineItem(line_item: LineItem) {
-    createCredit(line_item.total, `STORE CREDIT (${line_item.description})`)
+    createCredit(
+      line_item.total || 0,
+      `STORE CREDIT (${line_item.description})`
+    )
   }
 
   function applyStoreCredit() {
@@ -423,7 +436,7 @@ export default function EditOrder() {
   //     .finally(() => setSnackOpen(true))
   // }
 
-  function onMembertemSelected(value?: { name: string; member: Member }) {
+  function onMembertemSelected(value?: MemberOption) {
     if (value && value.member) {
       const { id, name, phone, address } = value.member // email
       const email =
@@ -447,15 +460,12 @@ export default function EditOrder() {
   }
 
   const onSaveBtnClick = async (): Promise<void> => {
-    const { OrderLineItems: orderLineItems, Members, fts, ...o } = order
+    const { OrderLineItems: orderLineItems, Members, User, fts, ...o } = order
 
     setSaving(true)
 
     if (!orderId || orderId === 'new') {
-      const result = await createOrder(
-        o as SupaOrder,
-        orderLineItems as SupaOrderLineItem[]
-      )
+      const result = await createOrder(o, orderLineItems as SupaOrderLineItem[])
       setSnackOpen(true)
       setSnackMsg('Saved order!')
       setSaving(false)
@@ -463,10 +473,7 @@ export default function EditOrder() {
         navigate(`/orders/edit/${result.id}`)
       }
     } else {
-      const result = await updateOrder(
-        o as SupaOrder,
-        orderLineItems as SupaOrderLineItem[]
-      )
+      const result = await updateOrder(o, orderLineItems as SupaOrderLineItem[])
       setSnackOpen(true)
       if (!result) {
         setSnackMsg('Oops! Could not update order.')
@@ -635,7 +642,7 @@ export default function EditOrder() {
               )}
             </div>
 
-            {order.Members && order.Members.discount > 0 && (
+            {order?.Members?.discount && order.Members.discount > 0 && (
               <Box color="info.main">
                 <Typography variant="overline" display="block" gutterBottom>
                   Member has discount:{' '}

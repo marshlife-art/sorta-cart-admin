@@ -21,12 +21,18 @@ import ListItem from '@material-ui/core/ListItem'
 import ListSubheader from '@material-ui/core/ListSubheader'
 import ListItemText from '@material-ui/core/ListItemText'
 
-import { Member } from '../types/Member'
 import Loading from '../Loading'
 import { fetchStoreCredit } from '../orders/EditOrder'
-import { Order } from '../types/Order'
-import { supabase } from '../lib/supabaseClient'
-import { SupaOrder } from '../types/SupaTypes'
+import { SupaMember, SuperOrderAndAssoc as Order } from '../types/SupaTypes'
+import { upsertMember } from '../services/mutations'
+import { memberFetcher, ordersForMember } from '../services/fetchers'
+
+type Member =
+  | Omit<SupaMember, 'id' | 'data' | 'is_admin'> & {
+      id?: string | number
+      data: string | object
+      is_admin?: boolean
+    }
 
 const blankMember: Member = {
   id: 'new',
@@ -40,6 +46,7 @@ const blankMember: Member = {
   store_credit: 0,
   shares: 0,
   member_type: '',
+  is_admin: false,
   data: {}
 }
 
@@ -72,10 +79,7 @@ async function fetchMemberOrders(
   MemberId: string,
   setOrders: React.Dispatch<React.SetStateAction<Order[]>>
 ) {
-  const { data: orders, error } = await supabase
-    .from<SupaOrder>('Orders')
-    .select()
-    .eq('MemberId', MemberId)
+  const { data: orders, error } = await ordersForMember(Number(MemberId))
   if (error || !orders) {
     console.warn('fetchMemberOrders got error', error)
     setOrders([])
@@ -109,15 +113,13 @@ export default function EditMember() {
       setMember(blankMember)
       setLoadingMember(false)
     } else {
-      supabase
-        .from('Members')
-        .select()
-        .eq('id', memberId)
-        .single()
-        .then(({ data: member }) => {
-          setMember({ ...member, data: JSON.parse(member.data) })
-          setLoadingMember(false)
+      memberFetcher(Number(memberId)).then(({ data: member }) => {
+        setMember({
+          ...member,
+          data: member?.data ? JSON.parse(member.data) : {}
         })
+        setLoadingMember(false)
+      })
 
       if (!memberId) {
         return
@@ -132,16 +134,13 @@ export default function EditMember() {
     setResponse('')
     setLoading(true)
 
-    const { error } = await supabase.from('Members').upsert(
-      {
-        ...member,
-        id: memberId === 'new' ? undefined : memberId,
-        createdAt: memberId === 'new' ? undefined : member.createdAt,
-        updatedAt: null,
-        fts: undefined
-      },
-      { returning: 'minimal' }
-    )
+    const { error } = await upsertMember({
+      ...member,
+      id: memberId === 'new' ? undefined : memberId,
+      createdAt: memberId === 'new' ? undefined : member.createdAt,
+      updatedAt: null,
+      fts: undefined
+    })
 
     if (error) {
       console.warn('upsert member caugher err:', error)
@@ -373,10 +372,10 @@ export default function EditMember() {
 
             {member && member.data && (
               <dl>
-                {Object.keys(member.data).map((k) => (
+                {Object.entries(member.data).map(([k, v]) => (
                   <React.Fragment key={`memberdata${k}`}>
                     <dt>{k}</dt>
-                    <dd>{member.data[k]}</dd>
+                    <dd>{v}</dd>
                   </React.Fragment>
                 ))}
               </dl>

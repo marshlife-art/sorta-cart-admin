@@ -3,21 +3,29 @@ import { useNavigate } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import { Menu, MenuItem } from '@material-ui/core'
 import Divider from '@material-ui/core/Divider'
-import MaterialTable from 'material-table'
+import MaterialTable, { Query } from 'material-table'
 import Link from '@material-ui/core/Link'
 
-import { LineItem, OrderStatus } from '../types/Order'
-import { supabase } from '../lib/supabaseClient'
+import { OrderStatus } from '../types/Order'
 import { useAllWholesaleOrdersService } from './useWholesaleOrderService'
-import { SupaOrderLineItem, SupaWholesaleOrder } from '../types/SupaTypes'
+import { SupaOrderLineItem as LineItem } from '../types/SupaTypes'
+import {
+  insertWholesaleOrder,
+  updateOrderLineItems
+} from '../services/mutations'
+import { wholesaleOrdersDataTableFetcher } from '../services/fetchers'
 
-function tryParseData(data: string) {
-  try {
-    return JSON.parse(data)
-  } catch (e) {
-    return data
-  }
-}
+// #TODO: deal with this
+// function tryParseData(data: any): object {
+//   if (!(data instanceof String) || typeof data !== 'string') {
+//     return data as object
+//   }
+//   try {
+//     return JSON.parse(data)
+//   } catch (e) {
+//     return {}
+//   }
+// }
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -44,7 +52,7 @@ export default function AddWholesaleOrderLineItems(
     setNeedsRefresh(false)
   }, [tableRef, setNeedsRefresh])
 
-  const [selectedLineItems, setSelectedLineItems] = useState<string[]>()
+  const [selectedLineItems, setSelectedLineItems] = useState<number[]>()
 
   const addAction = {
     tooltip: 'ADD LINE ITEMS TO ORDER',
@@ -56,7 +64,7 @@ export default function AddWholesaleOrderLineItems(
       handleWholesaleOrderMenuOpen(event)
       if (Array.isArray(data)) {
         // ain't nobody (tsc) tell me nothin
-        setSelectedLineItems(data.map((li) => li.id) as string[])
+        setSelectedLineItems(data.map((li) => li.id) as number[])
       }
     }
   }
@@ -82,13 +90,13 @@ export default function AddWholesaleOrderLineItems(
     if (allWholesaleOrders.status === 'loaded') {
       setWholesaleOrderLookup(
         allWholesaleOrders.payload
-          .filter((wo: { status: OrderStatus }) =>
-            ['new', 'needs_review'].includes(wo.status)
+          .filter(
+            (wo) => wo.status && ['new', 'needs_review'].includes(wo.status)
           )
-          .map((order: { id: string; vendor: string; createdAt: string }) => ({
-            id: order.id,
+          .map((order) => ({
+            id: `${order.id}`,
             name: `${order.vendor} ${new Date(
-              order.createdAt
+              order.createdAt || ''
             ).toLocaleDateString()}`
           }))
       )
@@ -113,39 +121,32 @@ export default function AddWholesaleOrderLineItems(
       return
     }
 
-    let WholesaleOrderId: number
-    if (id === 'new') {
-      const { data, error } = await supabase
-        .from<SupaWholesaleOrder>('WholesaleOrders')
-        .insert(
-          {
-            vendor: 'New Wholesale Order',
-            status: 'new',
-            payment_status: 'balance_due',
-            shipment_status: 'backorder'
-          },
-          { returning: 'representation' }
-        )
-        .single()
+    let WholesaleOrderId: number | undefined
+    if (id === undefined) {
+      const { data, error } = await insertWholesaleOrder({
+        vendor: 'New Wholesale Order',
+        status: 'new',
+        payment_status: 'balance_due',
+        shipment_status: 'backorder'
+      })
+
       if (error || !data) {
         return
       }
       WholesaleOrderId = data.id
     } else {
-      WholesaleOrderId = parseInt(id)
+      WholesaleOrderId = Number(id)
     }
 
-    const response = await supabase
-      .from<SupaOrderLineItem>('OrderLineItems')
-      .update({ WholesaleOrderId }, { returning: 'minimal' })
-      .in(
-        'id',
-        selectedLineItems?.map((id) => parseInt(id))
-      )
-    if (response.error) {
+    const { error } = await updateOrderLineItems(
+      { WholesaleOrderId },
+      selectedLineItems?.map((id) => Number(id))
+    )
+
+    if (error) {
       console.warn(
         '[AddWholesaleOrderLineItems] handleWholesaleOrderSelect() got error response:',
-        response
+        error
       )
     }
     handleWholesaleOrderMenuClose()
@@ -208,68 +209,28 @@ export default function AddWholesaleOrderLineItems(
         ]}
         data={(q) =>
           new Promise(async (resolve, reject) => {
-            let query = supabase
-              .from('OrderLineItems')
-              .select('*', { count: 'exact' })
-              .is('WholesaleOrderId', null)
-              .eq('kind', 'product')
-              .or('status.neq.on_hand,status.is.null')
-
-            //(status != 'on_hand' or status is null)
-            if (q.filters.length) {
-              q.filters.forEach((filter) => {
-                if (filter.column.field && filter.value) {
-                  if (filter.value instanceof Array && filter.value.length) {
-                    const or = filter.value
-                      .map((v) => `${String(filter.column.field)}.eq."${v}"`)
-                      .join(',')
-                    query = query.or(or)
-                  } else if (filter.value.length) {
-                    query = query.or(
-                      `${String(filter.column.field)}.eq."${filter.value}"`
-                    )
-                  }
-                }
-              })
-            }
-
-            if (q.search) {
-              // #todo consider q.search.split(' ')
-              query = query.or(
-                ['vendor', 'description']
-                  .map((f) => `${f}.ilike."%${q.search}%"`)
-                  .join(',')
-              )
-            }
-            if (q.page) {
-              query = query.range(
-                q.pageSize * q.page,
-                q.pageSize * q.page + q.pageSize
-              )
-            }
-            if (q.pageSize) {
-              query = query.limit(q.pageSize)
-            }
-            if (q.orderBy && q.orderBy.field) {
-              query = query.order(q.orderBy.field, {
-                ascending: q.orderDirection === 'asc'
-              })
-            }
-
-            const { data: orderLineItems, error, count } = await query
+            const {
+              data: orderLineItems,
+              error,
+              count
+            } = await wholesaleOrdersDataTableFetcher(q)
 
             // whee, so need to JSON.parse each OrderLineItem .data field
-            const data =
-              orderLineItems &&
-              (orderLineItems.map(({ data, ...rest }: { data: string }) => ({
-                ...rest,
-                data: tryParseData(data)
-              })) as LineItem[])
+            // ughhhhh i guess?!?! fuck tsc :/
 
-            if (!data || error) {
+            if (!orderLineItems || error) {
               resolve({ data: [], page: 0, totalCount: 0 })
             } else {
-              resolve({ data, page: q.page, totalCount: count || 0 })
+              // const data: LineItem[] | null = orderLineItems.map(({ data, ...rest }) => ({
+              //   ...rest,
+              //   data: tryParseData(data) as SupaOrderLineItemData
+              // }))
+
+              resolve({
+                data: orderLineItems,
+                page: q.page,
+                totalCount: count || 0
+              })
             }
           })
         }

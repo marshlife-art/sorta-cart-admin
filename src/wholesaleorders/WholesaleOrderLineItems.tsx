@@ -10,15 +10,16 @@ import IconButton from '@material-ui/core/IconButton'
 import CloseIcon from '@material-ui/icons/Close'
 import CreditIcon from '@material-ui/icons/LocalAtm'
 import Link from '@material-ui/core/Link'
+import TextField from '@material-ui/core/TextField'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 
+import {
+  SupaOrderLineItem,
+  SupaWholesaleOrder as WholesaleOrder
+} from '../types/SupaTypes'
 import { LineItemData, GroupedItem } from './EditWholesaleOrder'
-import { WholesaleOrder } from '../types/WholesaleOrder'
-import { supabase } from '../lib/supabaseClient'
 import { createOrderCredits, OrderCreditItem } from '../lib/orderService'
-import { TextField } from '@material-ui/core'
-import { LineItem } from '../types/Order'
-import { SupaOrderLineItem } from '../types/SupaTypes'
+import { updateOrderLineItems } from '../services/mutations'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -89,24 +90,28 @@ export default function WholesaleOrderLineItems(props: {
         li.data &&
         li.data.product &&
         `${li.data.product.unf}${li.data.product.upc_code}`
-      const key = id ? id : li.description
+      const key = id ? id : li.description || 'unknown'
 
       let acc = groupedLineItems[key]
 
-      const qty =
+      const qty: number =
         li.data && li.data.product && li.selected_unit === 'EA'
-          ? li.quantity / li.data.product.pk
-          : li.quantity
+          ? (li.quantity || 1) / (li.data.product.pk || 1)
+          : li.quantity || 1
 
       const qtyUnits =
         li.data && li.data.product && li.selected_unit === 'CS'
-          ? li.quantity * li.data.product.pk
-          : li.quantity
+          ? (li.quantity || 1) * (li.data.product.pk || 1)
+          : li.quantity || 1
 
+      const wsPriceCost = isNaN(Number(li.data?.product?.ws_price_cost))
+        ? 0
+        : Number(li.data?.product?.ws_price_cost)
+      const liTotalCheck = isNaN(Number(li.total)) ? 0 : Number(li.total)
       const liTotal =
         (li.data && li.data.product
-          ? +(parseFloat(li.data.product.ws_price_cost) * qty).toFixed(2)
-          : li.total) || 0
+          ? +(wsPriceCost * qty).toFixed(2)
+          : liTotalCheck) || 0
 
       groupedLineItems[key] = {
         qtySum: acc ? acc.qtySum + qty : qty,
@@ -115,7 +120,7 @@ export default function WholesaleOrderLineItems(props: {
         totalSum: toMoney(acc ? acc.totalSum + liTotal : liTotal),
         product: li && li.data && li.data.product,
         vendor: li.vendor,
-        description: li.description,
+        description: li.description || 'no description',
         line_items: acc ? [...acc.line_items, li] : [li]
       }
 
@@ -129,18 +134,20 @@ export default function WholesaleOrderLineItems(props: {
     Object.values(groupedLineItems).forEach((item) => {
       // check if qtySum is not a round number (i.e. a partial case)
       if (item.qtySum % 1 !== 0 && item.product) {
-        const pk = item.product.pk
+        const pk = item.product.pk || 1
         const qty = item.line_items.reduce(
-          (acc, v) => acc + (v.selected_unit === 'EA' ? v.quantity : 0),
+          (acc, v) =>
+            acc + (v.selected_unit === 'EA' && v.quantity ? v.quantity : 0),
           0
         )
         // quantity needed to complete a case
         const quantity = Math.abs((qty % pk) - pk)
-        const price = +(
-          quantity * parseFloat(item.product.u_price_cost)
-        ).toFixed(2)
+        const uPriceCost = isNaN(Number(item.product.u_price_cost))
+          ? 0
+          : Number(item.product.u_price_cost)
+        const price = +(quantity * uPriceCost).toFixed(2)
 
-        const total = price
+        const total = isNaN(Number(price)) ? 0 : Number(price)
         if (calcAdjustments) {
           item.line_items.push({
             quantity,
@@ -165,7 +172,7 @@ export default function WholesaleOrderLineItems(props: {
         const qtyAdjustments = item.line_items.reduce((acc, li) => {
           if (!li.OrderId) {
             const pk = item.product?.pk || 1
-            const qty = li.quantity
+            const qty = li.quantity || 1
             acc += pk * qty
           }
           return acc
@@ -186,17 +193,14 @@ export default function WholesaleOrderLineItems(props: {
   useEffect(calc, [lineItems, calcAdjustments])
 
   async function removeLineItem(item: GroupedItem) {
-    const ids = item.line_items.map((li) => li.id).filter((a) => a)
+    const ids = item.line_items.map((li) => Number(li.id)).filter((a) => a)
     if (ids && ids.length && window.confirm('are you sure?')) {
-      const response = await supabase
-        .from('OrderLineItems')
-        .update({ WholesaleOrderId: null })
-        .in('id', ids)
-      if (response.error) {
-        console.warn(
-          '[removeLineItem] got error updating OLIs:',
-          response.error
-        )
+      const { error } = await updateOrderLineItems(
+        { WholesaleOrderId: null },
+        ids
+      )
+      if (error) {
+        console.warn('[removeLineItem] got error updating OLIs:', error)
       }
       props.setReload(true)
     }
@@ -206,8 +210,8 @@ export default function WholesaleOrderLineItems(props: {
     const items: OrderCreditItem[] = item.line_items
       .filter((li) => !!li.OrderId)
       .map((li) => ({
-        OrderId: li.OrderId as number,
-        total: li.total,
+        OrderId: Number(li.OrderId),
+        total: li.total || 0,
         description: item.description
       }))
 
@@ -228,16 +232,17 @@ export default function WholesaleOrderLineItems(props: {
     }
   }
 
-  async function handleQtyChange(li: LineItem, qtyString: string, idx: number) {
+  async function handleQtyChange(
+    li: SupaOrderLineItem,
+    qtyString: string,
+    idx: number
+  ) {
     setLoading(true)
     const qty = isNaN(parseInt(qtyString)) ? 1 : parseInt(qtyString)
 
     const quantity = qty > 0 ? qty : 1
+    const { error } = await updateOrderLineItems({ quantity }, [Number(li.id)])
 
-    const { error } = await supabase
-      .from<SupaOrderLineItem>('OrderLineItems')
-      .update({ quantity })
-      .eq('id', li.id)
     if (error) {
       setSnackMsg(`error updating line item: ${error.message}`)
       setSnackOpen(true)
@@ -246,6 +251,15 @@ export default function WholesaleOrderLineItems(props: {
     }
     // forgive me for my sinz, this is weird :/
     setTimeout(() => setLoading(false), 2000)
+  }
+
+  function tryGetEaQty(li: SupaOrderLineItem): React.ReactNode {
+    if (li.data && li.data.product && li.selected_unit === 'EA') {
+      const qty = li.quantity || 1
+      const pk = li.data.product.pk || 1
+      return +(qty / pk).toFixed(2)
+    }
+    return null
   }
 
   return (
@@ -392,11 +406,7 @@ export default function WholesaleOrderLineItems(props: {
                           />
                         )}
                   </TableCell>
-                  <TableCell align="center">
-                    {li.data && li.data.product && li.selected_unit === 'EA'
-                      ? +(li.quantity / li.data.product.pk).toFixed(2)
-                      : null}
-                  </TableCell>
+                  <TableCell align="center">{tryGetEaQty(li)}</TableCell>
                   <TableCell align="right">{li.total}</TableCell>
                 </TableRow>
               ))}

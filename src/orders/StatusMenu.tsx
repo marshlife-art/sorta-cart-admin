@@ -4,32 +4,15 @@ import { IconButton, Menu, MenuItem } from '@material-ui/core'
 import TimelapseIcon from '@material-ui/icons/Timelapse'
 import ShippingIcon from '@material-ui/icons/LocalShipping'
 
-import { Order } from '../types/Order'
+import { SupaOrder as Order } from '../types/SupaTypes'
 import { ORDER_STATUSES, SHIPMENT_STATUSES } from '../constants'
-import { supabase } from '../lib/supabaseClient'
+import {
+  updateOrderShipmentStatus,
+  updateOrderStatus
+} from '../services/mutations'
 
 // this global var isn't great, but there doesn't seem to be a better option :/
 let selectedOrders: Order[]
-
-async function updateOrderStatus(status: string) {
-  return await supabase
-    .from('Orders')
-    .update({ status })
-    .in(
-      'id',
-      selectedOrders.map((o) => o.id)
-    )
-}
-
-async function updateOrderShipmentStatus(shipment_status: string) {
-  return await supabase
-    .from('Orders')
-    .update({ shipment_status })
-    .in(
-      'id',
-      selectedOrders.map((o) => o.id)
-    )
-}
 
 function StatusMenu(props: {
   for: 'status' | 'shipment_status'
@@ -65,7 +48,10 @@ function StatusMenu(props: {
                 console.warn('ugh no selectedOrders')
                 return
               }
-              updateOrderStatus(v[0]).then(() => {
+              updateOrderStatus(
+                v[0],
+                selectedOrders.map((o) => o.id)
+              ).then(() => {
                 setNeedsRefresh(true)
                 handleClose()
               })
@@ -83,7 +69,10 @@ function StatusMenu(props: {
                 console.warn('ugh no selectedOrders')
                 return
               }
-              updateOrderShipmentStatus(v[0]).then(() => {
+              updateOrderShipmentStatus(
+                v[0],
+                selectedOrders.map((o) => o.id)
+              ).then(() => {
                 setNeedsRefresh(true)
                 handleClose()
               })

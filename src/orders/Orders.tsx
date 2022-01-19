@@ -2,7 +2,6 @@ import React, { useState, useEffect, createRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import MaterialTable, { Action } from 'material-table'
-import { Order } from '../types/Order'
 import OrderDetailPanel from './OrderDetailPanel'
 import {
   ORDER_STATUSES,
@@ -10,9 +9,10 @@ import {
   SHIPMENT_STATUSES
 } from '../constants'
 import { formatRelative } from 'date-fns'
-import { supabase } from '../lib/supabaseClient'
 import { getStatusAction, getShipmentStatusAction } from './StatusMenu'
 import printOrders from '../lib/printOrder'
+import { ordersDataTableFetcher } from '../services/fetchers'
+import { SuperOrderAndAssoc as Order } from '../types/SupaTypes'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -179,52 +179,7 @@ export default function Orders() {
         ]}
         data={(q) =>
           new Promise(async (resolve, reject) => {
-            let query = supabase
-              .from('Orders')
-              .select('*, OrderLineItems ( * )', { count: 'exact' })
-
-            if (q.filters.length) {
-              q.filters.forEach((filter) => {
-                if (filter.column.field && filter.value) {
-                  if (filter.value instanceof Array && filter.value.length) {
-                    const or = filter.value
-                      .map((v) => `${filter.column.field}.eq."${v}"`)
-                      .join(',')
-                    query = query.or(or)
-                  } else if (filter.value.length) {
-                    query = query.or(
-                      `${filter.column.field}.eq."${filter.value}"`
-                    )
-                  }
-                }
-              })
-            }
-            if (q.search) {
-              // #todo consider q.search.split(' ')
-              query = query.or(
-                ['name', 'email', 'phone', 'address', 'notes']
-                  .map((f) => `${f}.ilike."%${q.search}%"`)
-                  .join(',')
-              )
-            }
-            if (q.page) {
-              query = query.range(
-                q.pageSize * q.page,
-                q.pageSize * q.page + q.pageSize
-              )
-            }
-            if (q.pageSize) {
-              query = query.limit(q.pageSize)
-            }
-            if (q.orderBy && q.orderBy.field) {
-              query = query.order(q.orderBy.field, {
-                ascending: q.orderDirection === 'asc'
-              })
-            } else {
-              query = query.order('id', { ascending: false })
-            }
-
-            const { data, error, count } = await query
+            const { data, error, count } = await ordersDataTableFetcher(q)
 
             if (!data || error) {
               resolve({ data: [], page: 0, totalCount: 0 })

@@ -1,7 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { formatDistance } from 'date-fns'
-import useSWR from 'swr'
 import Button from '@material-ui/core/Button'
 import { makeStyles } from '@material-ui/core/styles'
 import Table from '@material-ui/core/Table'
@@ -11,8 +10,8 @@ import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 
 import Title from './Title'
-import { WholesaleOrder } from '../types/WholesaleOrder'
-import { supabase } from '../lib/supabaseClient'
+import { SupaWholesaleOrder as WholesaleOrder } from '../types/SupaTypes'
+import { useWholesaleOrdersDashboard } from '../services/hooks/wholesaleorders'
 
 interface WholesaleOrderData {
   data: WholesaleOrder[]
@@ -36,37 +35,10 @@ export default function WholesaleOrders() {
   const navigate = useNavigate()
   const classes = useStyles()
 
-  const { data: orders, error } = useSWR<WholesaleOrderData>(
-    'dashboard_wholesale_orders',
-    async () => {
-      const {
-        data,
-        error,
-        count: totalCount
-      } = await supabase
-        .from<WholesaleOrder>('WholesaleOrders')
-        .select('*', { count: 'exact' })
-        .order('createdAt', { ascending: false })
-        .limit(10)
+  const { wholesaleOrders, isError, isLoading } = useWholesaleOrdersDashboard()
 
-      if (!error && data?.length && totalCount) {
-        return {
-          data,
-          page: 0,
-          totalCount
-        }
-      }
-
-      return {
-        data: [],
-        page: 0,
-        totalCount: 0
-      }
-    }
-  )
-
-  if (error) return <div>failed to load</div>
-  if (!orders) return <div>loading...</div>
+  if (isError) return <div>failed to load</div>
+  if (isLoading) return <div>loading...</div>
 
   return (
     <React.Fragment>
@@ -85,7 +57,7 @@ export default function WholesaleOrders() {
           </TableRow>
         </TableHead>
         <TableBody>
-          {orders.data.map((order) => (
+          {wholesaleOrders?.data?.map((order) => (
             <TableRow
               key={order.id}
               className={classes.rowHover}

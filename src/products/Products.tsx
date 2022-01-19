@@ -2,10 +2,15 @@ import React, { useState, useEffect, useCallback, createRef } from 'react'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import MaterialTable, { Query } from 'material-table'
 
-import { Product } from '../types/Product'
-import { supabase } from '../lib/supabaseClient'
-import { getCategories, getSubCategories, getVendors } from './productsService'
+import { SupaProduct as Product } from '../types/SupaTypes'
 import { getNoBackorderAction, getFeaturedAction } from './TableActionMenu'
+import {
+  distinctProductVendors,
+  productsFetcher,
+  distinctProductCategories,
+  distinctProductSubCategories
+} from '../services/fetchers'
+import { deleteProducts } from '../services/mutations'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -20,7 +25,6 @@ const useStyles = makeStyles((theme: Theme) =>
 function Products() {
   const classes = useStyles()
   let tableRef = createRef<any>()
-
   // ugh, this is needed because tableRef.current is always null inside the deleteAction onClick fn :/
   const [needsRefresh, setNeedsRefresh] = useState(false)
   const refreshTable = useCallback(() => {
@@ -41,10 +45,7 @@ function Products() {
           `are sure you want to destroy these ${ids.length} products?`
         )
       ) {
-        const { error } = await supabase
-          .from('products')
-          .delete({ returning: 'minimal' })
-          .in('id', ids)
+        const { error } = await deleteProducts(ids)
 
         if (error) {
           console.warn('destroy products caught err:', error)
@@ -64,15 +65,17 @@ function Products() {
   const [searchExpanded, setSearchExpanded] = useState(true)
 
   const [categoryLookup, setCategoryLookup] = useState<object>(() => {
-    getCategories().then((result) => setCategoryLookup(result))
+    distinctProductCategories().then((result) => setCategoryLookup(result))
   })
 
   const [subCategoryLookup, setSubCategoryLookup] = useState<object>(() => {
-    getSubCategories('').then((result) => setSubCategoryLookup(result))
+    distinctProductSubCategories('').then((result) =>
+      setSubCategoryLookup(result)
+    )
   })
 
   const [vendorLookup, setVendorLookup] = useState<object>(() => {
-    getVendors().then((result) => setVendorLookup(result))
+    distinctProductVendors().then((result) => setVendorLookup(result))
   })
 
   const [catDefaultFilter, setCatDefaultFilter] = useState<
@@ -103,7 +106,7 @@ function Products() {
       let newSubCatz = {}
 
       for await (const cat of categories) {
-        const result = await getSubCategories(cat)
+        const result = await distinctProductSubCategories(cat)
         newSubCatz = {
           ...newSubCatz,
           ...result
@@ -232,63 +235,8 @@ function Products() {
         data={(q) =>
           new Promise(async (resolve, reject) => {
             setSelectedCatsFromQuery(q)
-            let query = supabase
-              .from('products')
-              .select('*', { count: 'exact' })
 
-            if (q.filters.length) {
-              q.filters.forEach((filter) => {
-                if (filter.column.field === 'no_backorder') {
-                  query = query.or(
-                    `no_backorder.eq.${filter.value === 'checked'}`
-                  )
-                } else if (filter.column.field === 'featured') {
-                  query = query.or(`featured.eq.${filter.value === 'checked'}`)
-                } else if (filter.column.field === 'count_on_hand') {
-                  const or = `count_on_hand.${
-                    filter.value === 'checked'
-                      ? 'gt.0'
-                      : 'is.null,count_on_hand.lte.0'
-                  }`
-                  query = query.or(or)
-                } else if (filter.column.field && filter.value) {
-                  if (filter.value instanceof Array && filter.value.length) {
-                    const or = filter.value
-                      .map((v) => `${String(filter.column.field)}.eq."${v}"`)
-                      .join(',')
-                    query = query.or(or)
-                  } else if (filter.value.length) {
-                    query = query.or(
-                      `${String(filter.column.field)}.eq."${filter.value}"`
-                    )
-                  }
-                }
-              })
-            }
-            if (q.search) {
-              // #todo consider q.search.split(' ')
-              query = query.or(
-                ['name', 'description', 'id']
-                  .map((f) => `${f}.ilike."%${q.search}%"`)
-                  .join(',')
-              )
-            }
-            if (q.page) {
-              query = query.range(
-                q.pageSize * q.page,
-                q.pageSize * q.page + q.pageSize
-              )
-            }
-            if (q.pageSize) {
-              query = query.limit(q.pageSize)
-            }
-            if (q.orderBy && q.orderBy.field) {
-              query = query.order(q.orderBy.field, {
-                ascending: q.orderDirection === 'asc'
-              })
-            }
-
-            const { data, error, count } = await query
+            const { data, error, count } = await productsFetcher(q)
 
             if (!data || error) {
               resolve({ data: [], page: 0, totalCount: 0 })

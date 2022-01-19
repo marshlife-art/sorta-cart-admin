@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import useSWR from 'swr'
+
 import {
   Button,
   Dialog,
@@ -19,14 +19,9 @@ import {
   IParseProductCatzCSV,
   parseProductsDistinctCatzCSV
 } from '../lib/parseProductsCSV'
-import { supabase } from '../lib/supabaseClient'
 import { SupaCatmap } from '../types/SupaTypes'
-
-interface CatmapData {
-  data: SupaCatmap[]
-  page: number
-  totalCount: number
-}
+import { useCatmap } from '../services/hooks/catmap'
+import { deleteCatmap, upsertCatmap } from '../services/mutations'
 
 export default function CatMapDialog(props: {
   file?: File
@@ -36,36 +31,10 @@ export default function CatMapDialog(props: {
   const [fileResult, setFileResult] = useState<IParseProductCatzCSV>()
   const [mappedCatz, setMappedCatz] = useState<SupaCatmap[]>([])
 
-  const {
-    data: catmap,
-    error,
-    mutate
-  } = useSWR<CatmapData>('catmapz', async () => {
-    const {
-      data,
-      error,
-      count: totalCount
-    } = await supabase
-      .from<SupaCatmap>('catmap')
-      .select('*', { count: 'exact' })
+  const { catmap, isError, isLoading, mutate } = useCatmap()
 
-    if (!error && data?.length && totalCount) {
-      return {
-        data,
-        page: 0,
-        totalCount
-      }
-    }
-
-    return {
-      data: [],
-      page: 0,
-      totalCount: 0
-    }
-  })
-
-  function getCatMap(from: string): string | undefined {
-    return catmap && catmap.data.find((m) => m.from === from)?.to
+  function getCatMap(from: string): string | undefined | null {
+    return catmap && catmap.find((m) => m.from === from)?.to
   }
 
   const handleClickOpen = () => {
@@ -77,11 +46,9 @@ export default function CatMapDialog(props: {
   }
 
   const handleSave = async () => {
-    const result = await supabase
-      .from<SupaCatmap>('catmap')
-      .upsert(mappedCatz.filter((m) => !!m.to))
+    const { error } = await upsertCatmap(mappedCatz.filter((m) => !!m.to))
 
-    if (!result.error) {
+    if (!error) {
       mutate()
     }
     setOpen(false)
@@ -98,10 +65,7 @@ export default function CatMapDialog(props: {
   }
 
   async function handleDeleteMap(from: string) {
-    await supabase
-      .from<SupaCatmap>('catmap')
-      .delete({ returning: 'minimal' })
-      .eq('from', from)
+    await deleteCatmap(from)
     mutate()
   }
 
@@ -115,8 +79,8 @@ export default function CatMapDialog(props: {
     }
   }, [open, props.file])
 
-  if (error) return <div>failed to load</div>
-  if (!catmap) return <div>loading...</div>
+  if (isError) return <div>failed to load</div>
+  if (isLoading) return <div>loading...</div>
 
   return (
     <div>

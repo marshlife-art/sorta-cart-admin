@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import useSWR from 'swr'
 import { makeStyles, Theme, createStyles } from '@material-ui/core'
 import Paper from '@material-ui/core/Paper'
 import Grid from '@material-ui/core/Grid'
@@ -17,10 +16,15 @@ import Typography from '@material-ui/core/Typography'
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
 
 import Loading from '../Loading'
-import { supabase } from '../lib/supabaseClient'
 import parseProductsCSV from '../lib/parseProductsCSV'
-import { SupaCatmap, SupaProduct } from '../types/SupaTypes'
+import { SupaProduct } from '../types/SupaTypes'
 import CatMapDialog from './CatMapDialog'
+import {
+  useDistinctProductImportTags,
+  useDistinctProductVendors
+} from '../services/hooks/products'
+import { updateNoBackorder, upsertProducts } from '../services/mutations'
+import { useCatmap } from '../services/hooks/catmap'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -53,6 +57,7 @@ const useStyles = makeStyles((theme: Theme) =>
 
 export default function ImportProducts() {
   const classes = useStyles()
+
   const [loading, setLoading] = useState(false)
   const [vendor, setVendor] = useState('')
   const [importTag, setImportTag] = useState('')
@@ -65,57 +70,13 @@ export default function ImportProducts() {
   const [dryRun, setDryRun] = useState(false)
   const [error, setError] = useState('')
   const [response, setResponse] = useState('')
-
   const [file, setFile] = useState<File>()
 
-  const { data: vendorLookup, error: vendorLookupError } = useSWR<string[]>(
-    'distinct_product_vendors',
-    async () => {
-      const { data, error } = await supabase.rpc('distinct_product_vendors')
+  const { catmap } = useCatmap()
+  const { vendorLookup } = useDistinctProductVendors()
+  const { importTagsLookup } = useDistinctProductImportTags()
 
-      if (!error && data?.length) {
-        return data?.reduce((acc, row) => {
-          acc.push(row.vendor)
-          return acc
-        }, [])
-      }
-
-      return []
-    }
-  )
-
-  const { data: importTagsLookup, error: importTagsLookupError } = useSWR<
-    string[]
-  >('distinct_product_import_tags', async () => {
-    const { data, error } = await supabase.rpc('distinct_product_import_tags')
-
-    if (!error && data?.length) {
-      return data?.reduce((acc, row) => {
-        acc.push(row.import_tag)
-        return acc
-      }, [])
-    }
-
-    return []
-  })
-
-  const {
-    data: catmap,
-    error: catmapError,
-    mutate
-  } = useSWR<SupaCatmap[]>('import_catmapz', async () => {
-    const { data, error } = await supabase
-      .from<SupaCatmap>('catmap')
-      .select('*')
-
-    if (!error && data?.length) {
-      return data
-    }
-
-    return []
-  })
-
-  function getCatMap(from: string): string | undefined {
+  function getCatMap(from: string): string | undefined | null {
     return catmap && catmap.find((m) => m.from === from)?.to
   }
 
@@ -152,10 +113,23 @@ export default function ImportProducts() {
       return
     }
 
-    await supabase
-      .from<SupaProduct>('products')
-      .update({ no_backorder: true })
-      .eq('import_tag', prevImportTag)
+    const { error: updateNoBackorderError } = await updateNoBackorder(
+      prevImportTag
+    )
+
+    if (updateNoBackorderError) {
+      console.warn(
+        'got error updating existing products to no_backorder=true for prevImportTag:',
+        prevImportTag,
+        ' updateNoBackorderError:',
+        updateNoBackorderError
+      )
+      setResponse(
+        `Error updating existing products to no_backorder=true for prevImportTag:${prevImportTag}. Error: ${updateNoBackorderError.message}. Stopping.`
+      )
+      setLoading(false)
+      return
+    }
 
     const itemsPerChunk = 1000 // items per chunk
     const chunkedProducts = result.products.reduce((acc, item, index) => {
@@ -170,15 +144,10 @@ export default function ImportProducts() {
     const upsertErrors: string[] = []
     let upsertCount = 0
     for await (const products of chunkedProducts) {
-      const { error, count, ...rest } = await supabase
-        .from('products')
-        .upsert(products, {
-          count: 'exact',
-          returning: 'minimal',
-          ignoreDuplicates
-        })
+      const { error, count } = await upsertProducts(products, ignoreDuplicates)
+
       if (error) {
-        console.warn('zomg supabase upsert error:', error)
+        console.warn('zomg upsertProducts error:', error)
         upsertErrors.push(error.message)
       }
       if (count) {

@@ -9,10 +9,9 @@ import Button from '@material-ui/core/Button'
 import Typography from '@material-ui/core/Typography'
 
 import Loading from '../Loading'
-import { API_HOST } from '../constants'
 import parseProductUpdatesCSV from '../lib/parseProductUpdatesCSV'
-import { SupaProduct } from '../types/SupaTypes'
-import { supabase } from '../lib/supabaseClient'
+import { updateProducts } from '../services/mutations'
+import { productFetcher } from '../services/fetchers'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -65,19 +64,15 @@ export default function UpdateProducts() {
     const updateErrors = []
     let updateCount = 0
     for await (const product of result?.products) {
-      const { error, data, ...rest } = await supabase
-        .from('products')
-        .select('id')
-        .eq('id', product.id)
-        .single()
+      const { data, error } = await productFetcher(product.id)
+
       if (error || !data) {
         updateErrors.push(`unable to find a product with id: ${product.id}`)
       } else if (!dryrun) {
         const { unf, upc_code, id, ...productUpdates } = product
-        const { error: updateError, ...rest } = await supabase
-          .from('products')
-          .update(productUpdates)
-          .eq('id', product.id)
+        const { error: updateError } = await updateProducts(productUpdates, [
+          product.id
+        ])
         if (error) {
           updateErrors.push(
             `error updating product with id: ${product.id} error message: ${updateError?.message}`

@@ -1,29 +1,37 @@
 import { useCallback, useEffect, useState } from 'react'
-
-import { Service } from '../types/Service'
-import { WholesaleOrder } from '../types/WholesaleOrder'
-import { OrderStatus } from '../types/Order'
-import { supabase } from '../lib/supabaseClient'
 import useSWR from 'swr'
 
+import { Service } from '../types/Service'
+import { SupaWholesaleOrder as WholesaleOrder } from '../types/SupaTypes'
+import { OrderStatus } from '../types/Order'
+
+import {
+  wholesaleOrderFetcher,
+  wholesaleOrdersFetcher
+} from '../services/fetchers'
+import { upsertWholesaleOrder } from '../services/mutations'
+
 const blankWholesaleOrder: WholesaleOrder = {
-  id: '',
+  id: undefined,
+  api_key: undefined,
   vendor: '',
   notes: '',
   status: 'new',
   payment_status: 'balance_due',
   shipment_status: 'backorder',
   createdAt: '',
-  updatedAt: ''
+  updatedAt: '',
+  OrderLineItems: []
 }
 
-function tryParseData(data: string) {
-  try {
-    return JSON.parse(data)
-  } catch (e) {
-    return data
-  }
-}
+// hmm
+// function tryParseData(data: string) {
+//   try {
+//     return JSON.parse(data)
+//   } catch (e) {
+//     return data
+//   }
+// }
 
 const useWholesaleOrderService = (
   id: string | undefined,
@@ -42,42 +50,42 @@ const useWholesaleOrderService = (
       return
     }
 
-    if (id === 'new') {
+    if (id === undefined) {
       setResult({ status: 'loaded', payload: blankWholesaleOrder })
       setLoading(false)
       setReload(false)
       return
     }
 
-    let query = supabase
-      .from('WholesaleOrders')
-      .select('*, OrderLineItems ( * )')
-      .eq('id', id)
-      .single()
+    const { data, error } = await wholesaleOrderFetcher(Number(id))
 
-    const { data, error } = await query
-
-    if (error) {
+    if (error || !data) {
       console.warn('useWholesaleOrderService got error:', error)
       // #TODO: handle errorz
       // setResult({ error })
+      setResult({
+        status: 'error',
+        error: new Error(error?.message || 'unknown error')
+      })
+    } else {
+      setResult({
+        status: 'loaded',
+        payload: data
+      })
     }
 
     // whee, so need to JSON.parse each OrderLineItem .data field
-    const { OrderLineItems, ...rest } = data
-    const wholesaleOrder = {
-      ...rest,
-      OrderLineItems: OrderLineItems.map(
-        ({ data, ...rest }: { data: string }) => ({
-          ...rest,
-          data: tryParseData(data)
-        })
-      )
-    }
-    setResult({
-      status: 'loaded',
-      payload: wholesaleOrder as WholesaleOrder
-    })
+    // const { OrderLineItems, ...rest } = data
+    // const wholesaleOrder = {
+    //   ...rest,
+    //   OrderLineItems: OrderLineItems.map(
+    //     ({ data, ...rest }: { data: string }) => ({
+    //       ...rest,
+    //       data: tryParseData(data)
+    //     })
+    //   )
+    // }
+
     setReload(false)
     setLoading(false)
   })
@@ -101,23 +109,24 @@ const useAllWholesaleOrdersService = (
       if (!reloadWholesaleOrders) {
         return
       }
-      let query = supabase.from('WholesaleOrders').select()
-      if (status) {
-        query = query.eq('status', status)
-      }
 
-      const { data, error, count } = await query
+      const { data, error } = await wholesaleOrdersFetcher(status)
 
-      if (error) {
+      if (error || !data) {
         console.warn('useWholesaleOrderService got error:', error)
         // #TODO: handle errorz
         // setResult({ error })
+        setResult({
+          status: 'loaded',
+          payload: []
+        })
+      } else {
+        setResult({
+          status: 'loaded',
+          payload: data
+        })
       }
 
-      setResult({
-        status: 'loaded',
-        payload: data as WholesaleOrder[]
-      })
       setReloadWholesaleOrders(false)
       setLoading(false)
     }
@@ -138,23 +147,12 @@ const useWholesaleOrderSaveService = (
   })
 
   const createOrUpdateWholesaleOrder = useCallback(async () => {
-    if (!doSave || !wholesaleOrder || !wholesaleOrder.id) {
+    if (!doSave || !wholesaleOrder) {
       setDoSave(false)
       return
     }
 
-    const { data, error } = await supabase
-      .from('WholesaleOrders')
-      .upsert({
-        ...wholesaleOrder,
-        id: wholesaleOrder.id === 'new' ? undefined : wholesaleOrder.id,
-        createdAt:
-          wholesaleOrder.id === 'new' ? undefined : wholesaleOrder.createdAt,
-        updatedAt:
-          wholesaleOrder.id === 'new' ? undefined : wholesaleOrder.updatedAt,
-        OrderLineItems: undefined
-      })
-      .single()
+    const { data, error } = await upsertWholesaleOrder(wholesaleOrder)
 
     if (error) {
       setSnackMsg(error.message)
