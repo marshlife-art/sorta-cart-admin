@@ -13,7 +13,17 @@ await esbuild.build({
   ],
   bundle: true,
   loader: { '.js': 'jsx', '.tsx': 'tsx' },
-  watch: !!process.env.STORY_WATCH,
+  watch: !!process.env.STORY_WATCH
+    ? {
+        onRebuild(error, result) {
+          if (error) console.error('watch build failed:', error)
+          else
+            console.log(
+              `[${new Date().toLocaleTimeString()}] watch build succeeded!`
+            )
+        }
+      }
+    : false,
   platform: 'browser',
   external: ['fs', 'path', 'process'],
   inject: ['story/process-shim.js']

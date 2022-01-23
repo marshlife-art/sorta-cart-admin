@@ -178,7 +178,7 @@ export default function WholesaleOrders(props: Props) {
       <Grid
         container
         direction="row"
-        justify="space-between"
+        justifyContent="space-between"
         alignItems="stretch"
         className={classes.root}
         spacing={2}

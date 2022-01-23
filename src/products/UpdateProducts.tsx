@@ -136,7 +136,7 @@ export default function UpdateProducts() {
         container
         spacing={2}
         direction="row"
-        justify="center"
+        justifyContent="center"
         alignItems="flex-start"
       >
         <Grid item sm={4}>

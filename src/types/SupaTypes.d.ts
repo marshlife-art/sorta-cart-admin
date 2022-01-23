@@ -12,9 +12,12 @@ export type SupaOrderLineItemData = {
   product?: SupaProduct
   payment?: { receipt_url: string; receipt_number: string }
 }
-export type SupaOrderLineItem = Omit<definitions['OrderLineItems'], 'id'> & {
+export type SupaOrderLineItem = Omit<
+  definitions['OrderLineItems'],
+  'id' | 'data'
+> & {
   id?: number
-  data?: SupaOrderLineItemData
+  data?: SupaOrderLineItemData | null
 }
 export type SupaOrder = definitions['Orders']
 export type SupaOrderWithLineItems = SupaOrder & {

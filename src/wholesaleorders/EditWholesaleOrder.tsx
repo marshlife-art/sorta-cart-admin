@@ -67,7 +67,7 @@ export interface GroupedItem {
   qtyUnits: number
   qtyAdjustments: number
   totalSum: number
-  product: SupaProduct | undefined
+  product: SupaProduct | undefined | null
   vendor: string | undefined
   description: string
   line_items: LineItem[]
@@ -414,7 +414,7 @@ export default function EditWholesaleOrder(props: EditWholesaleOrderProps) {
             container
             spacing={2}
             direction="row"
-            justify="center"
+            justifyContent="center"
             alignItems="flex-start"
           >
             <Grid item sm={5}>

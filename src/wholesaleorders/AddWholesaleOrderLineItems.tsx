@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import { Menu, MenuItem } from '@material-ui/core'
 import Divider from '@material-ui/core/Divider'
-import MaterialTable, { Query } from 'material-table'
+import MaterialTable from 'material-table'
 import Link from '@material-ui/core/Link'
 
 import { OrderStatus } from '../types/Order'
@@ -15,7 +15,6 @@ import {
 } from '../services/mutations'
 import { wholesaleOrdersDataTableFetcher } from '../services/fetchers'
 
-// #TODO: deal with this
 // function tryParseData(data: any): object {
 //   if (!(data instanceof String) || typeof data !== 'string') {
 //     return data as object

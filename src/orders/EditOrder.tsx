@@ -575,7 +575,7 @@ export default function EditOrder() {
           container
           spacing={2}
           direction="row"
-          justify="center"
+          justifyContent="center"
           alignItems="flex-start"
         >
           <Grid item xs={12} md={4}>
