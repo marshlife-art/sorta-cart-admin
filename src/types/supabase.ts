@@ -299,6 +299,7 @@ export interface paths {
           updatedAt?: parameters["rowFilter.Orders.updatedAt"];
           MemberId?: parameters["rowFilter.Orders.MemberId"];
           fts?: parameters["rowFilter.Orders.fts"];
+          api_key?: parameters["rowFilter.Orders.api_key"];
           /** Filtering Columns */
           select?: parameters["select"];
           /** Ordering */
@@ -368,6 +369,7 @@ export interface paths {
           updatedAt?: parameters["rowFilter.Orders.updatedAt"];
           MemberId?: parameters["rowFilter.Orders.MemberId"];
           fts?: parameters["rowFilter.Orders.fts"];
+          api_key?: parameters["rowFilter.Orders.api_key"];
         };
         header: {
           /** Preference */
@@ -401,6 +403,7 @@ export interface paths {
           updatedAt?: parameters["rowFilter.Orders.updatedAt"];
           MemberId?: parameters["rowFilter.Orders.MemberId"];
           fts?: parameters["rowFilter.Orders.fts"];
+          api_key?: parameters["rowFilter.Orders.api_key"];
         };
         body: {
           /** Orders */
@@ -661,6 +664,7 @@ export interface paths {
           description_edit?: parameters["rowFilter.products.description_edit"];
           description?: parameters["rowFilter.products.description"];
           featured?: parameters["rowFilter.products.featured"];
+          sq_variation_id?: parameters["rowFilter.products.sq_variation_id"];
           /** Filtering Columns */
           select?: parameters["select"];
           /** Ordering */
@@ -738,6 +742,7 @@ export interface paths {
           description_edit?: parameters["rowFilter.products.description_edit"];
           description?: parameters["rowFilter.products.description"];
           featured?: parameters["rowFilter.products.featured"];
+          sq_variation_id?: parameters["rowFilter.products.sq_variation_id"];
         };
         header: {
           /** Preference */
@@ -779,6 +784,7 @@ export interface paths {
           description_edit?: parameters["rowFilter.products.description_edit"];
           description?: parameters["rowFilter.products.description"];
           featured?: parameters["rowFilter.products.featured"];
+          sq_variation_id?: parameters["rowFilter.products.sq_variation_id"];
         };
         body: {
           /** products */
@@ -906,14 +912,11 @@ export interface paths {
       };
     };
   };
-  "/rpc/distinct_product_sub_categories": {
+  "/rpc/products_update_id": {
     post: {
       parameters: {
         body: {
-          args: {
-            /** Format: text */
-            category: string;
-          };
+          args: { [key: string]: unknown };
         };
         header: {
           /** Preference */
@@ -926,11 +929,31 @@ export interface paths {
       };
     };
   };
-  "/rpc/products_update_id": {
+  "/rpc/default_products": {
     post: {
       parameters: {
         body: {
           args: { [key: string]: unknown };
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferParams"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: unknown;
+      };
+    };
+  };
+  "/rpc/distinct_product_sub_categories": {
+    post: {
+      parameters: {
+        body: {
+          args: {
+            /** Format: text */
+            category: string;
+          };
         };
         header: {
           /** Preference */
@@ -995,23 +1018,6 @@ export interface paths {
     };
   };
   "/rpc/distinct_product_categories": {
-    post: {
-      parameters: {
-        body: {
-          args: { [key: string]: unknown };
-        };
-        header: {
-          /** Preference */
-          Prefer?: parameters["preferParams"];
-        };
-      };
-      responses: {
-        /** OK */
-        200: unknown;
-      };
-    };
-  };
-  "/rpc/default_products": {
     post: {
       parameters: {
         body: {
@@ -1187,6 +1193,11 @@ export interface definitions {
      * @default to_tsvector('english'::regconfig, ((((((((COALESCE(name, ''::text) || ' '::text) || COALESCE(email, ''::text)) || ' '::text) || COALESCE(phone, ''::text)) || ' '::text) || COALESCE(address, ''::text)) || ' '::text) || COALESCE(notes, ''::text)))
      */
     fts?: string;
+    /**
+     * Format: uuid
+     * @default extensions.uuid_generate_v4()
+     */
+    api_key?: string;
   };
   WholesaleOrders: {
     /**
@@ -1310,6 +1321,8 @@ export interface definitions {
     description?: string;
     /** Format: boolean */
     featured?: boolean;
+    /** Format: text */
+    sq_variation_id?: string;
   };
   /** @description square on-hand inventory */
   stock: {
@@ -1474,6 +1487,8 @@ export interface parameters {
   "rowFilter.Orders.MemberId": string;
   /** Format: tsvector */
   "rowFilter.Orders.fts": string;
+  /** Format: uuid */
+  "rowFilter.Orders.api_key": string;
   /** @description WholesaleOrders */
   "body.WholesaleOrders": definitions["WholesaleOrders"];
   /** Format: bigint */
@@ -1566,6 +1581,8 @@ export interface parameters {
   "rowFilter.products.description": string;
   /** Format: boolean */
   "rowFilter.products.featured": string;
+  /** Format: text */
+  "rowFilter.products.sq_variation_id": string;
   /** @description stock */
   "body.stock": definitions["stock"];
   /** Format: text */
