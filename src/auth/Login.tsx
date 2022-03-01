@@ -1,14 +1,14 @@
+import { Button, Container, TextField } from '@material-ui/core'
 import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { Container, Button, TextField } from '@material-ui/core'
-import Box from '@material-ui/core/Box'
-import Typography from '@material-ui/core/Typography'
-import { makeStyles } from '@material-ui/core/styles'
 
+import Box from '@material-ui/core/Box'
 import { RootState } from '../redux'
-import { login } from '../redux/session/actions'
+import Typography from '@material-ui/core/Typography'
 import { UserService } from '../redux/session/reducers'
+import { login } from '../redux/session/actions'
+import { makeStyles } from '@material-ui/core/styles'
+import { useNavigate } from 'react-router-dom'
 
 const useStyles = makeStyles((theme) => ({
   form: {
@@ -50,7 +50,7 @@ export default function Login() {
   const classes = useStyles()
   const [error, setError] = useState('')
   const [password, setPassword] = useState('')
-
+  
   // when userService changes, figure out if the page should redirect if a user is already logged in.
   useEffect(() => {
     if (

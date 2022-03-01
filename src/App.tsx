@@ -1,47 +1,43 @@
-import React, { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
+import React, { useEffect, useState } from 'react'
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom'
+import { Theme, createStyles, makeStyles } from '@material-ui/core/styles'
+import { checkSession, logout } from './redux/session/actions'
+import { darkTheme, lightTheme } from './theme'
+import { getPreferences, setPreferences } from './redux/preferences/actions'
 import { useDispatch, useSelector } from 'react-redux'
-import clsx from 'clsx'
 
-import { ThemeProvider } from '@material-ui/core/styles'
-
+import { APP_VERSION } from './constants'
 import CssBaseline from '@material-ui/core/CssBaseline'
-import Drawer from '@material-ui/core/Drawer'
-import List from '@material-ui/core/List'
+import Dashboard from './dashboard/Dashboard'
 import Divider from '@material-ui/core/Divider'
+import Drawer from '@material-ui/core/Drawer'
+import EditMember from './members/EditMember'
+import EditOrder from './orders/EditOrder'
 import Fab from '@material-ui/core/Fab'
-import MUISwitch from '@material-ui/core/Switch'
+import { Icon } from '@material-ui/core'
+import ImportProducts from './products/ImportProducts'
+import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemIcon from '@material-ui/core/ListItemIcon'
 import ListItemText from '@material-ui/core/ListItemText'
-import { createStyles, Theme, makeStyles } from '@material-ui/core/styles'
-
-import { darkTheme, lightTheme } from './theme'
-import { mainListItems } from './listItems' // secondaryListItems
-
-import { RootState } from './redux'
-import { UserService } from './redux/session/reducers'
-import { checkSession, logout } from './redux/session/actions'
-
-import { PreferencesService } from './redux/preferences/reducers'
-import { getPreferences, setPreferences } from './redux/preferences/actions'
-
 import Loading from './Loading'
-import Dashboard from './dashboard/Dashboard'
 import Login from './auth/Login'
+import MUISwitch from '@material-ui/core/Switch'
+import Members from './members/Members'
+import Orders from './orders/Orders'
+import { PreferencesService } from './redux/preferences/reducers'
+import Products from './products/Products'
 import ProtectedRoute from './auth/ProtectedRoute'
+import { RootState } from './redux'
 // import UserMenu from './auth/UserMenu'
 import StoreCredits from './members/StoreCredits'
-import Orders from './orders/Orders'
-import WholesaleOrders from './wholesaleorders/WholesaleOrders'
-import Products from './products/Products'
-import ImportProducts from './products/ImportProducts'
-import EditOrder from './orders/EditOrder'
-import Members from './members/Members'
-import EditMember from './members/EditMember'
-import { APP_VERSION } from './constants'
+import { ThemeProvider } from '@material-ui/core/styles'
 import UpdateProducts from './products/UpdateProducts'
-import { Icon } from '@material-ui/core'
+import { UserService } from './redux/session/reducers'
+import WholesaleOrders from './wholesaleorders/WholesaleOrders'
+import clsx from 'clsx'
+import { mainListItems } from './listItems' // secondaryListItems
+import { supabase } from './lib/supabaseClient'
 
 const drawerWidth = 240
 
@@ -144,6 +140,11 @@ export function App() {
 
   useEffect(() => {
     dispatch(checkSession())
+
+    const sub = supabase.auth.onAuthStateChange((event, session) => {
+      dispatch(checkSession())
+    })
+    return () => sub?.data?.unsubscribe()
   }, [])
 
   useEffect(() => {
@@ -174,14 +175,6 @@ export function App() {
             userService.user &&
             userService.user.role === 'admin' && (
               <div className={classes.nav}>
-                {/* <IconButton
-              edge="start"
-              aria-label="open drawer"
-              onClick={() => setOpen(true)}
-            >
-              
-            </IconButton> */}
-
                 <Fab
                   color="secondary"
                   aria-label="menu"
@@ -261,12 +254,10 @@ export function App() {
             )}
 
           <main className={classes.content}>
-            {/* ROUTER */}
 
             {loading ? (
               <Loading />
             ) : (
-              // <ProtectedRoute path="/" element={< />} />
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route
@@ -321,11 +312,9 @@ export function App() {
                   path="/"
                   element={<ProtectedRoute path="/" element={<Dashboard />} />}
                 />
-                {/* <ProtectedRoute path="/" element={<Dashboard />} /> */}
               </Routes>
             )}
 
-            {/* <Box pt={4}>FOOT'r</Box> */}
           </main>
         </div>
       </Router>

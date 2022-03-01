@@ -1,8 +1,7 @@
 import { Navigate } from 'react-router-dom'
-import { useSelector } from 'react-redux'
-
 import { RootState } from '../redux'
 import { UserService } from '../redux/session/reducers'
+import { useSelector } from 'react-redux'
 
 const isAdmin = (userService: UserService): boolean =>
   userService.user && userService.user.role && userService.user.role === 'admin'
@@ -24,7 +23,6 @@ export default function ProtectedRoute(props: {
       to={{
         pathname: '/login'
       }}
-      state={{ from: props.path }}
     />
   )
 }

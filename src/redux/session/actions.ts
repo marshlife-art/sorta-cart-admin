@@ -1,8 +1,8 @@
+import { LoginError, LoginMessage, User } from '../../types/User'
 import { ThunkAction, ThunkDispatch } from 'redux-thunk'
-import { AnyAction } from 'redux'
-
-import { User, LoginError, LoginMessage } from '../../types/User'
 import { getSession, signIn, signOut } from '../../services/auth'
+
+import { AnyAction } from 'redux'
 
 export interface SetAction {
   type: 'SET'
