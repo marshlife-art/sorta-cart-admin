@@ -1,4 +1,13 @@
-import { FormHelperText, InputLabel, MenuItem, Select, Theme, createStyles, makeStyles } from '@material-ui/core'
+import {
+  FormHelperText,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
+  Theme,
+  createStyles,
+  makeStyles,
+} from '@material-ui/core'
 import React, { useState } from 'react'
 import { updateNoBackorder, updateProducts } from '../services/mutations'
 
@@ -19,19 +28,19 @@ const useStyles = makeStyles((theme: Theme) =>
     root: {
       margin: theme.spacing(2),
       padding: theme.spacing(2),
-      zIndex: 2
+      zIndex: 2,
     },
     gridItem: {
-      margin: theme.spacing(2, 0)
+      margin: theme.spacing(2, 0),
     },
     vendor: {
       display: 'flex',
       alignItems: 'center',
-      margin: theme.spacing(2, 0)
+      margin: theme.spacing(2, 0),
     },
     preFormat: {
-      whiteSpace: 'pre-wrap'
-    }
+      whiteSpace: 'pre-wrap',
+    },
   })
 )
 
@@ -44,6 +53,7 @@ export default function UpdateProducts() {
   const [response, setResponse] = useState('')
   const [vendor, setVendor] = useState('')
   const [priceUpdate, setPriceUpdate] = useState(false)
+  const [markup, setMarkup] = useState(0.0)
   const { vendorLookup } = useDistinctProductVendors()
 
   async function submitData() {
@@ -85,7 +95,6 @@ export default function UpdateProducts() {
         setLoading(false)
         return
       }
-
     }
 
     const updateErrors = []
@@ -94,6 +103,7 @@ export default function UpdateProducts() {
       const { data, error } = await productFetcher(product.id)
 
       if (error || !data) {
+        // console.log(`unable to find a product with id: ${product.id}`)
         if (!priceUpdate) {
           // ignore if doing price&availability update
           updateErrors.push(`unable to find a product with id: ${product.id}`)
@@ -102,17 +112,41 @@ export default function UpdateProducts() {
         // productUpdates is a Partial<Product>
         let productUpdates = {}
         if (priceUpdate) {
-          const { u_price, u_price_cost, ws_price, ws_price_cost } = product
-          productUpdates = { u_price, u_price_cost, ws_price, ws_price_cost, no_backorder: false }
+          const { u_price, u_price_cost, ws_price, ws_price_cost, unit_type } =
+            product
+          let u_price_markup = u_price
+          let ws_price_markup = ws_price
+          if (u_price && markup) {
+            u_price_markup = parseFloat((u_price + u_price * markup).toFixed(2))
+          }
+          if (ws_price && markup) {
+            ws_price_markup = parseFloat(
+              (ws_price + ws_price * markup).toFixed(2)
+            )
+          }
+          productUpdates = {
+            u_price: u_price_markup,
+            u_price_cost,
+            ws_price: ws_price_markup,
+            ws_price_cost,
+            unit_type,
+            no_backorder: false,
+          }
         } else {
           const { unf, upc_code, id, ...rest } = product
           productUpdates = rest
         }
 
         const { error: updateError } = await updateProducts(productUpdates, [
-          product.id
+          product.id,
         ])
 
+        // console.log(
+        //   'updated id,',
+        //   product.id,
+        //   ' productUpdates:',
+        //   productUpdates
+        // )
         if (error) {
           updateErrors.push(
             `error updating product with id: ${product.id} error message: ${updateError?.message}`
@@ -136,14 +170,18 @@ export default function UpdateProducts() {
 
       const [twentyErrors, restOfTheErrors] = chunkUpsertErrors
       setError(
-        `${dryrun === true && 'Dry Run'} ${updateCount ? `Successfully imported ${updateCount} products!\n` : ''
-        }. Products from csv: ${result.products.length}. \nThere were ${updateErrors.length
-        } errors adding new products:\n${twentyErrors.join('\n ')} \n\n...and ${restOfTheErrors.length
+        `${dryrun === true && 'Dry Run'} ${
+          updateCount ? `Successfully imported ${updateCount} products!\n` : ''
+        }. Products from csv: ${result.products.length}. \nThere were ${
+          updateErrors.length
+        } errors adding new products:\n${twentyErrors.join('\n ')} \n\n...and ${
+          restOfTheErrors.length
         } more`
       )
     } else {
       setResponse(
-        `${dryrun === true && 'Dry Run'} Success! \nProducts from csv: ${result.products.length
+        `${dryrun === true ? 'Dry Run' : ''} Success! \nProducts from csv: ${
+          result.products.length
         } \nProducts updated in database: ${updateCount}\n`
       )
     }
@@ -176,7 +214,6 @@ export default function UpdateProducts() {
         alignItems="flex-start"
       >
         <Grid item sm={4}>
-
           <FormControl fullWidth className={classes.gridItem}>
             <FormControlLabel
               control={
@@ -193,36 +230,62 @@ export default function UpdateProducts() {
               label="Price &amp; Availability Update"
             />
             <FormHelperText>
-              If checked, only price and availability for vendor's products are updated.
-              Upload vendor price sheet(s) to get updated price and availability for existing products.
+              If checked, only price and availability for vendor's products are
+              updated. Upload vendor price sheet(s) to get updated price and
+              availability for existing products.
             </FormHelperText>
           </FormControl>
 
-          {priceUpdate && (<FormControl fullWidth className={classes.gridItem}>
-            <InputLabel id="prev-import-tag-select-label">
-              Vendor
-            </InputLabel>
-            <Select
-              labelId="prev-import-tag-select-label"
-              id="prev-import-tag-select"
-              value={vendor}
-              onChange={(event) =>
-                event.target && setVendor(event.target.value as string)
-              }
-            >
-              <MenuItem value="">None</MenuItem>
-              {vendorLookup &&
-                vendorLookup.map((vendor, idx) => (
-                  <MenuItem key={`vendor-sel-${idx}`} value={idx}>
-                    {vendor}
-                  </MenuItem>
-                ))}
-            </Select>
-            <FormHelperText>
-              <b>Optional.</b> All products with the vendor you select here will first
-              be set as unavailable for order (<b>no_backorder</b>=<i>true</i>).
-            </FormHelperText>
-          </FormControl>)}
+          {priceUpdate && (
+            <>
+              <FormControl fullWidth className={classes.gridItem}>
+                <InputLabel id="prev-import-tag-select-label">
+                  Vendor
+                </InputLabel>
+                <Select
+                  labelId="prev-import-tag-select-label"
+                  id="prev-import-tag-select"
+                  value={vendor}
+                  onChange={(event) =>
+                    event.target && setVendor(event.target.value as string)
+                  }
+                >
+                  <MenuItem value="">None</MenuItem>
+                  {vendorLookup &&
+                    vendorLookup.map((vendor, idx) => (
+                      <MenuItem key={`vendor-sel-${idx}`} value={idx}>
+                        {vendor}
+                      </MenuItem>
+                    ))}
+                </Select>
+                <FormHelperText>
+                  <b>Optional.</b> All products with the vendor you select here
+                  will first be set as unavailable for order (
+                  <b>no_backorder</b>=<i>true</i>).
+                </FormHelperText>
+              </FormControl>
+              <TextField
+                label="Markup"
+                helperText="Markup percentage. Use decimal format."
+                type="number"
+                inputProps={{
+                  min: '0',
+                  max: '1',
+                  step: '0.01',
+                }}
+                fullWidth
+                value={markup}
+                onChange={(event) =>
+                  setMarkup(
+                    isNaN(parseFloat(event.target.value))
+                      ? 0.0
+                      : parseFloat(event.target.value)
+                  )
+                }
+                className={classes.gridItem}
+              />
+            </>
+          )}
 
           <FormControl fullWidth className={classes.gridItem}>
             <FormControlLabel
@@ -240,7 +303,8 @@ export default function UpdateProducts() {
               label="Dry Run"
             />
             <FormHelperText>
-              <i>note:</i> when <b>Dry Run</b> is checked no products in the database will be modified (useful for debugging .csv files).
+              <i>note:</i> when <b>Dry Run</b> is checked no products in the
+              database will be modified (useful for debugging .csv files).
             </FormHelperText>
           </FormControl>
 
@@ -294,33 +358,42 @@ export default function UpdateProducts() {
             <dl>
               <dt>Product Identifier</dt>
               <dd>
-                <b>unf</b> and <b>upc_code</b> columns are used
-                to identify a unique product. some combination of these are
-                required.
+                <b>unf</b> and <b>upc_code</b> columns are used to identify a
+                unique product. some combination of these are required.
               </dd>
 
               <dt>Columns</dt>
               {priceUpdate ? (
                 <dd>
-                  <b>u_price</b>, <b>u_price_cost</b>, <b>ws_price</b>, <b>ws_price_cost</b>;
-                  any other columns will be ignored.
-
+                  <b>u_price</b>, <b>u_price_cost</b>, <b>ws_price</b>,{' '}
+                  <b>ws_price_cost</b>, <b>unit_type</b>; any other columns will
+                  be ignored.
                 </dd>
-              ) : (<dd>
-                <i>example:</i> <b>plu</b>, <b>count_on_hand</b>,{' '}
-                <b>no_backorder</b>, <b>featured</b>, <b>name</b>,{' '}
-                <b>description_edit</b>; any product property except{' '}
-                <b>unf</b>, <b>upc_code</b>, and <b>id</b> will get updated.
-                <p>
-                  <i>note:</i> use only whole integer numbers for{' '}
-                  <b>count_on_hand</b> otherwise will round (so 0.4 would turn
-                  into 0).
-                </p>
-                <p>
-                  You probably don't want to update{' '}
-                  <b>count_on_hand</b>, here.
-                </p>
-              </dd>)}
+              ) : (
+                <dd>
+                  <i>example:</i> <b>plu</b>, <b>count_on_hand</b>,{' '}
+                  <b>no_backorder</b>, <b>featured</b>, <b>name</b>,{' '}
+                  <b>description_edit</b>; any product property except{' '}
+                  <b>unf</b>, <b>upc_code</b>, and <b>id</b> will get updated.
+                  <p>
+                    <i>note:</i> use only whole integer numbers for{' '}
+                    <b>count_on_hand</b> otherwise will round (so 0.4 would turn
+                    into 0).
+                  </p>
+                  <p>
+                    You probably don't want to update <b>count_on_hand</b>,
+                    here.
+                  </p>
+                </dd>
+              )}
+
+              <dt>Markup</dt>
+              <dd>
+                Markup is a percentage in decimal format so 0.10 will markup
+                products by 10%. The formula is: <i>PRICE + (PRICE * MARKUP)</i>{' '}
+                so if the value of <b>ws_price</b> is 10.00 and the markup
+                specified is 0.10 the the markup price will be 11.00.
+              </dd>
             </dl>
           </Typography>
         </Grid>

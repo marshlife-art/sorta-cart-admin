@@ -1,4 +1,5 @@
-import { parse, ParseStepResult } from 'papaparse'
+import { ParseStepResult, parse } from 'papaparse'
+
 import { SupaProduct } from '../types/SupaTypes'
 
 const KNOWN_HEADERS: string[] = [
@@ -11,7 +12,8 @@ const KNOWN_HEADERS: string[] = [
   'description_edit',
   'no_backorder',
   'featured',
-  'count_on_hand'
+  'count_on_hand',
+  'unit_type',
 ]
 const HEADER_MAP: { [index: string]: string } = {
   'UPC Code': 'upc_code',
@@ -22,7 +24,7 @@ const HEADER_MAP: { [index: string]: string } = {
   UPCPLU: 'upc_code',
   Price: 'ws_price',
   UnitCost: 'u_price',
-  'Item Number': 'unf'
+  'Item Number': 'unf',
 }
 
 function transformHeader(header: string, index: number): string {
@@ -73,7 +75,8 @@ function step(props: {
       plu,
       name,
       description_edit,
-      count_on_hand
+      count_on_hand,
+      unit_type,
     } = data
 
     const upc_code: string = orig_upc_code
@@ -87,7 +90,8 @@ function step(props: {
       plu,
       name,
       description_edit,
-      count_on_hand
+      count_on_hand,
+      unit_type,
     }
 
     // WS_PRICE
@@ -160,8 +164,8 @@ export default function parseProductUpdatesCSV(
         step({
           row,
           products,
-          problems
-        })
+          problems,
+        }),
     })
   })
 }
