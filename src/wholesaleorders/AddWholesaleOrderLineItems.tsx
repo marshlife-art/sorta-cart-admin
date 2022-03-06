@@ -1,13 +1,30 @@
 import React, { useState, useEffect, useCallback, createRef } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import { Menu, MenuItem } from '@material-ui/core'
 import Divider from '@material-ui/core/Divider'
 import MaterialTable from 'material-table'
 import Link from '@material-ui/core/Link'
 
-import { LineItem } from '../types/Order'
-import { API_HOST } from '../constants'
+import { OrderStatus } from '../types/Order'
+import { useAllWholesaleOrdersService } from './useWholesaleOrderService'
+import { SupaOrderLineItem as LineItem } from '../types/SupaTypes'
+import {
+  insertWholesaleOrder,
+  updateOrderLineItems
+} from '../services/mutations'
+import { wholesaleOrdersDataTableFetcher } from '../services/fetchers'
+
+// function tryParseData(data: any): object {
+//   if (!(data instanceof String) || typeof data !== 'string') {
+//     return data as object
+//   }
+//   try {
+//     return JSON.parse(data)
+//   } catch (e) {
+//     return {}
+//   }
+// }
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -21,9 +38,10 @@ interface AddWholesaleOrderLineItemsProps {
   setReloadOrders: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-function AddWholesaleOrderLineItems(
-  props: AddWholesaleOrderLineItemsProps & RouteComponentProps
+export default function AddWholesaleOrderLineItems(
+  props: AddWholesaleOrderLineItemsProps
 ) {
+  const navigate = useNavigate()
   const classes = useStyles()
   let tableRef = createRef<any>()
 
@@ -33,7 +51,7 @@ function AddWholesaleOrderLineItems(
     setNeedsRefresh(false)
   }, [tableRef, setNeedsRefresh])
 
-  const [selectedLineItems, setSelectedLineItems] = useState<string[]>()
+  const [selectedLineItems, setSelectedLineItems] = useState<number[]>()
 
   const addAction = {
     tooltip: 'ADD LINE ITEMS TO ORDER',
@@ -45,10 +63,18 @@ function AddWholesaleOrderLineItems(
       handleWholesaleOrderMenuOpen(event)
       if (Array.isArray(data)) {
         // ain't nobody (tsc) tell me nothin
-        setSelectedLineItems(data.map((li) => li.id) as string[])
+        setSelectedLineItems(data.map((li) => li.id) as number[])
       }
     }
   }
+
+  const [reloadOrders, setReloadOrders] = useState(true)
+  const allWholesaleOrders = useAllWholesaleOrdersService(
+    null as unknown as OrderStatus,
+    () => {},
+    reloadOrders,
+    setReloadOrders
+  )
 
   useEffect(() => {
     if (needsRefresh) {
@@ -56,37 +82,27 @@ function AddWholesaleOrderLineItems(
     }
   }, [needsRefresh, refreshTable])
 
-  const [wholesaleorderLookup, setWholesaleOrderLookup] = useState<
-    Array<{ id: string; name: string }>
-  >()
+  const [wholesaleorderLookup, setWholesaleOrderLookup] =
+    useState<Array<{ id: string; name: string }>>()
+
   useEffect(() => {
-    fetch(`${API_HOST}/wholesaleorders`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ status: ['new', 'needs_review'] })
-    })
-      .then((response) => response.json())
-      .then((result) =>
-        setWholesaleOrderLookup(
-          result.data.map(
-            (order: { id: string; vendor: string; createdAt: string }) => ({
-              id: order.id,
-              name: `${order.vendor} ${new Date(
-                order.createdAt
-              ).toLocaleDateString()}`
-            })
+    if (allWholesaleOrders.status === 'loaded') {
+      setWholesaleOrderLookup(
+        allWholesaleOrders.payload
+          .filter(
+            (wo) => wo.status && ['new', 'needs_review'].includes(wo.status)
           )
-        )
+          .map((order) => ({
+            id: `${order.id}`,
+            name: `${order.vendor} ${new Date(
+              order.createdAt || ''
+            ).toLocaleDateString()}`
+          }))
       )
-      .catch(console.warn)
-  }, [])
-  const [
-    wholesaleorderMenuAnchorEl,
-    setWholesaleOrderMenuAnchorEl
-  ] = React.useState<null | HTMLElement>(null)
+    }
+  }, [allWholesaleOrders])
+  const [wholesaleorderMenuAnchorEl, setWholesaleOrderMenuAnchorEl] =
+    React.useState<null | HTMLElement>(null)
 
   const handleWholesaleOrderMenuOpen = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -99,25 +115,42 @@ function AddWholesaleOrderLineItems(
     setWholesaleOrderMenuAnchorEl(null)
   }
 
-  const handleWholesaleOrderSelect = (id: string) => {
-    fetch(`${API_HOST}/wholesaleorder/addlineitems`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ id, selectedLineItems })
-    })
-      .then((response) => response.json())
-      .then((result) => {
-        // console.log('update line items result:', result)
+  const handleWholesaleOrderSelect = async (id: string) => {
+    if (!selectedLineItems?.length) {
+      return
+    }
+
+    let WholesaleOrderId: number | undefined
+    if (id === undefined) {
+      const { data, error } = await insertWholesaleOrder({
+        vendor: 'New Wholesale Order',
+        status: 'new',
+        payment_status: 'balance_due',
+        shipment_status: 'backorder'
       })
-      .catch(console.warn)
-      .finally(() => {
-        handleWholesaleOrderMenuClose()
-        setNeedsRefresh(true)
-        props.setReloadOrders(true)
-      })
+
+      if (error || !data) {
+        return
+      }
+      WholesaleOrderId = data.id
+    } else {
+      WholesaleOrderId = Number(id)
+    }
+
+    const { error } = await updateOrderLineItems(
+      { WholesaleOrderId },
+      selectedLineItems?.map((id) => Number(id))
+    )
+
+    if (error) {
+      console.warn(
+        '[AddWholesaleOrderLineItems] handleWholesaleOrderSelect() got error response:',
+        error
+      )
+    }
+    handleWholesaleOrderMenuClose()
+    setNeedsRefresh(true)
+    props.setReloadOrders(true)
   }
 
   return (
@@ -142,7 +175,7 @@ function AddWholesaleOrderLineItems(
                 href={`/orders/edit/${row.OrderId}`}
                 onClick={(e: any) => {
                   e.preventDefault()
-                  props.history.push(`/orders/edit/${row.OrderId}`)
+                  navigate(`/orders/edit/${row.OrderId}`)
                 }}
               >
                 Order #{row.OrderId}
@@ -173,24 +206,31 @@ function AddWholesaleOrderLineItems(
             hidden: true
           }
         ]}
-        data={(query) =>
-          new Promise((resolve, reject) => {
-            fetch(`${API_HOST}/wholesaleorders/lineitems`, {
-              method: 'post',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              credentials: 'include',
-              body: JSON.stringify(query)
-            })
-              .then((response) => response.json())
-              .then((result) => {
-                resolve(result)
+        data={(q) =>
+          new Promise(async (resolve, reject) => {
+            const {
+              data: orderLineItems,
+              error,
+              count
+            } = await wholesaleOrdersDataTableFetcher(q)
+
+            // whee, so need to JSON.parse each OrderLineItem .data field
+            // ughhhhh i guess?!?! fuck tsc :/
+
+            if (!orderLineItems || error) {
+              resolve({ data: [], page: 0, totalCount: 0 })
+            } else {
+              // const data: LineItem[] | null = orderLineItems.map(({ data, ...rest }) => ({
+              //   ...rest,
+              //   data: tryParseData(data) as SupaOrderLineItemData
+              // }))
+
+              resolve({
+                data: orderLineItems,
+                page: q.page,
+                totalCount: count || 0
               })
-              .catch((err) => {
-                console.warn('onoz, caught err:', err)
-                return resolve({ data: [], page: 0, totalCount: 0 })
-              })
+            }
           })
         }
         title="Line Items"
@@ -234,5 +274,3 @@ function AddWholesaleOrderLineItems(
     </div>
   )
 }
-
-export default withRouter(AddWholesaleOrderLineItems)

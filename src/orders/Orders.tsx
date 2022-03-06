@@ -1,16 +1,18 @@
-import React, { useState, useEffect, createRef } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
+import React, { useState, useEffect, createRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import MaterialTable, { Action } from 'material-table'
-import { Order } from '../types/Order'
 import OrderDetailPanel from './OrderDetailPanel'
 import {
-  API_HOST,
   ORDER_STATUSES,
   PAYMENT_STATUSES,
   SHIPMENT_STATUSES
 } from '../constants'
 import { formatRelative } from 'date-fns'
+import { getStatusAction, getShipmentStatusAction } from './StatusMenu'
+import printOrders from '../lib/printOrder'
+import { ordersDataTableFetcher } from '../services/fetchers'
+import { SuperOrderAndAssoc as Order } from '../types/SupaTypes'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -22,9 +24,22 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 )
 
-function Orders(props: RouteComponentProps) {
+export default function Orders() {
+  const navigate = useNavigate()
   const classes = useStyles()
-  let tableRef = createRef<any>()
+  const tableRef = createRef<any>()
+
+  const [needsRefresh, setNeedsRefresh] = useState(false)
+  const refreshTable = useCallback(() => {
+    tableRef.current && tableRef.current.onQueryChange()
+    setNeedsRefresh(false)
+  }, [tableRef, setNeedsRefresh])
+
+  useEffect(() => {
+    if (needsRefresh) {
+      refreshTable()
+    }
+  }, [needsRefresh, refreshTable])
 
   const [searchExpanded, setSearchExpanded] = useState(false)
   const [isSelecting, setIsSelecting] = useState(false)
@@ -40,38 +55,25 @@ function Orders(props: RouteComponentProps) {
     icon: 'add',
     tooltip: 'NEW ORDER',
     isFreeAction: true,
-    onClick: () => props.history.push('/orders/create')
+    onClick: () => navigate('/orders/create')
   }
 
   const printAction = {
     tooltip: 'PRINT',
     icon: 'print',
-    onClick: (e: any, data: Order[]) => {
-      const orderIds = data.map((order) => order.id)
+    onClick: async (e: any, data: Order[]) => {
+      const orderIds = data.map((order) => parseInt(`${order.id}`))
 
-      fetch(`${API_HOST}/orders/print`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ orderIds })
-      })
-        .then((response) => response.text())
-        .then((result) => {
-          try {
-            // eslint-disable-next-line
-            const wOpen = window.open('about:blank')
-            if (wOpen) {
-              wOpen.document.body.innerHTML += result
-            }
-          } catch (e) {
-            console.warn('caught error doing this razzle dazze shit e:', e)
-          }
-        })
-        .catch((err) => {
-          console.warn(err)
-        })
+      try {
+        const ordersHTML = await printOrders(orderIds)
+        // eslint-disable-next-line
+        const wOpen = window.open('about:blank')
+        if (wOpen) {
+          wOpen.document.body.innerHTML += ordersHTML
+        }
+      } catch (e) {
+        console.warn('caught error doing this razzle dazze shit e:', e)
+      }
     }
   }
 
@@ -79,17 +81,9 @@ function Orders(props: RouteComponentProps) {
     tooltip: 'EDIT',
     icon: 'edit',
     onClick: (e: any, data: Order[]) => {
-      data[0] && data[0].id && props.history.push(`/orders/edit/${data[0].id}`)
+      data[0] && data[0].id && navigate(`/orders/edit/${data[0].id}`)
     }
   }
-
-  // const archiveAction = {
-  //   tooltip: 'ARCHIVE',
-  //   icon: 'archive',
-  //   onClick: (e: any, data: Order[]) => {
-  //     console.log('archive these muthafuckaz')
-  //   }
-  // }
 
   const [actions, setActions] = useState<Action<any>[]>([
     searchAction,
@@ -183,26 +177,15 @@ function Orders(props: RouteComponentProps) {
           },
           { title: 'history', field: 'history', type: 'string', hidden: true }
         ]}
-        data={(query) =>
-          new Promise((resolve, reject) => {
-            // console.log('query:', query)
-            fetch(`${API_HOST}/orders`, {
-              method: 'post',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              credentials: 'include',
-              body: JSON.stringify(query)
-            })
-              .then((response) => response.json())
-              .then((result) => {
-                // console.log('result', result)
-                resolve(result)
-              })
-              .catch((err) => {
-                console.warn(err)
-                return resolve({ data: [], page: 0, totalCount: 0 })
-              })
+        data={(q) =>
+          new Promise(async (resolve, reject) => {
+            const { data, error, count } = await ordersDataTableFetcher(q)
+
+            if (!data || error) {
+              resolve({ data: [], page: 0, totalCount: 0 })
+            } else {
+              resolve({ data, page: q.page, totalCount: count || 0 })
+            }
           })
         }
         detailPanel={(order) => <OrderDetailPanel order={order} />}
@@ -229,9 +212,18 @@ function Orders(props: RouteComponentProps) {
           }
           setIsSelecting(true)
           if (data.length === 1) {
-            setActions([printAction, editAction])
+            setActions([
+              getStatusAction(setNeedsRefresh),
+              getShipmentStatusAction(setNeedsRefresh),
+              printAction,
+              editAction
+            ])
           } else {
-            setActions([printAction])
+            setActions([
+              getStatusAction(setNeedsRefresh),
+              getShipmentStatusAction(setNeedsRefresh),
+              printAction
+            ])
           }
         }}
         actions={actions}
@@ -239,5 +231,3 @@ function Orders(props: RouteComponentProps) {
     </div>
   )
 }
-
-export default withRouter(Orders)

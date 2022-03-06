@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react'
-// import Link from '@material-ui/core/Link'
+import React from 'react'
 import Button from '@material-ui/core/Button'
 import { makeStyles } from '@material-ui/core/styles'
 import Table from '@material-ui/core/Table'
@@ -8,11 +7,11 @@ import TableCell from '@material-ui/core/TableCell'
 import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 import Title from './Title'
-import { RouteComponentProps, withRouter } from 'react-router-dom'
-
-import { API_HOST } from '../constants'
-import { Order } from '../types/Order'
 import { formatDistance } from 'date-fns/esm'
+
+import { useNavigate } from 'react-router-dom'
+import { useOrdersDashboard } from '../services/hooks/orders'
+import { SuperOrderAndAssoc as Order } from '../types/SupaTypes'
 
 interface OrderData {
   data: Order[]
@@ -32,30 +31,14 @@ const useStyles = makeStyles((theme) => ({
   }
 }))
 
-function Orders(props: RouteComponentProps) {
+export default function Orders() {
+  const navigate = useNavigate()
   const classes = useStyles()
 
-  const [orders, setOrders] = useState<OrderData>({
-    data: [],
-    page: 0,
-    totalCount: 0
-  })
+  const { orders, isError, isLoading } = useOrdersDashboard()
 
-  useEffect(() => {
-    fetch(`${API_HOST}/orders/recent`, {
-      method: 'get',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include'
-    })
-      .then((response) => response.json())
-      .then(setOrders)
-      .catch((err) => {
-        console.warn(err)
-        return { data: [], page: 0, totalCount: 0 }
-      })
-  }, [])
+  if (isError) return <div>failed to load</div>
+  if (isLoading) return <div>loading...</div>
 
   return (
     <React.Fragment>
@@ -73,11 +56,11 @@ function Orders(props: RouteComponentProps) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {orders.data.map((order) => (
+          {orders?.data?.map((order) => (
             <TableRow
               key={order.id}
               className={classes.rowHover}
-              onClick={() => props.history.push(`/orders/edit/${order.id}`)}
+              onClick={() => navigate(`/orders/edit/${order.id}`)}
             >
               <TableCell
                 title={
@@ -104,7 +87,7 @@ function Orders(props: RouteComponentProps) {
           variant="contained"
           color="primary"
           onClick={(event: any) => {
-            props.history.push('/orders')
+            navigate('/orders')
           }}
         >
           ALL ORDERS
@@ -113,5 +96,3 @@ function Orders(props: RouteComponentProps) {
     </React.Fragment>
   )
 }
-
-export default withRouter(Orders)

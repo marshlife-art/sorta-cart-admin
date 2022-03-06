@@ -1,9 +1,10 @@
 import { OrderStatus, PaymentStatus, ShipmentStatus } from './types/Order'
+import { SquareStatus } from './types/WholesaleOrder'
 
 export const API_HOST =
   process.env.NODE_ENV === 'production'
-    ? 'https://api.marshcoop.org'
-    : 'https://api.marsh.dev'
+    ? 'https://sorta-cart.vercel.app'
+    : 'http://localhost:3000'
 
 export const TAX_RATE = 0.06391
 export const TAX_RATE_STRING = `${(TAX_RATE * 100).toFixed(3)}%`
@@ -35,6 +36,13 @@ export const SHIPMENT_STATUSES: OrderShipmentStatusLookup = {
   shipped: 'shipped',
   partial: 'partial',
   canceled: 'canceled'
+}
+
+type SquareStatusLookup = { [key in SquareStatus]: string }
+export const SQUARE_STATUSES: SquareStatusLookup = {
+  new: 'new',
+  ready_to_import: 'ready to import',
+  complete: 'complete'
 }
 
 export const APP_VERSION = `v${

@@ -1,9 +1,16 @@
 import React, { useState, useEffect, useCallback, createRef } from 'react'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
-import MaterialTable from 'material-table'
+import MaterialTable, { Query } from 'material-table'
 
-import { Product } from '../types/Product'
-import { API_HOST } from '../constants'
+import { SupaProduct as Product } from '../types/SupaTypes'
+import { getNoBackorderAction, getFeaturedAction } from './TableActionMenu'
+import {
+  distinctProductVendors,
+  productsFetcher,
+  distinctProductCategories,
+  distinctProductSubCategories
+} from '../services/fetchers'
+import { deleteProducts } from '../services/mutations'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -18,7 +25,6 @@ const useStyles = makeStyles((theme: Theme) =>
 function Products() {
   const classes = useStyles()
   let tableRef = createRef<any>()
-
   // ugh, this is needed because tableRef.current is always null inside the deleteAction onClick fn :/
   const [needsRefresh, setNeedsRefresh] = useState(false)
   const refreshTable = useCallback(() => {
@@ -29,7 +35,7 @@ function Products() {
   const deleteAction = {
     tooltip: 'destroy all selected products',
     icon: 'delete',
-    onClick: (e: any, data: Product | Product[]) => {
+    onClick: async (e: any, data: Product | Product[]) => {
       const ids = Array.isArray(data) ? data.map((p) => p.id) : [data.id]
       if (ids.length === 0) {
         return
@@ -39,16 +45,12 @@ function Products() {
           `are sure you want to destroy these ${ids.length} products?`
         )
       ) {
-        fetch(`${API_HOST}/products/destroy`, {
-          method: 'post',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({ ids })
-        })
-          .catch((err) => console.warn('destroy products caught err:', err))
-          .finally(() => setNeedsRefresh(true))
+        const { error } = await deleteProducts(ids)
+
+        if (error) {
+          console.warn('destroy products caught err:', error)
+        }
+        setNeedsRefresh(true)
       }
     }
   }
@@ -56,26 +58,68 @@ function Products() {
   useEffect(() => {
     if (needsRefresh) {
       refreshTable()
+      setSearchExpanded(true)
     }
   }, [needsRefresh, refreshTable])
 
+  const [searchExpanded, setSearchExpanded] = useState(true)
+
   const [categoryLookup, setCategoryLookup] = useState<object>(() => {
-    fetch(`${API_HOST}/categories`)
-      .then((response) => response.json())
-      .then((result) => setCategoryLookup(result))
+    distinctProductCategories().then((result) => setCategoryLookup(result))
   })
 
   const [subCategoryLookup, setSubCategoryLookup] = useState<object>(() => {
-    fetch(`${API_HOST}/sub_categories`)
-      .then((response) => response.json())
-      .then((result) => setSubCategoryLookup(result))
+    distinctProductSubCategories('').then((result) =>
+      setSubCategoryLookup(result)
+    )
   })
 
   const [vendorLookup, setVendorLookup] = useState<object>(() => {
-    fetch(`${API_HOST}/products/vendors`)
-      .then((response) => response.json())
-      .then((result) => setVendorLookup(result))
+    distinctProductVendors().then((result) => setVendorLookup(result))
   })
+
+  const [catDefaultFilter, setCatDefaultFilter] = useState<
+    '' | string[] | undefined
+  >()
+  const [subCatDefaultFilter, setSubCatDefaultFilter] = useState<
+    '' | string[] | undefined
+  >()
+
+  async function setSelectedCatsFromQuery(query: Query<any>) {
+    try {
+      const categories = query.filters
+        .filter((f) => f.column.field === 'category')
+        .reduce(
+          (terms: string[], t: { value: string[] }) => [...terms, ...t.value],
+          []
+        )
+      const subCatz = query.filters
+        .filter((f) => f.column.field === 'sub_category')
+        .reduce(
+          (terms: string[], t: { value: string[] }) => [...terms, ...t.value],
+          []
+        )
+      if (categories.length === 0) {
+        return
+      }
+
+      let newSubCatz = {}
+
+      for await (const cat of categories) {
+        const result = await distinctProductSubCategories(cat)
+        newSubCatz = {
+          ...newSubCatz,
+          ...result
+        }
+      }
+
+      setCatDefaultFilter(categories)
+      setSubCategoryLookup(newSubCatz)
+      setSubCatDefaultFilter(subCatz)
+    } catch (e) {
+      console.warn('onoz caught err:', e)
+    }
+  }
 
   return (
     <div className={classes.root}>
@@ -87,14 +131,16 @@ function Products() {
             field: 'category',
             type: 'string',
             lookup: categoryLookup,
-            filterPlaceholder: 'filter'
+            filterPlaceholder: 'filter',
+            defaultFilter: catDefaultFilter
           },
           {
             title: 'sub category',
             field: 'sub_category',
             type: 'string',
             lookup: subCategoryLookup,
-            filterPlaceholder: 'filter'
+            filterPlaceholder: 'filter',
+            defaultFilter: subCatDefaultFilter
           },
           {
             title: 'vendor',
@@ -155,47 +201,48 @@ function Products() {
           {
             title: 'price',
             field: 'ws_price',
-            type: 'currency',
-            filtering: false
+            type: 'string',
+            filtering: false,
+            render: (row) => {
+              return `$${row.ws_price} ${
+                row.u_price && row.ws_price !== row.u_price
+                  ? `(${row.u_price} ea)`
+                  : ''
+              }`
+            }
           },
           {
-            title: '',
-            field: 'u_price',
-            type: 'currency',
-            filtering: false
+            title: 'count',
+            field: 'count_on_hand',
+            type: 'boolean',
+            filtering: true,
+            render: (row) => row.count_on_hand
           },
-          // {
-          //   title: 'count',
-          //   field: 'count_on_hand',
-          //   type: 'numeric',
-          //   filtering: false
-          // },
-          // {
-          //   title: 'no_backorder',
-          //   field: 'no_backorder',
-          //   type: 'boolean'
-          // },
+          {
+            title: 'no backorder',
+            field: 'no_backorder',
+            type: 'boolean'
+          },
+          {
+            title: 'featured',
+            field: 'featured',
+            type: 'boolean'
+          },
           { title: 'upc', field: 'upc_code', type: 'string', hidden: true },
           // { title: 'unf', field: 'unf', type: 'string' },
           { title: 'id', field: 'id', type: 'string', hidden: true }
         ]}
-        data={(query) =>
-          new Promise((resolve, reject) => {
-            fetch(`${API_HOST}/products`, {
-              method: 'post',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(query)
-            })
-              .then((response) => response.json())
-              .then((result) => {
-                resolve(result)
-              })
-              .catch((err) => {
-                console.warn('onoz, caught err:', err)
-                return resolve({ data: [], page: 0, totalCount: 0 })
-              })
+        data={(q) =>
+          new Promise(async (resolve, reject) => {
+            setSelectedCatsFromQuery(q)
+
+            const { data, error, count } = await productsFetcher(q)
+
+            if (!data || error) {
+              resolve({ data: [], page: 0, totalCount: 0 })
+            } else {
+              resolve({ data, page: q.page, totalCount: count || 0 })
+            }
           })
         }
         title="Products"
@@ -206,11 +253,19 @@ function Products() {
           pageSizeOptions: [50, 100, 500],
           debounceInterval: 750,
           filtering: true,
-          search: true,
+          search: searchExpanded,
           emptyRowsWhenPaging: false,
           selection: true
         }}
-        actions={[deleteAction]}
+        onSelectionChange={(data: Product[], rowData?: Product | undefined) => {
+          searchExpanded && setSearchExpanded(false)
+          setSearchExpanded(data.length === 0)
+        }}
+        actions={[
+          getFeaturedAction(setNeedsRefresh),
+          getNoBackorderAction(setNeedsRefresh),
+          deleteAction
+        ]}
       />
     </div>
   )

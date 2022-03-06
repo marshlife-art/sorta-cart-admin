@@ -1,20 +1,37 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import useSWR from 'swr'
 
 import { Service } from '../types/Service'
-import { WholesaleOrder } from '../types/WholesaleOrder'
-import { API_HOST } from '../constants'
+import { SupaWholesaleOrder as WholesaleOrder } from '../types/SupaTypes'
 import { OrderStatus } from '../types/Order'
 
+import {
+  wholesaleOrderFetcher,
+  wholesaleOrdersFetcher
+} from '../services/fetchers'
+import { upsertWholesaleOrder } from '../services/mutations'
+
 const blankWholesaleOrder: WholesaleOrder = {
-  id: '',
+  id: undefined,
+  api_key: undefined,
   vendor: '',
   notes: '',
   status: 'new',
   payment_status: 'balance_due',
   shipment_status: 'backorder',
   createdAt: '',
-  updatedAt: ''
+  updatedAt: '',
+  OrderLineItems: []
 }
+
+// hmm
+// function tryParseData(data: string) {
+//   try {
+//     return JSON.parse(data)
+//   } catch (e) {
+//     return data
+//   }
+// }
 
 const useWholesaleOrderService = (
   id: string | undefined,
@@ -26,36 +43,52 @@ const useWholesaleOrderService = (
     status: 'loading'
   })
 
-  useEffect(() => {
+  useSWR({ key: 'get_wholesale_order', id, reload }, async ({ id, reload }) => {
     if (!id) {
       setLoading(false)
       setReload(false)
       return
     }
 
-    if (id === 'new') {
+    if (id === undefined) {
       setResult({ status: 'loaded', payload: blankWholesaleOrder })
       setLoading(false)
       setReload(false)
       return
     }
 
-    fetch(`${API_HOST}/wholesaleorder/${id}`, {
-      credentials: 'include',
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        setResult({ status: 'loaded', payload: response as WholesaleOrder })
+    const { data, error } = await wholesaleOrderFetcher(Number(id))
+
+    if (error || !data) {
+      console.warn('useWholesaleOrderService got error:', error)
+      // #TODO: handle errorz
+      // setResult({ error })
+      setResult({
+        status: 'error',
+        error: new Error(error?.message || 'unknown error')
       })
-      .catch((error) => {
-        console.warn('useWholesaleOrderService fetch caught err:', error)
-        setResult({ ...error })
+    } else {
+      setResult({
+        status: 'loaded',
+        payload: data
       })
-      .finally(() => {
-        setLoading(false)
-        setReload(false)
-      })
-  }, [id, setLoading, reload, setReload])
+    }
+
+    // whee, so need to JSON.parse each OrderLineItem .data field
+    // const { OrderLineItems, ...rest } = data
+    // const wholesaleOrder = {
+    //   ...rest,
+    //   OrderLineItems: OrderLineItems.map(
+    //     ({ data, ...rest }: { data: string }) => ({
+    //       ...rest,
+    //       data: tryParseData(data)
+    //     })
+    //   )
+    // }
+
+    setReload(false)
+    setLoading(false)
+  })
 
   return result
 }
@@ -70,39 +103,34 @@ const useAllWholesaleOrdersService = (
     status: 'loading'
   })
 
-  useEffect(() => {
-    reloadWholesaleOrders &&
-      fetch(`${API_HOST}/wholesaleorders`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          status
+  useSWR(
+    { key: 'get_wholesale_orders', reloadWholesaleOrders, status },
+    async ({ reloadWholesaleOrders, status }) => {
+      if (!reloadWholesaleOrders) {
+        return
+      }
+
+      const { data, error } = await wholesaleOrdersFetcher(status)
+
+      if (error || !data) {
+        console.warn('useWholesaleOrderService got error:', error)
+        // #TODO: handle errorz
+        // setResult({ error })
+        setResult({
+          status: 'loaded',
+          payload: []
         })
-      })
-        .then((response) => response.json())
-        .then((response) => {
-          setResult({
-            status: 'loaded',
-            payload: response.data as WholesaleOrder[]
-          })
+      } else {
+        setResult({
+          status: 'loaded',
+          payload: data
         })
-        .catch((error) => {
-          console.warn('useWholesaleOrderService fetch caught err:', error)
-          setResult({ ...error })
-        })
-        .finally(() => {
-          setReloadWholesaleOrders(false)
-          setLoading(false)
-        })
-  }, [
-    reloadWholesaleOrders,
-    setReloadWholesaleOrders,
-    status,
-    setLoading,
-  ])
+      }
+
+      setReloadWholesaleOrders(false)
+      setLoading(false)
+    }
+  )
 
   return result
 }
@@ -118,43 +146,33 @@ const useWholesaleOrderSaveService = (
     status: 'loading'
   })
 
-  useEffect(() => {
-    if (!doSave || !wholesaleOrder || !wholesaleOrder.id) {
+  const createOrUpdateWholesaleOrder = useCallback(async () => {
+    if (!doSave || !wholesaleOrder) {
       setDoSave(false)
       return
     }
 
-    const path =
-      wholesaleOrder.id === 'new'
-        ? '/wholesaleorder/create'
-        : '/wholesaleorder/upsert'
-    fetch(`${API_HOST}${path}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify(wholesaleOrder)
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        setResult({
-          status: 'loaded',
-          payload: response.order as WholesaleOrder
-        })
-        setSnackMsg(response.msg)
-        setSnackOpen(true)
+    const { data, error } = await upsertWholesaleOrder(wholesaleOrder)
+
+    if (error) {
+      setSnackMsg(error.message)
+      setSnackOpen(true)
+      setResult({ status: 'error', error: new Error(error.message) })
+    } else {
+      setSnackMsg('Saved!')
+      setSnackOpen(true)
+      setResult({
+        status: 'loaded',
+        payload: data as WholesaleOrder
       })
-      .catch((error) => {
-        console.warn('useWholesaleOrderSaveService fetch caught err:', error)
-        setResult({ ...error })
-        setSnackMsg(`o noz! ${error}`)
-        setSnackOpen(true)
-      })
-      .finally(() => {
-        setDoSave(false)
-      })
+    }
+
+    setDoSave(false)
   }, [wholesaleOrder, doSave, setDoSave, setSnackMsg, setSnackOpen])
+
+  useEffect(() => {
+    createOrUpdateWholesaleOrder()
+  }, [doSave])
 
   return result
 }

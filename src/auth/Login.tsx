@@ -1,23 +1,14 @@
+import { Button, Container, TextField } from '@material-ui/core'
 import React, { useEffect, useState } from 'react'
-import { connect } from 'react-redux'
-import { ThunkDispatch } from 'redux-thunk'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
-import { Container, Button, TextField } from '@material-ui/core'
+import { useDispatch, useSelector } from 'react-redux'
+
 import Box from '@material-ui/core/Box'
-import Typography from '@material-ui/core/Typography'
-import { makeStyles } from '@material-ui/core/styles'
-
 import { RootState } from '../redux'
+import Typography from '@material-ui/core/Typography'
+import { UserService } from '../redux/session/reducers'
 import { login } from '../redux/session/actions'
-import { UserServiceProps } from '../redux/session/reducers'
-
-interface OwnProps {}
-
-interface DispatchProps {
-  login: (email: string, password: string) => void
-}
-
-type Props = UserServiceProps & OwnProps & DispatchProps & RouteComponentProps
+import { makeStyles } from '@material-ui/core/styles'
+import { useNavigate } from 'react-router-dom'
 
 const useStyles = makeStyles((theme) => ({
   form: {
@@ -38,28 +29,28 @@ const useStyles = makeStyles((theme) => ({
   }
 }))
 
-function Login(props: Props) {
+export default function Login() {
+  const navigate = useNavigate()
+  const userService = useSelector<RootState, UserService>(
+    (state) => state.session.userService
+  )
+  const dispatch = useDispatch()
+
   const doLogin = (event: React.FormEvent) => {
     event.preventDefault()
     setError('')
     const target = event.currentTarget as HTMLFormElement
     const emailEl = target.elements.namedItem('email') as HTMLInputElement
-    const passwordEl = target.elements.namedItem('password') as HTMLInputElement
 
-    if (
-      emailEl &&
-      emailEl.value.length > 0 &&
-      passwordEl &&
-      passwordEl.value.length > 0
-    ) {
-      props.login(emailEl.value, passwordEl.value)
+    if (emailEl && emailEl.value.length > 0) {
+      dispatch(login(emailEl.value, password))
     }
   }
 
-  const { userService, history } = props
   const classes = useStyles()
   const [error, setError] = useState('')
-
+  const [password, setPassword] = useState('')
+  
   // when userService changes, figure out if the page should redirect if a user is already logged in.
   useEffect(() => {
     if (
@@ -68,19 +59,19 @@ function Login(props: Props) {
       userService.user.role &&
       userService.user.role === 'admin'
     ) {
-      history.push('/')
+      navigate('/')
     }
     // else if (userService.user && !userService.isFetching) {
     //   setError('o noz! error! ...hmm, not an admin?')
     // }
-  }, [userService, history])
+  }, [userService])
 
   return (
     <Container maxWidth="sm">
       <form onSubmit={doLogin} className={classes.form}>
         <div className={classes.title}>
           <Typography variant="h2" display="block">
-            MARSH COOP
+            SORTA-CART
           </Typography>
           <Typography variant="overline" display="inline">
             admin
@@ -98,8 +89,9 @@ function Login(props: Props) {
           label="password"
           name="password"
           type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           fullWidth
-          required
         />
 
         <div>
@@ -108,21 +100,28 @@ function Login(props: Props) {
             fullWidth
             variant="contained"
             color="primary"
-            disabled={props.userService.isFetching}
+            disabled={userService.isFetching}
             className={classes.submit}
           >
-            Login
+            {!password ? 'Email Magic Link' : 'Login'}
           </Button>
         </div>
 
+        <Box>
+          {userService.message && (
+            <Typography variant="body1" display="block" gutterBottom>
+              {userService.message.message}
+            </Typography>
+          )}
+        </Box>
         <Box color="error.main">
-          {props.userService.error && (
+          {userService.error && (
             <>
               <Typography variant="overline" display="block">
                 onoz! an error!
               </Typography>
               <Typography variant="body1" display="block" gutterBottom>
-                {props.userService.error.reason}
+                {userService.error.reason}
               </Typography>
             </>
           )}
@@ -141,23 +140,3 @@ function Login(props: Props) {
     </Container>
   )
 }
-
-const mapStateToProps = (
-  states: RootState,
-  ownProps: OwnProps
-): UserServiceProps => {
-  return {
-    userService: states.session.userService
-  }
-}
-
-const mapDispatchToProps = (
-  dispatch: ThunkDispatch<{}, {}, any>,
-  ownProps: OwnProps
-): DispatchProps => {
-  return {
-    login: (email, password) => dispatch(login(email, password))
-  }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(withRouter(Login))

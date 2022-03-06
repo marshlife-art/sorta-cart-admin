@@ -1,71 +1,39 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import TextField from '@material-ui/core/TextField'
 import Autocomplete from '@material-ui/lab/Autocomplete'
 import CircularProgress from '@material-ui/core/CircularProgress'
 
-import { Product } from '../types/Product'
-import { API_HOST } from '../constants'
-
-interface ProductResponse {
-  data: Product[]
-}
-
-interface ProductOption {
-  name: string
-  product: Product
-}
+import { useProductsAutocomplete } from '../services/hooks/products'
+import { ProductOption } from '../services/fetchers/types'
 
 interface LineItemAutocompleteProps {
-  onItemSelected: (value: { name: string; product: Product }) => void
+  onItemSelected: (value: ProductOption) => void
 }
 
 export default function LineItemAutocomplete(props: LineItemAutocompleteProps) {
-  const [open, setOpen] = React.useState(false)
-  const [options, setOptions] = React.useState<ProductOption[]>([])
-  const [q, setQ] = React.useState('')
-  const [loading, setLoading] = React.useState(open && options.length === 0)
+  const [open, setOpen] = useState(false)
+  const [options, setOptions] = useState<ProductOption[]>([])
+  const [q, setQ] = useState('')
+  const [loading, setLoading] = useState(true)
 
-  React.useEffect(() => {
-    let active = true
+  const { products, isLoading, isError } = useProductsAutocomplete(q)
 
-    if (!loading) {
-      return undefined
+  useEffect(() => {
+    if (!products) {
+      return
     }
+    setOptions(products)
+    setLoading(false)
+  }, [products])
 
-    ;(async () => {
-      const response = await fetch(`${API_HOST}/products`, {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ search: q })
-      })
-
-      const products = (await response.json()) as ProductResponse
-
-      if (active) {
-        setOptions(
-          products.data.map((p) => ({
-            name: `${p.name} ${p.description} ${p.pk} ${p.size} $${
-              p.ws_price
-            } ${p.u_price !== p.ws_price ? `($${p.u_price} EA)` : ''}${
-              isNaN(parseInt(`${p.count_on_hand}`))
-                ? ''
-                : ` ${p.count_on_hand} on hand`
-            }`,
-            product: p
-          }))
-        )
-        setLoading(false)
-      }
-    })()
-
-    return () => {
-      active = false
+  useEffect(() => {
+    if (isError) {
+      setOptions([])
     }
-  }, [loading, q])
+    setLoading(isLoading)
+  }, [isError, isLoading])
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!open) {
       setOptions([])
     }
@@ -108,10 +76,10 @@ export default function LineItemAutocomplete(props: LineItemAutocompleteProps) {
           InputProps={{
             ...params.InputProps,
             endAdornment: (
-              <React.Fragment>
+              <>
                 {loading ? <CircularProgress size={20} /> : null}
                 {params.InputProps.endAdornment}
-              </React.Fragment>
+              </>
             )
           }}
         />

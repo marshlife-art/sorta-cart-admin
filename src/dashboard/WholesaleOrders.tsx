@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react'
-// import Link from '@material-ui/core/Link'
+import React from 'react'
+import { useNavigate } from 'react-router-dom'
+import { formatDistance } from 'date-fns'
 import Button from '@material-ui/core/Button'
 import { makeStyles } from '@material-ui/core/styles'
 import Table from '@material-ui/core/Table'
@@ -7,12 +8,10 @@ import TableBody from '@material-ui/core/TableBody'
 import TableCell from '@material-ui/core/TableCell'
 import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
-import Title from './Title'
-import { RouteComponentProps, withRouter } from 'react-router-dom'
-import { formatDistance } from 'date-fns'
 
-import { API_HOST } from '../constants'
-import { WholesaleOrder } from '../types/WholesaleOrder'
+import Title from './Title'
+import { SupaWholesaleOrder as WholesaleOrder } from '../types/SupaTypes'
+import { useWholesaleOrdersDashboard } from '../services/hooks/wholesaleorders'
 
 interface WholesaleOrderData {
   data: WholesaleOrder[]
@@ -32,31 +31,14 @@ const useStyles = makeStyles((theme) => ({
   }
 }))
 
-function WholesaleOrders(props: RouteComponentProps) {
+export default function WholesaleOrders() {
+  const navigate = useNavigate()
   const classes = useStyles()
 
-  const [orders, setOrders] = useState<WholesaleOrderData>({
-    data: [],
-    page: 0,
-    totalCount: 0
-  })
+  const { wholesaleOrders, isError, isLoading } = useWholesaleOrdersDashboard()
 
-  useEffect(() => {
-    fetch(`${API_HOST}/wholesaleorders`, {
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ pageSize: 10 })
-    })
-      .then((response) => response.json())
-      .then(setOrders)
-      .catch((err) => {
-        console.warn(err)
-        return { data: [], page: 0, totalCount: 0 }
-      })
-  }, [])
+  if (isError) return <div>failed to load</div>
+  if (isLoading) return <div>loading...</div>
 
   return (
     <React.Fragment>
@@ -75,13 +57,11 @@ function WholesaleOrders(props: RouteComponentProps) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {orders.data.map((order) => (
+          {wholesaleOrders?.data?.map((order) => (
             <TableRow
               key={order.id}
               className={classes.rowHover}
-              onClick={() =>
-                props.history.push(`/wholesaleorders/edit/${order.id}`)
-              }
+              onClick={() => navigate(`/wholesaleorders/edit/${order.id}`)}
             >
               <TableCell
                 title={
@@ -109,7 +89,7 @@ function WholesaleOrders(props: RouteComponentProps) {
           variant="contained"
           color="primary"
           onClick={(event: any) => {
-            props.history.push('/wholesaleorders')
+            navigate('/wholesaleorders')
           }}
         >
           SEE MORE
@@ -118,5 +98,3 @@ function WholesaleOrders(props: RouteComponentProps) {
     </React.Fragment>
   )
 }
-
-export default withRouter(WholesaleOrders)

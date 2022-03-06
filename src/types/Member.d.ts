@@ -17,7 +17,3 @@ export interface Member {
   updatedAt?: string
   User?: User
 }
-
-export interface MemberRouterProps {
-  id: string
-}

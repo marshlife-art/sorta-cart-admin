@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { makeStyles, withStyles } from '@material-ui/core/styles'
 import Paper from '@material-ui/core/Paper'
 import Table from '@material-ui/core/Table'
@@ -11,16 +11,15 @@ import MuiExpansionPanel from '@material-ui/core/ExpansionPanel'
 import MuiExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
 import MuiExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails'
 import Typography from '@material-ui/core/Typography'
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import Tooltip from '@material-ui/core/Tooltip'
 import Button from '@material-ui/core/Button'
 import ListSubheader from '@material-ui/core/ListSubheader'
 import List from '@material-ui/core/List'
-import ListItem from '@material-ui/core/ListItem'
+import { Icon } from '@material-ui/core'
 
-import { API_HOST } from '../constants'
-import { LineItem } from '../types/Order'
 import { Member } from '../types/Member'
+import { getStoreCreditReport } from '../lib/storeCredit'
+import { SupaOrderLineItem } from '../types/SupaTypes'
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -97,34 +96,21 @@ const ExpansionPanelDetails = withStyles((theme) => ({
 }))(MuiExpansionPanelDetails)
 
 type StoreCreditRow = Member & {
-  credits: LineItem[]
+  credits: SupaOrderLineItem[]
   credits_sum: number
-  adjustments: LineItem[]
+  adjustments: SupaOrderLineItem[]
   adjustments_sum: number
   store_credit: number
 }
 
-function StoreCredits(props: RouteComponentProps) {
+export default function StoreCredits() {
+  const navigate = useNavigate()
   const classes = useStyles()
   // const tableRef = createRef<any>()
 
   const [members, setMembers] = useState<StoreCreditRow[]>([])
   useEffect(() => {
-    fetch(`${API_HOST}/admin/store_credit_report`, {
-      method: 'get',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include'
-    })
-      .then((response) => response.json())
-      .then((result) => {
-        setMembers(result)
-      })
-      .catch((err) => {
-        console.warn(err)
-        setMembers([])
-      })
+    getStoreCreditReport().then((result) => setMembers(result))
   }, [])
 
   return (
@@ -140,30 +126,30 @@ function StoreCredits(props: RouteComponentProps) {
       >
         {members.map((member) => (
           <React.Fragment key={member.id}>
-            <ListItem>
-              <div className={classes.row}>
-                <Tooltip title="edit member">
-                  <Button
-                    onClick={() => props.history.push(`/members/${member.id}`)}
-                  >
-                    {member.name}
-                  </Button>
-                </Tooltip>
-                <Typography>{member.registration_email}</Typography>
-                <Typography>$ {member.store_credit.toFixed(2)}</Typography>
-              </div>
-            </ListItem>
             <ExpansionPanel square>
               <ExpansionPanelSummary
-                expandIcon={<ExpandMoreIcon />}
+                expandIcon={<Icon>expand_more</Icon>}
                 aria-controls={`panel${member.id}-content`}
                 id={`panel${member.id}-header`}
               >
-                <Typography>Order Line Items</Typography>
+                <div className={classes.row}>
+                  <Tooltip title="edit member">
+                    <Button onClick={() => navigate(`/members/${member.id}`)}>
+                      {member.name}
+                    </Button>
+                  </Tooltip>
+                  <Typography>{member.registration_email}</Typography>
+                  <Typography>$ {member.store_credit.toFixed(2)}</Typography>
+                </div>
               </ExpansionPanelSummary>
               <ExpansionPanelDetails>
                 <Table>
                   <TableHead>
+                    <TableRow>
+                      <TableCell colSpan={3}>
+                        <Typography>Order Line Items</Typography>
+                      </TableCell>
+                    </TableRow>
                     <TableRow>
                       <TableCell>createdAt</TableCell>
                       <TableCell>order#</TableCell>
@@ -192,7 +178,7 @@ function StoreCredits(props: RouteComponentProps) {
                           <Tooltip title="edit order">
                             <Button
                               onClick={() =>
-                                props.history.push(`/orders/edit/${li.OrderId}`)
+                                navigate(`/orders/edit/${li.OrderId}`)
                               }
                             >
                               #{li.OrderId}
@@ -226,7 +212,7 @@ function StoreCredits(props: RouteComponentProps) {
                           <Tooltip title="edit order">
                             <Button
                               onClick={() =>
-                                props.history.push(`/orders/edit/${li.OrderId}`)
+                                navigate(`/orders/edit/${li.OrderId}`)
                               }
                             >
                               #{li.OrderId}
@@ -247,5 +233,3 @@ function StoreCredits(props: RouteComponentProps) {
     </Paper>
   )
 }
-
-export default withRouter(StoreCredits)

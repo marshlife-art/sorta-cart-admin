@@ -9,7 +9,13 @@ import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 import Link from '@material-ui/core/Link'
 
-import { Order } from '../types/Order'
+import { SuperOrderAndAssoc as Order } from '../types/SupaTypes'
+
+// type Order = SupaOrder & {
+//   OrderLineItems?: SupaOrderLineItem[]
+//   User?: {email: string, role: string},
+//   Member?: SupaMember
+// }
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -239,7 +245,7 @@ export default function OrderDetailPanel(props: { order: Order }) {
             </Typography>
           </div>
         </Grid>
-        {order.User && order.User !== order.Member && (
+        {order.User && order.User !== order.Members && (
           <Grid item xs={4}>
             <div className={classes.gridItem}>
               <Typography
@@ -275,7 +281,7 @@ export default function OrderDetailPanel(props: { order: Order }) {
       </Grid>
       {order.createdAt !== order.updatedAt && (
         <div className={classes.lastUpdated}>
-          <i>Last updated</i> {new Date(order.updatedAt).toLocaleString()}
+          <i>Last updated</i> {new Date(order.updatedAt || '').toLocaleString()}
         </div>
       )}
     </div>

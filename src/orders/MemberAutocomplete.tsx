@@ -1,66 +1,38 @@
 import React, { useState, useEffect } from 'react'
+
 import TextField from '@material-ui/core/TextField'
 import Autocomplete from '@material-ui/lab/Autocomplete'
 import CircularProgress from '@material-ui/core/CircularProgress'
 
-import { Member } from '../types/Member'
-import { API_HOST } from '../constants'
-
-interface MemberResponse {
-  data: Member[]
-}
-
-interface MemberOption {
-  name: string
-  member: Member
-}
+import { useMembersAutocomplete } from '../services/hooks/members'
+import { MemberOption } from '../services/fetchers/types'
 
 interface MemberAutocompleteProps {
-  onItemSelected: (value: { name: string; member: Member }) => void
+  onItemSelected: (value: MemberOption) => void
 }
 
 export default function MemberAutocomplete(props: MemberAutocompleteProps) {
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<MemberOption[]>([])
   const [q, setQ] = useState('')
-  const [loading, setLoading] = useState(open && options.length === 0)
+  const [loading, setLoading] = useState(true)
+
+  const { members, isError, isLoading } = useMembersAutocomplete(q)
 
   useEffect(() => {
-    let active = true
-
-    if (!loading) {
-      return undefined
+    if (!members) {
+      return
     }
+    setOptions(members)
+    setLoading(false)
+  }, [members])
 
-    // this is a little weird
-    ;(async () => {
-      const response = await fetch(`${API_HOST}/members`, {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ search: q })
-      })
-
-      const members = (await response.json()) as MemberResponse
-      if (active) {
-        setOptions(
-          members.data.map((p) => ({
-            name: `${p.name} ${
-              p.User && p.User.email ? p.User.email : p.registration_email
-            }`,
-            member: p
-          }))
-        )
-        setLoading(false)
-      }
-    })()
-
-    return () => {
-      active = false
+  useEffect(() => {
+    if (isError) {
+      setOptions([])
     }
-  }, [loading, q])
+    setLoading(isLoading)
+  }, [isError, isLoading])
 
   useEffect(() => {
     if (!open) {
@@ -106,10 +78,10 @@ export default function MemberAutocomplete(props: MemberAutocompleteProps) {
           InputProps={{
             ...params.InputProps,
             endAdornment: (
-              <React.Fragment>
+              <>
                 {loading ? <CircularProgress size={20} /> : null}
                 {params.InputProps.endAdornment}
-              </React.Fragment>
+              </>
             )
           }}
         />

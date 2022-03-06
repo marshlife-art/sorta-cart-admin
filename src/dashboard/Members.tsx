@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react'
-// import Link from '@material-ui/core/Link'
+import React from 'react'
+import { useNavigate } from 'react-router-dom'
+import { formatDistance } from 'date-fns'
+
 import Button from '@material-ui/core/Button'
 import { makeStyles } from '@material-ui/core/styles'
 import Table from '@material-ui/core/Table'
@@ -7,18 +9,9 @@ import TableBody from '@material-ui/core/TableBody'
 import TableCell from '@material-ui/core/TableCell'
 import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
+
+import { useMembersDashboard } from '../services/hooks/members'
 import Title from './Title'
-import { RouteComponentProps, withRouter } from 'react-router-dom'
-
-import { API_HOST } from '../constants'
-import { Member } from '../types/Member'
-import { formatDistance } from 'date-fns'
-
-interface MemberData {
-  data: Member[]
-  page: number
-  totalCount: number
-}
 
 const useStyles = makeStyles((theme) => ({
   seeMore: {
@@ -32,31 +25,14 @@ const useStyles = makeStyles((theme) => ({
   }
 }))
 
-function Members(props: RouteComponentProps) {
+export default function Members() {
+  const navigate = useNavigate()
   const classes = useStyles()
 
-  const [members, setMembers] = useState<MemberData>({
-    data: [],
-    page: 0,
-    totalCount: 0
-  })
+  const { members, isError, isLoading } = useMembersDashboard()
 
-  useEffect(() => {
-    fetch(`${API_HOST}/members`, {
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ pageSize: 10 })
-    })
-      .then((response) => response.json())
-      .then(setMembers)
-      .catch((err) => {
-        console.warn(err)
-        return { data: [], page: 0, totalCount: 0 }
-      })
-  }, [])
+  if (isError) return <div>failed to load</div>
+  if (isLoading) return <div>loading...</div>
 
   return (
     <React.Fragment>
@@ -71,11 +47,11 @@ function Members(props: RouteComponentProps) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {members.data.map((member) => (
+          {members?.data?.map((member) => (
             <TableRow
               key={member.id}
               className={classes.rowHover}
-              onClick={() => props.history.push(`/members/${member.id}`)}
+              onClick={() => navigate(`/members/${member.id}`)}
             >
               <TableCell
                 title={
@@ -100,7 +76,7 @@ function Members(props: RouteComponentProps) {
           variant="contained"
           color="primary"
           onClick={(event: any) => {
-            props.history.push('/members')
+            navigate('/members')
           }}
         >
           ALL MEMBERS
@@ -109,5 +85,3 @@ function Members(props: RouteComponentProps) {
     </React.Fragment>
   )
 }
-
-export default withRouter(Members)

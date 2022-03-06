@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
-import { connect } from 'react-redux'
+import { useNavigate, useMatch } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 
+import { Icon } from '@material-ui/core'
 import TextField from '@material-ui/core/TextField'
 import Grid from '@material-ui/core/Grid'
 import Button from '@material-ui/core/Button'
@@ -9,12 +10,6 @@ import Snackbar from '@material-ui/core/Snackbar'
 import IconButton from '@material-ui/core/IconButton'
 import Tooltip from '@material-ui/core/Tooltip'
 import Typography from '@material-ui/core/Typography'
-import CloseIcon from '@material-ui/icons/Close'
-import AddIcon from '@material-ui/icons/Add'
-import EmailIcon from '@material-ui/icons/Email'
-import ClearIcon from '@material-ui/icons/Clear'
-import PeopleIcon from '@material-ui/icons/People'
-import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import InputLabel from '@material-ui/core/InputLabel'
 import MenuItem from '@material-ui/core/MenuItem'
 import FormControl from '@material-ui/core/FormControl'
@@ -23,33 +18,38 @@ import Box from '@material-ui/core/Box'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 
 import { RootState } from '../redux'
-import { UserService, UserServiceProps } from '../redux/session/reducers'
+import { UserService } from '../redux/session/reducers'
 import Loading from '../Loading'
 import { useOrderService } from './useOrderService'
-import {
-  Order,
-  OrderRouterProps,
-  OrderStatus,
-  ShipmentStatus,
-  PaymentStatus
-} from '../types/Order'
-import { LineItem } from '../types/Order'
+import { OrderStatus, ShipmentStatus, PaymentStatus } from '../types/Order'
 import OrderLineItems from './OrderLineItems'
 import LineItemAutocomplete from './LineItemAutocomplete'
 import MemberAutocomplete from './MemberAutocomplete'
-import { Product } from '../types/Product'
-import { Member } from '../types/Member'
 import {
-  API_HOST,
   ORDER_STATUSES,
   PAYMENT_STATUSES,
   SHIPMENT_STATUSES,
   TAX_RATE_STRING,
   TAX_RATE
 } from '../constants'
+import { getMemberCreditsAdjustmentsSums } from '../lib/storeCredit'
+import { createOrder, updateOrder } from '../lib/orderService'
+import {
+  SuperOrderAndAssoc,
+  SupaOrderLineItem,
+  SupaProduct as Product
+} from '../types/SupaTypes'
+import { MemberOption } from '../services/fetchers/types'
+
+type Order = Omit<SuperOrderAndAssoc, 'id'> & {
+  id?: number
+}
+// type PartialOrder = Partial<Order>
+type LineItem = SupaOrderLineItem
+type PartialLineItem = Partial<SupaOrderLineItem>
 
 const blankOrder: Order = {
-  id: 'new',
+  id: undefined,
   status: 'new',
   payment_status: 'balance_due',
   shipment_status: 'backorder',
@@ -113,33 +113,31 @@ const useStyles = makeStyles((theme: Theme) =>
 )
 
 export async function fetchStoreCredit(
-  MemberId: string,
+  MemberId: string | number,
   setStoreCredit: React.Dispatch<React.SetStateAction<number>>
 ) {
-  const store_credit = await fetch(`${API_HOST}/admin/store_credit`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include',
-    body: JSON.stringify({ MemberId })
-  })
-    .then((response: any) => response.json())
-    .then((response) =>
-      response && response.store_credit ? response.store_credit : 0
-    )
-    .catch((err: any) => 0)
-
+  const { store_credit } = await getMemberCreditsAdjustmentsSums(MemberId)
   setStoreCredit(store_credit)
 }
 
-interface EditOrderProps {
-  userService?: UserService
+function tryNumber(input?: string | number): number {
+  if (input === undefined) {
+    return 0.0
+  }
+  const str = `${input}`
+  if (isNaN(parseFloat(str))) {
+    return 0.0
+  }
+  return +parseFloat(str).toFixed(2)
 }
 
-function EditOrder(
-  props: EditOrderProps & RouteComponentProps<OrderRouterProps>
-) {
+export default function EditOrder() {
+  const navigate = useNavigate()
+  const match = useMatch('/orders/edit/:id')
+  const userService = useSelector<RootState, UserService>(
+    (state) => state.session.userService
+  )
+
   const classes = useStyles()
 
   const [orderId, setOrderId] = useState('')
@@ -161,21 +159,21 @@ function EditOrder(
       if (orderService.payload) {
         const _order = orderService.payload
         if (
-          _order.Member &&
-          _order.Member.discount &&
-          _order.Member.discount > 0
+          _order.Members &&
+          _order.Members.discount &&
+          _order.Members.discount > 0
         ) {
           setCanApplyMemberDiscount(true)
         }
-        if (_order.Member && _order.Member.id) {
-          fetchStoreCredit(_order.Member.id, setStoreCredit)
+        if (_order.Members && _order.Members.id) {
+          fetchStoreCredit(_order.Members.id, setStoreCredit)
         }
         setOrder(_order)
       }
     }
   }, [orderService])
 
-  const pOrderId = props.match.params.id
+  const pOrderId = match?.params?.id
 
   useEffect(() => {
     if (pOrderId && pOrderId !== 'new') {
@@ -187,18 +185,18 @@ function EditOrder(
     if (
       order &&
       !order.UserId &&
-      props.userService &&
-      props.userService.user &&
-      props.userService.user.id
+      userService &&
+      userService.user &&
+      userService.user.id
     ) {
-      const UserId = props.userService.user.id
+      const UserId = userService.user.id
       UserId &&
         setOrder((prevOrder) => ({
           ...prevOrder,
           UserId
         }))
     }
-  }, [props.userService, order])
+  }, [userService, order])
 
   useEffect(() => {
     if (!needToCheckForDiscounts || !order) {
@@ -217,10 +215,12 @@ function EditOrder(
         if (canDiscount && li.data && li.data.product) {
           const price =
             li.selected_unit === 'CS'
-              ? parseFloat(li.data.product.ws_price_cost)
-              : parseFloat(li.data.product.u_price_cost)
+              ? Number(li.data.product.ws_price_cost)
+              : Number(li.data.product.u_price_cost)
 
-          return +(li.total - price * li.quantity).toFixed(2)
+          const total = isNaN(Number(li.total)) ? 0 : Number(li.total)
+          const qty = isNaN(Number(li.quantity)) ? 1 : Number(li.quantity)
+          return +(total - price * qty).toFixed(2)
         } else {
           return 0
         }
@@ -228,15 +228,16 @@ function EditOrder(
 
       if (discountAmt > 0) {
         const discountPrice = -discountAmt.toFixed(2)
-        const discounts = order.OrderLineItems.filter(
+        const discount = order.OrderLineItems.filter(
           (li) =>
             li.kind === 'adjustment' && li.description === 'member discount'
-        )
-        if (discounts[0]) {
-          if (discounts[0].total !== discountPrice) {
-            const idx = order.OrderLineItems.indexOf(discounts[0])
+        )[0]
+        if (discount) {
+          if (discount.total !== discountPrice) {
+            const idx = order.OrderLineItems.indexOf(discount)
+            // const description = discounts[0].description || ''
             updateLineItem(idx, {
-              ...discounts[0],
+              ...discount,
               price: discountPrice,
               total: discountPrice
             })
@@ -280,11 +281,11 @@ function EditOrder(
         description: `${product.name} ${product.description}`,
         quantity: 1,
         selected_unit: 'CS',
-        price: parseFloat(product.ws_price),
-        total: parseFloat(product.ws_price),
+        price: parseFloat(`${product.ws_price}`),
+        total: parseFloat(`${product.ws_price}`),
         kind: 'product',
         vendor: product.vendor,
-        data: { product }
+        data: { product } as LineItem['data'] // ffffuck why tsc, whhhhy
       }
       setOrder((order) => ({
         ...order,
@@ -321,8 +322,9 @@ function EditOrder(
     setOrder((prevOrder) => {
       const orderLineItems = prevOrder.OrderLineItems
       orderLineItems.splice(idx, 1)
-      const item_count = orderLineItems.filter((li) => li.kind === 'product')
-        .length
+      const item_count = orderLineItems.filter(
+        (li) => li.kind === 'product'
+      ).length
       return {
         ...prevOrder,
         item_count,
@@ -346,7 +348,7 @@ function EditOrder(
   }
 
   function createPayment(event: any) {
-    const price = parseFloat(order.total.toFixed(2)) || -0.0
+    const price = Number(order.total?.toFixed(2)) || -0.0
     const payment: LineItem = {
       description: 'payment',
       quantity: 1,
@@ -382,7 +384,10 @@ function EditOrder(
   }
 
   function createCreditFromLineItem(line_item: LineItem) {
-    createCredit(line_item.total, `STORE CREDIT (${line_item.description})`)
+    createCredit(
+      line_item.total || 0,
+      `STORE CREDIT (${line_item.description})`
+    )
   }
 
   function applyStoreCredit() {
@@ -402,31 +407,32 @@ function EditOrder(
     }))
   }
 
-  function emailReceipt(event: any) {
-    fetch(`${API_HOST}/orders/resend_email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ orderId: order.id })
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        if (response.success) {
-          setSnackMsg(`Re-sent email to ${order.email}`)
-        } else {
-          setSnackMsg(`onoz! could not send email to ${order.email}`)
-        }
-      })
-      .catch((e) => {
-        console.warn('onoz! caught error re-sending email:', e)
-        setSnackMsg('onoz! could not re-send email')
-      })
-      .finally(() => setSnackOpen(true))
-  }
+  // #TODO: hmm, figure this out.
+  // function emailReceipt(event: any) {
+  //   fetch(`${API_HOST}/orders/resend_email`, {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json'
+  //     },
+  //     credentials: 'include',
+  //     body: JSON.stringify({ orderId: order.id })
+  //   })
+  //     .then((response) => response.json())
+  //     .then((response) => {
+  //       if (response.success) {
+  //         setSnackMsg(`Re-sent email to ${order.email}`)
+  //       } else {
+  //         setSnackMsg(`onoz! could not send email to ${order.email}`)
+  //       }
+  //     })
+  //     .catch((e) => {
+  //       console.warn('onoz! caught error re-sending email:', e)
+  //       setSnackMsg('onoz! could not re-send email')
+  //     })
+  //     .finally(() => setSnackOpen(true))
+  // }
 
-  function onMembertemSelected(value?: { name: string; member: Member }) {
+  function onMembertemSelected(value?: MemberOption) {
     if (value && value.member) {
       const { id, name, phone, address } = value.member // email
       const email =
@@ -442,37 +448,40 @@ function EditOrder(
         MemberId: id
       }))
       setShowMemberAutocomplete(false)
+      if (!id) {
+        return
+      }
       fetchStoreCredit(id, setStoreCredit)
     }
   }
 
-  const onSaveBtnClick = (): void => {
+  const onSaveBtnClick = async (): Promise<void> => {
+    const { OrderLineItems: orderLineItems, Members, User, fts, ...o } = order
+
     setSaving(true)
-    const path =
-      orderId && orderId !== 'new' ? '/order/update' : '/order/create'
-    fetch(`${API_HOST}${path}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify(order)
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        if (response.success) {
-          order &&
-            order.Member &&
-            order.Member.id &&
-            fetchStoreCredit(order.Member.id, setStoreCredit)
-          setSnackOpen(true)
-          setSnackMsg('Saved order!')
-          if (response.order.id && (!orderId || orderId === 'new')) {
-            props.history.replace(`/orders/edit/${response.order.id}`)
-          }
-        }
-      })
-      .finally(() => setSaving(false))
+
+    if (!orderId || orderId === 'new') {
+      const result = await createOrder(o, orderLineItems as SupaOrderLineItem[])
+      setSnackOpen(true)
+      setSnackMsg('Saved order!')
+      setSaving(false)
+      if (result && result.id) {
+        navigate(`/orders/edit/${result.id}`)
+      }
+    } else {
+      const result = await updateOrder(o, orderLineItems as SupaOrderLineItem[])
+      setSnackOpen(true)
+      if (!result) {
+        setSnackMsg('Oops! Could not update order.')
+      } else {
+        setSnackMsg('Updated order!')
+      }
+      if (order.Members?.id) {
+        await fetchStoreCredit(order.Members.id, setStoreCredit)
+      }
+
+      setSaving(false)
+    }
   }
 
   function onTaxesChange(tax: number) {
@@ -566,7 +575,7 @@ function EditOrder(
           container
           spacing={2}
           direction="row"
-          justify="center"
+          justifyContent="center"
           alignItems="flex-start"
         >
           <Grid item xs={12} md={4}>
@@ -578,7 +587,7 @@ function EditOrder(
                       aria-label="close"
                       onClick={() => setShowMemberAutocomplete(false)}
                     >
-                      <ClearIcon fontSize="inherit" />
+                      <Icon>clear</Icon>
                     </IconButton>
                   </Tooltip>
                   <MemberAutocomplete onItemSelected={onMembertemSelected} />
@@ -588,9 +597,9 @@ function EditOrder(
                   <Tooltip title="BACK TO ORDERS">
                     <IconButton
                       aria-label="back to orders"
-                      onClick={() => props.history.push('/orders')}
+                      onClick={() => navigate('/orders')}
                     >
-                      <ArrowBackIcon />
+                      <Icon>arrow_back</Icon>
                     </IconButton>
                   </Tooltip>
 
@@ -621,7 +630,7 @@ function EditOrder(
                         aria-label="add user details"
                         onClick={() => setShowMemberAutocomplete(true)}
                       >
-                        <PeopleIcon />
+                        <Icon>people</Icon>
                       </IconButton>
                     </Tooltip>
                   </div>
@@ -629,25 +638,14 @@ function EditOrder(
               )}
             </div>
 
-            {order.status !== 'new' && order.status !== 'needs_review' && (
-              <Box color="error.main">
-                <Typography variant="overline" display="block">
-                  ohey!
-                </Typography>
-                <Typography variant="body1" display="block" gutterBottom>
-                  this order status is not "new" or "needs review" so making
-                  changes might not be great...
-                </Typography>
-              </Box>
-            )}
-            {order.Member && order.Member.discount && (
+            {order?.Members?.discount && order.Members.discount > 0 && (
               <Box color="info.main">
                 <Typography variant="overline" display="block" gutterBottom>
                   Member has discount:{' '}
                   <b>
-                    {order.Member.discount}{' '}
-                    {order.Member.discount_type &&
-                      `(${order.Member.discount_type})`}
+                    {order.Members.discount}{' '}
+                    {order.Members.discount_type &&
+                      `(${order.Members.discount_type})`}
                   </b>
                 </Typography>
               </Box>
@@ -789,7 +787,7 @@ function EditOrder(
                       aria-label="close"
                       onClick={() => setShowLiAutocomplete(false)}
                     >
-                      <ClearIcon fontSize="inherit" />
+                      <Icon>clear</Icon>
                     </IconButton>
                   </Tooltip>
                   <LineItemAutocomplete onItemSelected={onAddLineitem} />
@@ -801,7 +799,7 @@ function EditOrder(
                     size="large"
                     onClick={() => setShowLiAutocomplete(true)}
                   >
-                    <AddIcon />
+                    <Icon>add</Icon>
                     LINE ITEMS
                   </Button>
 
@@ -810,7 +808,7 @@ function EditOrder(
                     size="large"
                     onClick={createAdjustment}
                   >
-                    <AddIcon />
+                    <Icon>add</Icon>
                     ADJUSTMENT
                   </Button>
 
@@ -823,7 +821,7 @@ function EditOrder(
                         setNeedToCheckForDiscounts(true)
                       }}
                     >
-                      <AddIcon />
+                      <Icon>add</Icon>
                       MEMBER DISCOUNT
                     </Button>
                   )}
@@ -833,7 +831,7 @@ function EditOrder(
                     size="large"
                     onClick={createPayment}
                   >
-                    <AddIcon />
+                    <Icon>add</Icon>
                     PAYMENT
                   </Button>
 
@@ -842,23 +840,28 @@ function EditOrder(
                     size="large"
                     onClick={createCreditClick}
                   >
-                    <AddIcon />
+                    <Icon>add</Icon>
                     CREDIT
                   </Button>
 
-                  <Button
+                  {/* <Button
                     aria-label="email receipt"
                     size="large"
                     onClick={emailReceipt}
                   >
                     <EmailIcon className={classes.emailIcon} />
                     email receipt
-                  </Button>
+                  </Button> */}
                 </>
               )}
             </div>
             <OrderLineItems
-              line_items={order.OrderLineItems}
+              line_items={order.OrderLineItems.map((oli) => ({
+                ...oli,
+                price: tryNumber(oli.price),
+                quantity: tryNumber(oli.quantity),
+                total: tryNumber(oli.total)
+              }))}
               onLineItemUpdated={onLineItemUpdated}
               removeLineItem={removeLineItem}
               onTaxesChange={onTaxesChange}
@@ -883,18 +886,10 @@ function EditOrder(
         message={<span id="message-id">{snackMsg}</span>}
         action={[
           <IconButton key="close" aria-label="close" onClick={handleSnackClose}>
-            <CloseIcon />
+            <Icon>close</Icon>
           </IconButton>
         ]}
       />
     </div>
   )
 }
-
-const mapStateToProps = (states: RootState): UserServiceProps => {
-  return {
-    userService: states.session.userService
-  }
-}
-
-export default connect(mapStateToProps, undefined)(withRouter(EditOrder))

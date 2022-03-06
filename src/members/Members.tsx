@@ -1,12 +1,12 @@
 import React, { createRef } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import MaterialTable from 'material-table'
-
-import { MemberRouterProps } from '../types/Member'
-import { Member } from '../types/Member'
-import { API_HOST } from '../constants'
 import { formatRelative } from 'date-fns'
+
+import { SupaMember as Member } from '../types/SupaTypes'
+import { deleteMember } from '../services/mutations'
+import { membersFetcher } from '../services/fetchers'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -18,7 +18,8 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 )
 
-function Members(props: RouteComponentProps<MemberRouterProps>) {
+export default function Members() {
+  const navigate = useNavigate()
   const classes = useStyles()
   const tableRef = createRef<any>()
 
@@ -26,13 +27,13 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
     icon: 'add',
     tooltip: 'add new member',
     isFreeAction: true,
-    onClick: () => props.history.push('/members/new')
+    onClick: () => navigate('/members/new')
   }
 
   const deleteAction = {
     tooltip: 'Remove Member',
     icon: 'delete',
-    onClick: (e: any, member: Member | Member[]) => {
+    onClick: async (e: any, member: Member | Member[]) => {
       let members: Member[]
       if (Array.isArray(member)) {
         members = member
@@ -45,17 +46,10 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
       }
       const id = members[0].id
       if (window.confirm(`Are you sure you want to delete this member?`)) {
-        fetch(`${API_HOST}/member`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({ id })
-        })
-          .then((response) => response.json())
-          .then(() => tableRef.current && tableRef.current.onQueryChange())
-          .catch((err) => console.warn('members deleteAction caught err', err))
+        const { error } = await deleteMember(id)
+        if (!error && tableRef.current) {
+          tableRef.current.onQueryChange()
+        }
       }
     }
   }
@@ -70,7 +64,7 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
       } else {
         member = members
       }
-      member.id && props.history.push(`/members/${member.id}`)
+      member.id && navigate(`/members/${member.id}`)
     }
   }
 
@@ -123,24 +117,24 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
           },
           { title: 'id', field: 'id', type: 'string', hidden: true }
         ]}
-        data={(query) =>
-          new Promise((resolve, reject) => {
-            fetch(`${API_HOST}/members`, {
-              method: 'post',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              credentials: 'include',
-              body: JSON.stringify(query)
+        data={(q) =>
+          new Promise(async (resolve, reject) => {
+            const { data, error, count: totalCount } = await membersFetcher(q)
+
+            if (!error && data?.length && totalCount) {
+              resolve({
+                data,
+                page: 0,
+                totalCount
+              })
+              return
+            }
+
+            resolve({
+              data: [],
+              page: 0,
+              totalCount: 0
             })
-              .then((response) => response.json())
-              .then((result) => {
-                resolve(result)
-              })
-              .catch((err) => {
-                console.warn(err)
-                return resolve({ data: [], page: 0, totalCount: 0 })
-              })
           })
         }
         title="Members"
@@ -159,5 +153,3 @@ function Members(props: RouteComponentProps<MemberRouterProps>) {
     </div>
   )
 }
-
-export default withRouter(Members)

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
-import { makeStyles, Theme, createStyles } from '@material-ui/core'
+import { useNavigate, useMatch } from 'react-router-dom'
+import { makeStyles, Theme, createStyles, Icon } from '@material-ui/core'
 import Paper from '@material-ui/core/Paper'
 import Grid from '@material-ui/core/Grid'
 import TextField from '@material-ui/core/TextField'
@@ -15,17 +15,23 @@ import Select from '@material-ui/core/Select'
 import Button from '@material-ui/core/Button'
 import IconButton from '@material-ui/core/IconButton'
 import Tooltip from '@material-ui/core/Tooltip'
-import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListSubheader from '@material-ui/core/ListSubheader'
 import ListItemText from '@material-ui/core/ListItemText'
 
-import { Member, MemberRouterProps } from '../types/Member'
 import Loading from '../Loading'
-import { API_HOST } from '../constants'
 import { fetchStoreCredit } from '../orders/EditOrder'
-import { Order } from '../types/Order'
+import { SupaMember, SuperOrderAndAssoc as Order } from '../types/SupaTypes'
+import { upsertMember } from '../services/mutations'
+import { memberFetcher, ordersForMember } from '../services/fetchers'
+
+type Member =
+  | Omit<SupaMember, 'id' | 'data' | 'is_admin'> & {
+      id?: string | number
+      data: string | object
+      is_admin?: boolean
+    }
 
 const blankMember: Member = {
   id: 'new',
@@ -39,6 +45,7 @@ const blankMember: Member = {
   store_credit: 0,
   shares: 0,
   member_type: '',
+  is_admin: false,
   data: {}
 }
 
@@ -71,27 +78,25 @@ async function fetchMemberOrders(
   MemberId: string,
   setOrders: React.Dispatch<React.SetStateAction<Order[]>>
 ) {
-  const orders = await fetch(`${API_HOST}/admin/member_orders`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include',
-    body: JSON.stringify({ MemberId })
-  })
-    .then((response: any) => response.json())
-    .catch((err: any) => [])
-  setOrders(orders)
+  const { data: orders, error } = await ordersForMember(Number(MemberId))
+  if (error || !orders) {
+    console.warn('fetchMemberOrders got error', error)
+    setOrders([])
+  } else {
+    setOrders(orders as Order[])
+  }
 }
 
-function EditMember(props: RouteComponentProps<MemberRouterProps>) {
+export default function EditMember() {
+  const navigate = useNavigate()
+  const match = useMatch('/members/:id')
   const classes = useStyles()
   const [loadingMember, setLoadingMember] = useState(true)
   const [loading, setLoading] = useState(false)
 
   const [error, setError] = useState('')
   const [response, setResponse] = useState('')
-  const memberId = props.match.params.id
+  const memberId = match?.params?.id
 
   const [member, setMember] = useState<Member>(blankMember)
   const [createNewUser, setCreateNewUser] = useState(false)
@@ -107,63 +112,42 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
       setMember(blankMember)
       setLoadingMember(false)
     } else {
-      fetch(`${API_HOST}/members`, {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          filters: [
-            {
-              column: {
-                field: 'id'
-              },
-              value: memberId
-            }
-          ]
+      memberFetcher(Number(memberId)).then(({ data: member }) => {
+        setMember({
+          ...member,
+          data: member?.data ? JSON.parse(member.data) : {}
         })
+        setLoadingMember(false)
       })
-        .then((response) => response.json())
-        .then((response) => {
-          // console.log('zomfg response:', response)
-          setMember(response.data[0] as Member)
-        })
-        .catch((err) => setMember(blankMember))
-        .finally(() => setLoadingMember(false))
+
+      if (!memberId) {
+        return
+      }
       fetchStoreCredit(memberId, setStoreCredit)
       fetchMemberOrders(memberId, setOrders)
     }
   }, [memberId])
 
-  function submitData() {
+  async function submitData() {
     setError('')
     setResponse('')
     setLoading(true)
 
-    const path = memberId === 'new' ? '/create' : '/update'
-
-    fetch(`${API_HOST}/member${path}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ member, createNewUser })
+    const { error } = await upsertMember({
+      ...member,
+      id: memberId === 'new' ? undefined : memberId,
+      createdAt: memberId === 'new' ? undefined : member.createdAt,
+      updatedAt: null,
+      fts: undefined
     })
-      .then((response) => response.json())
-      .then((response) => {
-        if (response.error) {
-          setError(response.msg)
-        } else {
-          setResponse(response.msg)
-        }
-      })
-      .catch((err) => {
-        console.warn('fetch caugher err:', err)
-        setError(err.toString())
-      })
-      .finally(() => setLoading(false))
+
+    if (error) {
+      console.warn('upsert member caugher err:', error)
+      setError(error.message)
+    } else {
+      setResponse('Success!')
+    }
+    setLoading(false)
   }
 
   return (
@@ -175,7 +159,7 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
           container
           spacing={2}
           direction="row"
-          justify="center"
+          justifyContent="center"
           alignItems="flex-start"
         >
           <Grid item sm={6}>
@@ -190,9 +174,9 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
               <Tooltip title="BACK TO MEMBERS">
                 <IconButton
                   aria-label="back to members"
-                  onClick={() => props.history.push('/members')}
+                  onClick={() => navigate('/members')}
                 >
-                  <ArrowBackIcon />
+                  <Icon>arrow_back</Icon>
                 </IconButton>
               </Tooltip>
 
@@ -387,10 +371,10 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
 
             {member && member.data && (
               <dl>
-                {Object.keys(member.data).map((k) => (
+                {Object.entries(member.data).map(([k, v]) => (
                   <React.Fragment key={`memberdata${k}`}>
                     <dt>{k}</dt>
-                    <dd>{member.data[k]}</dd>
+                    <dd>{v}</dd>
                   </React.Fragment>
                 ))}
               </dl>
@@ -422,9 +406,7 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
                     key={order.id}
                     button
                     href={`/orders/edit/${order.id}`}
-                    onClick={() =>
-                      props.history.push(`/orders/edit/${order.id}`)
-                    }
+                    onClick={() => navigate(`/orders/edit/${order.id}`)}
                   >
                     <ListItemText
                       primary={`#${order.id} $${order.total} (${order.item_count})`}
@@ -443,5 +425,3 @@ function EditMember(props: RouteComponentProps<MemberRouterProps>) {
     </Paper>
   )
 }
-
-export default withRouter(EditMember)

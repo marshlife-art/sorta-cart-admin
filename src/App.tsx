@@ -1,54 +1,43 @@
-import React, { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Switch, Route } from 'react-router-dom'
-import { connect } from 'react-redux'
-import { ThunkDispatch } from 'redux-thunk'
-import clsx from 'clsx'
+import React, { useEffect, useState } from 'react'
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom'
+import { Theme, createStyles, makeStyles } from '@material-ui/core/styles'
+import { checkSession, logout } from './redux/session/actions'
+import { darkTheme, lightTheme } from './theme'
+import { getPreferences, setPreferences } from './redux/preferences/actions'
+import { useDispatch, useSelector } from 'react-redux'
 
-import { ThemeProvider } from '@material-ui/core/styles'
-
+import { APP_VERSION } from './constants'
 import CssBaseline from '@material-ui/core/CssBaseline'
-import Drawer from '@material-ui/core/Drawer'
-import List from '@material-ui/core/List'
+import Dashboard from './dashboard/Dashboard'
 import Divider from '@material-ui/core/Divider'
+import Drawer from '@material-ui/core/Drawer'
+import EditMember from './members/EditMember'
+import EditOrder from './orders/EditOrder'
 import Fab from '@material-ui/core/Fab'
-import MUISwitch from '@material-ui/core/Switch'
-import MenuIcon from '@material-ui/icons/Menu'
+import { Icon } from '@material-ui/core'
+import ImportProducts from './products/ImportProducts'
+import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemIcon from '@material-ui/core/ListItemIcon'
 import ListItemText from '@material-ui/core/ListItemText'
-import FaceIcon from '@material-ui/icons/Face'
-import { createStyles, Theme, makeStyles } from '@material-ui/core/styles'
-
-import { darkTheme, lightTheme } from './theme'
-import { mainListItems } from './listItems' // secondaryListItems
-
-import { RootState } from './redux'
-import { UserServiceProps } from './redux/session/reducers'
-import { checkSession, logout } from './redux/session/actions'
-
-import { Preferences } from './types/Preferences'
-import { PreferencesServiceProps } from './redux/preferences/reducers'
-import { getPreferences, setPreferences } from './redux/preferences/actions'
-
 import Loading from './Loading'
-import Dashboard from './dashboard/Dashboard'
 import Login from './auth/Login'
-import Register from './auth/Register'
+import MUISwitch from '@material-ui/core/Switch'
+import Members from './members/Members'
+import Orders from './orders/Orders'
+import { PreferencesService } from './redux/preferences/reducers'
+import Products from './products/Products'
 import ProtectedRoute from './auth/ProtectedRoute'
+import { RootState } from './redux'
 // import UserMenu from './auth/UserMenu'
 import StoreCredits from './members/StoreCredits'
-import Orders from './orders/Orders'
+import { ThemeProvider } from '@material-ui/core/styles'
+import UpdateProducts from './products/UpdateProducts'
+import { UserService } from './redux/session/reducers'
 import WholesaleOrders from './wholesaleorders/WholesaleOrders'
-import Users from './users/Users'
-import Products from './products/Products'
-import ImportProducts from './products/ImportProducts'
-import OnHand from './products/OnHand'
-import AddStock from './products/AddStock'
-import EditOrder from './orders/EditOrder'
-import Members from './members/Members'
-import EditMember from './members/EditMember'
-import { APP_VERSION } from './constants'
-import Announcements from './announcements/Announcements'
+import clsx from 'clsx'
+import { mainListItems } from './listItems' // secondaryListItems
+import { supabase } from './lib/supabaseClient'
 
 const drawerWidth = 240
 
@@ -104,32 +93,23 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 )
 
-interface DispatchProps {
-  checkSession: () => void
-  getPreferences: () => void
-  setPreferences: (preferences: Preferences) => void
-  logout: () => void
-}
+export function App() {
+  const userService = useSelector<RootState, UserService>(
+    (state) => state.session.userService
+  )
 
-type Props = UserServiceProps & PreferencesServiceProps & DispatchProps
+  const preferencesService = useSelector<RootState, PreferencesService>(
+    (state) => state.preferences.preferencesService
+  )
 
-export function App(props: Props) {
+  const dispatch = useDispatch()
+
   const [loading, setLoading] = useState(true)
   const [useDarkTheme, setUseDarkTheme] = useState<null | boolean>(null)
 
-  // checkSession is destructured from props and passed into useEffect
-  // which is a bit confusing since checkSession is also imported. ah scope.
-  const {
-    checkSession,
-    userService,
-    getPreferences,
-    preferencesService,
-    setPreferences
-  } = props
-
   useEffect(() => {
-    getPreferences && getPreferences()
-  }, [getPreferences])
+    dispatch(getPreferences())
+  }, [])
 
   useEffect(() => {
     if (
@@ -153,14 +133,19 @@ export function App(props: Props) {
       (preferencesService.preferences.dark_mode === 'true' ? true : false) !==
         useDarkTheme
     ) {
-      setPreferences({ dark_mode: useDarkTheme ? 'true' : 'false' })
+      dispatch(setPreferences({ dark_mode: useDarkTheme ? 'true' : 'false' }))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [useDarkTheme])
 
   useEffect(() => {
-    checkSession && checkSession()
-  }, [checkSession])
+    dispatch(checkSession())
+
+    const sub = supabase.auth.onAuthStateChange((event, session) => {
+      dispatch(checkSession())
+    })
+    return () => sub?.data?.unsubscribe()
+  }, [])
 
   useEffect(() => {
     if (userService) {
@@ -182,7 +167,7 @@ export function App(props: Props) {
     <ThemeProvider theme={theme}>
       <CssBaseline />
 
-      <Router>
+      <Router basename={process.env.PUBLIC_URL}>
         <div className={classes.root}>
           <CssBaseline />
 
@@ -190,20 +175,12 @@ export function App(props: Props) {
             userService.user &&
             userService.user.role === 'admin' && (
               <div className={classes.nav}>
-                {/* <IconButton
-              edge="start"
-              aria-label="open drawer"
-              onClick={() => setOpen(true)}
-            >
-              
-            </IconButton> */}
-
                 <Fab
                   color="secondary"
                   aria-label="menu"
                   onClick={() => setOpen(true)}
                 >
-                  <MenuIcon />
+                  <Icon>menu</Icon>
                 </Fab>
               </div>
             )}
@@ -247,9 +224,9 @@ export function App(props: Props) {
                   </ListItemText>
                 </ListItem>
                 <Divider />
-                <ListItem button onClick={() => props.logout()}>
+                <ListItem button onClick={() => dispatch(logout())}>
                   <ListItemIcon>
-                    <FaceIcon />
+                    <Icon>face</Icon>
                   </ListItemIcon>
                   <ListItemText
                     primary="log out"
@@ -277,91 +254,67 @@ export function App(props: Props) {
             )}
 
           <main className={classes.content}>
-            {/* ROUTER */}
 
             {loading ? (
               <Loading />
             ) : (
-              <Switch>
-                <Route path="/login" component={Login} />
-                <Route path="/register" component={Register} />
-                <ProtectedRoute
-                  userService={userService}
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route
                   path="/products"
-                  component={Products}
-                  exact
+                  element={<ProtectedRoute path="/" element={<Products />} />}
                 />
-                <ProtectedRoute
-                  userService={userService}
+                <Route
                   path="/products/import"
-                  component={ImportProducts}
+                  element={
+                    <ProtectedRoute path="/" element={<ImportProducts />} />
+                  }
                 />
-                <ProtectedRoute
-                  userService={userService}
-                  path="/products/onhand"
-                  component={OnHand}
+                <Route
+                  path="/products/update"
+                  element={
+                    <ProtectedRoute path="/" element={<UpdateProducts />} />
+                  }
                 />
-                <ProtectedRoute
-                  userService={userService}
-                  path="/products/addstock"
-                  component={AddStock}
-                />
-                <ProtectedRoute
-                  userService={userService}
+                <Route
                   path="/orders"
-                  exact
-                  component={Orders}
+                  element={<ProtectedRoute path="/" element={<Orders />} />}
                 />
-                <ProtectedRoute
-                  userService={userService}
+                <Route
                   path="/orders/edit/:id"
-                  component={EditOrder}
+                  element={<ProtectedRoute path="/" element={<EditOrder />} />}
                 />
-                <ProtectedRoute
-                  userService={userService}
+                <Route
                   path="/orders/create"
-                  component={EditOrder}
+                  element={<ProtectedRoute path="/" element={<EditOrder />} />}
                 />
-                <ProtectedRoute
-                  userService={userService}
-                  path="/wholesaleorders"
-                  component={WholesaleOrders}
+                <Route
+                  path="/wholesaleorders/*"
+                  element={
+                    <ProtectedRoute path="/" element={<WholesaleOrders />} />
+                  }
                 />
-                <ProtectedRoute
-                  userService={userService}
-                  path="/users"
-                  component={Users}
-                />
-                <ProtectedRoute
-                  userService={userService}
+                <Route
                   path="/members"
-                  component={Members}
-                  exact
+                  element={<ProtectedRoute path="/" element={<Members />} />}
                 />
-                <ProtectedRoute
-                  userService={userService}
+                <Route
                   path="/members/:id"
-                  component={EditMember}
+                  element={<ProtectedRoute path="/" element={<EditMember />} />}
                 />
-                <ProtectedRoute
-                  userService={userService}
+                <Route
                   path="/storecredits"
-                  component={StoreCredits}
+                  element={
+                    <ProtectedRoute path="/" element={<StoreCredits />} />
+                  }
                 />
-                <ProtectedRoute
-                  userService={userService}
-                  path="/announcements"
-                  component={Announcements}
-                />
-                <ProtectedRoute
-                  userService={userService}
+                <Route
                   path="/"
-                  component={Dashboard}
+                  element={<ProtectedRoute path="/" element={<Dashboard />} />}
                 />
-              </Switch>
+              </Routes>
             )}
 
-            {/* <Box pt={4}>FOOT'r</Box> */}
           </main>
         </div>
       </Router>
@@ -369,25 +322,4 @@ export function App(props: Props) {
   )
 }
 
-const mapStateToProps = (
-  states: RootState
-): UserServiceProps & PreferencesServiceProps => {
-  return {
-    userService: states.session.userService,
-    preferencesService: states.preferences.preferencesService
-  }
-}
-
-const mapDispatchToProps = (
-  dispatch: ThunkDispatch<{}, {}, any>
-): DispatchProps => {
-  return {
-    checkSession: () => dispatch(checkSession()),
-    getPreferences: () => dispatch(getPreferences()),
-    setPreferences: (preferences: Preferences) =>
-      dispatch(setPreferences(preferences)),
-    logout: () => dispatch(logout())
-  }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(App)
+export default App

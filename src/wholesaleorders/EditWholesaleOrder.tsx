@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
+import { useNavigate, useMatch } from 'react-router-dom'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import Grid from '@material-ui/core/Grid'
 import TextField from '@material-ui/core/TextField'
@@ -9,30 +9,43 @@ import FormControl from '@material-ui/core/FormControl'
 import Select from '@material-ui/core/Select'
 import Snackbar from '@material-ui/core/Snackbar'
 import IconButton from '@material-ui/core/IconButton'
-import CloseIcon from '@material-ui/icons/Close'
-
-import { LineItem } from '../types/Order'
-import { Product } from '../types/Product'
 import {
-  WholesaleOrder,
-  WholesaleOrderRouterProps
-} from '../types/WholesaleOrder'
+  FormControlLabel,
+  Checkbox,
+  Button,
+  Tooltip,
+  Icon
+} from '@material-ui/core'
+import { Parser } from 'json2csv'
+import { formatDistance, formatRelative } from 'date-fns'
+
+import {
+  SupaWholesaleOrder as WholesaleOrder,
+  SupaProduct,
+  SupaOrderLineItem as LineItem
+} from '../types/SupaTypes'
+import { SquareStatus } from '../types/WholesaleOrder'
 import { OrderStatus, ShipmentStatus, PaymentStatus } from '../types/Order'
 import {
   API_HOST,
   ORDER_STATUSES,
   PAYMENT_STATUSES,
-  SHIPMENT_STATUSES
+  SHIPMENT_STATUSES,
+  SQUARE_STATUSES
 } from '../constants'
 import Loading from '../Loading'
+import EditMenu from './EditMenu'
+import WholesaleOrderLineItems from './WholesaleOrderLineItems'
+import LineItemAutocomplete from '../orders/LineItemAutocomplete'
 import {
   useWholesaleOrderService,
   useWholesaleOrderSaveService
 } from './useWholesaleOrderService'
-import EditMenu from './EditMenu'
-import WholesaleOrderLineItems from './WholesaleOrderLineItems'
-
-const { Parser } = require('json2csv')
+import {
+  deleteWholesaleOrder,
+  insertOrderLineItem,
+  updateOrderLineItems
+} from '../services/mutations'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -42,7 +55,9 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     editMenu: {
       padding: `${theme.spacing(2)}px 0`,
-      textAlign: 'right'
+      display: 'flex',
+      justifyContent: 'space-around',
+      alignItems: 'center'
     }
   })
 )
@@ -52,7 +67,7 @@ export interface GroupedItem {
   qtyUnits: number
   qtyAdjustments: number
   totalSum: number
-  product: Product | undefined
+  product: SupaProduct | undefined | null
   vendor: string | undefined
   description: string
   line_items: LineItem[]
@@ -71,10 +86,9 @@ interface EditWholesaleOrderProps {
   setReloadOrders: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-function EditWholesaleOrder(
-  props: EditWholesaleOrderProps &
-    RouteComponentProps<WholesaleOrderRouterProps>
-) {
+export default function EditWholesaleOrder(props: EditWholesaleOrderProps) {
+  const navigate = useNavigate()
+  const match = useMatch('wholesaleorders/edit/:id')
   const classes = useStyles()
 
   const [wholesaleOrderId, setWholesaleOrderId] = useState('')
@@ -82,6 +96,7 @@ function EditWholesaleOrder(
   const [loading, setLoading] = useState(true)
   const [doSave, setDoSave] = useState(false)
   const [reload, setReload] = useState(true)
+  const [showLiAutocomplete, setShowLiAutocomplete] = useState(false)
 
   const [lineItemData, setLineItemData] = useState<LineItemData>({
     groupedLineItems: {},
@@ -108,75 +123,89 @@ function EditWholesaleOrder(
   const [snackOpen, setSnackOpen] = React.useState(false)
   const [snackMsg, setSnackMsg] = React.useState('')
 
-  const handleOrderNotesChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleOrderNotesChange = (notes?: string) => {
     setWholesaleOrder((prevOrder) => {
       if (prevOrder) {
         return {
           ...prevOrder,
-          notes: event.target.value
+          notes
         }
       }
     })
   }
 
-  const handleOrderVendorChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleOrderVendorChange = (vendor: string) => {
     setWholesaleOrder((prevOrder) => {
       if (prevOrder) {
         return {
           ...prevOrder,
-          vendor: event.target.value
+          vendor
         }
       }
     })
   }
 
-  const handleStatusChange = (
-    event: React.ChangeEvent<{
-      name?: string | undefined
-      value: unknown
-    }>
-  ) => {
+  const handleStatusChange = (status: OrderStatus) => {
     setWholesaleOrder((prevOrder) => {
       if (prevOrder) {
         return {
           ...prevOrder,
-          status: event.target.value as OrderStatus
+          status
         }
       }
     })
   }
 
-  const handlePaymentStatusChange = (
-    event: React.ChangeEvent<{
-      name?: string | undefined
-      value: unknown
-    }>
-  ) => {
+  const handlePaymentStatusChange = (payment_status: PaymentStatus) => {
     setWholesaleOrder((prevOrder) => {
       if (prevOrder) {
         return {
           ...prevOrder,
-          payment_status: event.target.value as PaymentStatus
+          payment_status
         }
       }
     })
   }
 
-  const handleShipmentStatusChange = (
-    event: React.ChangeEvent<{
-      name?: string | undefined
-      value: unknown
-    }>
-  ) => {
+  const handleShipmentStatusChange = (shipment_status: ShipmentStatus) => {
     setWholesaleOrder((prevOrder) => {
       if (prevOrder) {
         return {
           ...prevOrder,
-          shipment_status: event.target.value as ShipmentStatus
+          shipment_status
+        }
+      }
+    })
+  }
+
+  const handleCalcAdjustmentsChange = (calc_adjustments: boolean) => {
+    setWholesaleOrder((prevOrder) => {
+      if (prevOrder) {
+        return {
+          ...prevOrder,
+          calc_adjustments
+        }
+      }
+    })
+  }
+
+  const handleSquareStatusChange = (square_status: SquareStatus) => {
+    setWholesaleOrder((prevOrder) => {
+      if (prevOrder) {
+        return {
+          ...prevOrder,
+          square_status
+        }
+      }
+    })
+  }
+
+  const handleDataChange = (data: any) => {
+    setWholesaleOrder((prevOrder) => {
+      if (prevOrder) {
+        return {
+          ...prevOrder,
+          data
         }
       }
     })
@@ -192,7 +221,13 @@ function EditWholesaleOrder(
     setSnackOpen(false)
   }
 
-  const id = props.match.params.id
+  useEffect(() => {
+    if (lineItemData) {
+      handleDataChange(lineItemData)
+    }
+  }, [lineItemData])
+
+  const id = match?.params?.id
 
   useEffect(() => {
     if (id) {
@@ -206,7 +241,7 @@ function EditWholesaleOrder(
         if (prevOrder) {
           return {
             ...prevOrder,
-            id: 'new'
+            id: undefined
           }
         }
       })
@@ -223,61 +258,64 @@ function EditWholesaleOrder(
     setSnackOpen
   )
 
-  const onDeleteBtnClick = (): void => {
-    wholesaleOrder &&
-      fetch(`${API_HOST}/wholesaleorder`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ id: wholesaleOrder.id })
-      })
-        .then((response) => response.json())
-        .then((response) => {
-          if (response.error) {
-            setSnackMsg(response.msg)
-            setSnackOpen(true)
-          } else {
-            props.history.replace('/wholesaleorders')
-          }
-        })
-        .catch((error) => {
-          console.warn('delete wholesaleOrder fetch caught err:', error)
-          setSnackMsg(`o noz! ${error}`)
-          setSnackOpen(true)
-        })
+  const onDeleteBtnClick = async (): Promise<void> => {
+    if (!wholesaleOrder || wholesaleOrder.id === undefined) {
+      return
+    }
+
+    const { error, status } = await updateOrderLineItems(
+      { WholesaleOrderId: null },
+      [wholesaleOrder.id]
+    )
+
+    if (error && status !== 404) {
+      console.warn('delete wholesale firstUpdateOLI order caught error:', error)
+      setSnackMsg(error.message)
+      setSnackOpen(true)
+      return
+    }
+
+    const { error: deleteError } = await deleteWholesaleOrder(wholesaleOrder.id)
+
+    if (deleteError) {
+      console.warn('delete wholesale order caught error:', deleteError)
+      setSnackMsg(deleteError.message)
+      setSnackOpen(true)
+    } else {
+      navigate('/wholesaleorders')
+    }
   }
 
   const saveStreamCSV = (filename: string, text: any) => {
     // lolol shoutout to https://stackoverflow.com/questions/37095233/downloading-and-saving-data-with-fetch-from-authenticated-rest
-    if (window.navigator.msSaveBlob) {
-      // IE 10 and later, and Edge.
+
+    // if (window.navigator.msSaveBlob) {
+    //   // IE 10 and later, and Edge.
+    //   const blobObject = new Blob([text], { type: 'text/csv' })
+    //   window.navigator.msSaveBlob(blobObject, filename)
+    // } else {
+    // Everthing else (except old IE).
+    // Create a dummy anchor (with a download attribute) to click.
+    const anchor = document.createElement('a')
+    anchor.download = filename
+    if (window.URL.createObjectURL) {
+      // Everything else new.
       const blobObject = new Blob([text], { type: 'text/csv' })
-      window.navigator.msSaveBlob(blobObject, filename)
+      anchor.href = window.URL.createObjectURL(blobObject)
     } else {
-      // Everthing else (except old IE).
-      // Create a dummy anchor (with a download attribute) to click.
-      const anchor = document.createElement('a')
-      anchor.download = filename
-      if (window.URL.createObjectURL) {
-        // Everything else new.
-        const blobObject = new Blob([text], { type: 'text/csv' })
-        anchor.href = window.URL.createObjectURL(blobObject)
-      } else {
-        // Fallback for older browsers (limited to 2MB on post-2010 Chrome).
-        // Load up the data into the URI for "download."
-        anchor.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(text)
-      }
-      // Now, click it.
-      if (document.createEvent) {
-        const event = document.createEvent('MouseEvents')
-        event.initEvent('click', true, true)
-        anchor.dispatchEvent(event)
-      } else {
-        anchor.click()
-      }
+      // Fallback for older browsers (limited to 2MB on post-2010 Chrome).
+      // Load up the data into the URI for "download."
+      anchor.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(text)
     }
+    // Now, click it.
+    if (document.createEvent) {
+      const event = document.createEvent('MouseEvents')
+      event.initEvent('click', true, true)
+      anchor.dispatchEvent(event)
+    } else {
+      anchor.click()
+    }
+    // }
   }
 
   const onProductsExportToCsv = (): void => {
@@ -289,6 +327,7 @@ function EditWholesaleOrder(
       fields: [
         { value: 'product.unf', label: 'unf' },
         { value: 'product.upc_code', label: 'upc_code' },
+        { value: 'product.plu', label: 'plu' },
         { value: 'vendor', label: 'vendor' },
         { value: 'description', label: 'description' },
         { value: 'qtySum', label: 'qtySum' },
@@ -313,8 +352,56 @@ function EditWholesaleOrder(
     saveStreamCSV(`${vendor}.csv`, csvout)
   }
 
+  const onImportToSquare = (): void => {
+    // handleSquareStatusChange('ready_to_import')
+    // handleStatusChange('pending')
+    setDoSave(true)
+    props.setReloadOrders(true)
+    // #TODO: call out to API_HOST, here? or can it be listening to this square_status change?
+
+    fetch(`${API_HOST}/api/wholesaleorders/ready-to-import`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ api_key: wholesaleOrder?.api_key })
+    })
+      .then((r) => r.json())
+      .then((response) => {
+        console.log('zomggg the response!')
+      })
+  }
+
   function valueFor(field: keyof WholesaleOrder) {
     return wholesaleOrder && wholesaleOrder[field] ? wholesaleOrder[field] : ''
+  }
+
+  async function onAddLineitem(value: { name: string; product: SupaProduct }) {
+    const wsOrderId = parseInt(wholesaleOrderId)
+    if (!value || !value.product || isNaN(wsOrderId)) {
+      return
+    }
+    const { product } = value
+
+    const lineItem: LineItem = {
+      WholesaleOrderId: wsOrderId,
+      description: `${product.name} ${product.description}`,
+      quantity: 1,
+      selected_unit: product.unit_type || 'CS',
+      price: parseFloat(`${product.ws_price}`),
+      total: parseFloat(`${product.ws_price}`),
+      kind: 'product',
+      vendor: product.vendor,
+      data: { product } as LineItem['data'] // oh tsc whyyy :/
+    }
+
+    const { error } = await insertOrderLineItem(lineItem)
+    if (error) {
+      setSnackMsg(`error adding line item: ${error.message}`)
+      setSnackOpen(true)
+      return
+    }
+    setReload(true)
   }
 
   return wholesaleOrder ? (
@@ -327,7 +414,7 @@ function EditWholesaleOrder(
             container
             spacing={2}
             direction="row"
-            justify="center"
+            justifyContent="center"
             alignItems="flex-start"
           >
             <Grid item sm={5}>
@@ -336,7 +423,9 @@ function EditWholesaleOrder(
                 label="vendor"
                 fullWidth
                 value={valueFor('vendor')}
-                onChange={handleOrderVendorChange}
+                onChange={(event) =>
+                  handleOrderVendorChange(event.target.value)
+                }
               />
               <FormControl fullWidth>
                 <InputLabel id="order-status-select-label">status</InputLabel>
@@ -344,7 +433,9 @@ function EditWholesaleOrder(
                   labelId="order-status-select-label"
                   id="order-status-select"
                   value={valueFor('status')}
-                  onChange={handleStatusChange}
+                  onChange={(event) =>
+                    handleStatusChange(event.target.value as OrderStatus)
+                  }
                 >
                   {Object.keys(ORDER_STATUSES).map((status) => (
                     <MenuItem key={`os-sel-${status}`} value={status}>
@@ -361,7 +452,11 @@ function EditWholesaleOrder(
                   labelId="payment-status-select-label"
                   id="payment-status-select"
                   value={valueFor('payment_status')}
-                  onChange={handlePaymentStatusChange}
+                  onChange={(event) =>
+                    handlePaymentStatusChange(
+                      event.target.value as PaymentStatus
+                    )
+                  }
                 >
                   {Object.keys(PAYMENT_STATUSES).map((status) => (
                     <MenuItem key={`ps-sel-${status}`} value={status}>
@@ -378,11 +473,40 @@ function EditWholesaleOrder(
                   labelId="shipment-status-select-label"
                   id="shipment-status-select"
                   value={valueFor('shipment_status')}
-                  onChange={handleShipmentStatusChange}
+                  onChange={(event) =>
+                    handleShipmentStatusChange(
+                      event.target.value as ShipmentStatus
+                    )
+                  }
                 >
                   {Object.keys(SHIPMENT_STATUSES).map((status) => (
                     <MenuItem key={`ship-sel-${status}`} value={status}>
                       {SHIPMENT_STATUSES[status as ShipmentStatus]}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth>
+                <InputLabel id="square-status-select-label">
+                  square status
+                </InputLabel>
+                <Select
+                  labelId="square-status-select-label"
+                  id="square-status-select"
+                  value={valueFor('square_status')}
+                  onChange={(event) =>
+                    handleSquareStatusChange(event.target.value as SquareStatus)
+                  }
+                  disabled={
+                    !!wholesaleOrder.square_loaded_at ||
+                    wholesaleOrder.square_status === 'ready_to_import' ||
+                    wholesaleOrder.square_status === 'complete'
+                  }
+                >
+                  {Object.keys(SQUARE_STATUSES).map((status) => (
+                    <MenuItem key={`ship-sel-${status}`} value={status}>
+                      {SQUARE_STATUSES[status as SquareStatus]}
                     </MenuItem>
                   ))}
                 </Select>
@@ -393,19 +517,87 @@ function EditWholesaleOrder(
                 label="notes"
                 multiline
                 fullWidth
-                rows={4}
+                rows={9}
                 rowsMax={28}
                 value={valueFor('notes')}
-                onChange={handleOrderNotesChange}
+                onChange={(event) => handleOrderNotesChange(event.target.value)}
               />
-              <div className={classes.editMenu}>
-                <EditMenu
-                  wholesaleOrder={wholesaleOrder}
-                  onSaveBtnClick={onSaveBtnClick}
-                  onDeleteBtnClick={onDeleteBtnClick}
-                  onProductsExportToCsv={onProductsExportToCsv}
-                />
+              <div>
+                {wholesaleOrder.updatedAt && (
+                  <div>
+                    last updated:{' '}
+                    {formatRelative(
+                      new Date(wholesaleOrder.updatedAt),
+                      Date.now()
+                    )}
+                  </div>
+                )}
+                {wholesaleOrder.square_loaded_at && (
+                  <div>
+                    square loaded:{' '}
+                    {formatDistance(
+                      new Date(wholesaleOrder.square_loaded_at),
+                      Date.now(),
+                      {
+                        addSuffix: true
+                      }
+                    )}
+                  </div>
+                )}
               </div>
+              {showLiAutocomplete ? (
+                <div style={{ display: 'flex' }}>
+                  <Tooltip title="close">
+                    <IconButton
+                      aria-label="close"
+                      onClick={() => setShowLiAutocomplete(false)}
+                    >
+                      <Icon>clear</Icon>
+                    </IconButton>
+                  </Tooltip>
+                  <LineItemAutocomplete onItemSelected={onAddLineitem} />
+                </div>
+              ) : (
+                <div className={classes.editMenu}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>,
+                          checked: boolean
+                        ) => {
+                          handleCalcAdjustmentsChange(checked)
+                        }}
+                        checked={!!valueFor('calc_adjustments')}
+                        value="calc_adjustments"
+                        disabled={
+                          !!wholesaleOrder.square_loaded_at ||
+                          wholesaleOrder.status === 'pending' ||
+                          wholesaleOrder.square_status === 'ready_to_import' ||
+                          wholesaleOrder.square_status === 'complete'
+                        }
+                      />
+                    }
+                    label="Calculate Adjustments"
+                  />
+                  <Button
+                    aria-label="add line items"
+                    size="large"
+                    onClick={() => setShowLiAutocomplete(true)}
+                    disabled={isNaN(parseInt(wholesaleOrderId))}
+                  >
+                    <Icon>add</Icon>
+                    LINE ITEMS
+                  </Button>
+                  <EditMenu
+                    wholesaleOrder={wholesaleOrder}
+                    onSaveBtnClick={onSaveBtnClick}
+                    onDeleteBtnClick={onDeleteBtnClick}
+                    onProductsExportToCsv={onProductsExportToCsv}
+                    onImportToSquare={onImportToSquare}
+                  />
+                </div>
+              )}
             </Grid>
           </Grid>
           <WholesaleOrderLineItems
@@ -415,6 +607,7 @@ function EditWholesaleOrder(
             setLineItemData={setLineItemData}
             setSnackMsg={setSnackMsg}
             setSnackOpen={setSnackOpen}
+            calcAdjustments={!!valueFor('calc_adjustments')}
           />
         </>
       )}
@@ -433,7 +626,7 @@ function EditWholesaleOrder(
         message={<span id="message-id">{snackMsg}</span>}
         action={[
           <IconButton key="close" aria-label="close" onClick={handleSnackClose}>
-            <CloseIcon />
+            <Icon>close</Icon>
           </IconButton>
         ]}
       />
@@ -442,5 +635,3 @@ function EditWholesaleOrder(
     <Loading />
   )
 }
-
-export default withRouter(EditWholesaleOrder)

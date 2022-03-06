@@ -1,19 +1,20 @@
 import { combineReducers } from 'redux'
 
 import { Action } from './actions'
-import { User, LoginError } from '../../types/User'
+import { User, LoginError, LoginMessage } from '../../types/User'
 
 export interface UserService {
   isFetching: boolean
   user?: User
   error?: LoginError
+  message?: LoginMessage
 }
 
 export interface UserServiceProps {
   userService: UserService
 }
 
-const userService = (
+export const userService = (
   state: UserService = { isFetching: false },
   action: Action
 ): UserService => {
@@ -27,6 +28,8 @@ const userService = (
       }
     case 'SET_ERROR':
       return { ...state, user: undefined, error: action.error }
+    case 'SET_MAGIC':
+      return { ...state, user: undefined, message: action.message }
   }
   return state
 }

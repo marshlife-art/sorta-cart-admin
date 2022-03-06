@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
+import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Table from '@material-ui/core/Table'
 import TableBody from '@material-ui/core/TableBody'
 import TableCell from '@material-ui/core/TableCell'
@@ -7,14 +7,18 @@ import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 import Tooltip from '@material-ui/core/Tooltip'
 import IconButton from '@material-ui/core/IconButton'
-import CloseIcon from '@material-ui/icons/Close'
-import CreditIcon from '@material-ui/icons/LocalAtm'
+import { Icon } from '@material-ui/core'
 import Link from '@material-ui/core/Link'
+import TextField from '@material-ui/core/TextField'
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 
+import {
+  SupaOrderLineItem,
+  SupaWholesaleOrder as WholesaleOrder
+} from '../types/SupaTypes'
 import { LineItemData, GroupedItem } from './EditWholesaleOrder'
-import { WholesaleOrder } from '../types/WholesaleOrder'
-import { API_HOST } from '../constants'
+import { createOrderCredits, OrderCreditItem } from '../lib/orderService'
+import { updateOrderLineItems } from '../services/mutations'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -30,23 +34,43 @@ const useStyles = makeStyles((theme: Theme) =>
     groupedRow: {
       backgroundColor: theme.palette.background.default
     },
-    groupedRowTotals: theme.typography.h6
+    groupedRowTotals: theme.typography.h6,
+    qtyinput: {
+      width: '50px'
+    }
   })
 )
 
-function WholesaleOrderLineItems(
-  props: {
-    wholesaleOrder?: WholesaleOrder
-    setReload: React.Dispatch<React.SetStateAction<boolean>>
-    lineItemData: LineItemData
-    setLineItemData: React.Dispatch<React.SetStateAction<LineItemData>>
-    setSnackMsg: (value: React.SetStateAction<string>) => void
-    setSnackOpen: React.Dispatch<React.SetStateAction<boolean>>
-  } & RouteComponentProps
-) {
+function toMoney(input: any) {
+  if (isNaN(parseFloat(input))) {
+    return 0
+  }
+  return +parseFloat(input).toFixed(2)
+}
+
+export default function WholesaleOrderLineItems(props: {
+  wholesaleOrder?: WholesaleOrder
+  setReload: React.Dispatch<React.SetStateAction<boolean>>
+  lineItemData: LineItemData
+  setLineItemData: React.Dispatch<React.SetStateAction<LineItemData>>
+  setSnackMsg: (value: React.SetStateAction<string>) => void
+  setSnackOpen: React.Dispatch<React.SetStateAction<boolean>>
+  calcAdjustments: boolean
+}) {
+  const navigate = useNavigate()
+
   const classes = useStyles()
   const lineItems = props?.wholesaleOrder?.OrderLineItems
-  const { lineItemData, setLineItemData, setSnackMsg, setSnackOpen } = props
+
+  const {
+    lineItemData,
+    setLineItemData,
+    setSnackMsg,
+    setSnackOpen,
+    calcAdjustments
+  } = props
+
+  const [loading, setLoading] = useState(false)
 
   function calc() {
     let groupedLineItems: {
@@ -65,33 +89,37 @@ function WholesaleOrderLineItems(
         li.data &&
         li.data.product &&
         `${li.data.product.unf}${li.data.product.upc_code}`
-      const key = id ? id : li.description
+      const key = id ? id : li.description || 'unknown'
 
       let acc = groupedLineItems[key]
 
-      const qty =
+      const qty: number =
         li.data && li.data.product && li.selected_unit === 'EA'
-          ? li.quantity / li.data.product.pk
-          : li.quantity
+          ? (li.quantity || 1) / (li.data.product.pk || 1)
+          : li.quantity || 1
 
       const qtyUnits =
         li.data && li.data.product && li.selected_unit === 'CS'
-          ? li.quantity * li.data.product.pk
-          : li.quantity
+          ? (li.quantity || 1) * (li.data.product.pk || 1)
+          : li.quantity || 1
 
+      const wsPriceCost = isNaN(Number(li.data?.product?.ws_price_cost))
+        ? 0
+        : Number(li.data?.product?.ws_price_cost)
+      const liTotalCheck = isNaN(Number(li.total)) ? 0 : Number(li.total)
       const liTotal =
-        li.data && li.data.product
-          ? +(parseFloat(li.data.product.ws_price_cost) * qty).toFixed(2)
-          : li.total
+        (li.data && li.data.product
+          ? +(wsPriceCost * qty).toFixed(2)
+          : liTotalCheck) || 0
 
       groupedLineItems[key] = {
         qtySum: acc ? acc.qtySum + qty : qty,
         qtyUnits: acc ? acc.qtyUnits + qtyUnits : qtyUnits,
         qtyAdjustments: 0,
-        totalSum: acc ? acc.totalSum + liTotal : liTotal,
+        totalSum: toMoney(acc ? acc.totalSum + liTotal : liTotal),
         product: li && li.data && li.data.product,
         vendor: li.vendor,
-        description: li.description,
+        description: li.description || 'no description',
         line_items: acc ? [...acc.line_items, li] : [li]
       }
 
@@ -105,27 +133,31 @@ function WholesaleOrderLineItems(
     Object.values(groupedLineItems).forEach((item) => {
       // check if qtySum is not a round number (i.e. a partial case)
       if (item.qtySum % 1 !== 0 && item.product) {
-        const pk = item.product.pk
+        const pk = item.product.pk || 1
         const qty = item.line_items.reduce(
-          (acc, v) => acc + (v.selected_unit === 'EA' ? v.quantity : 0),
+          (acc, v) =>
+            acc + (v.selected_unit === 'EA' && v.quantity ? v.quantity : 0),
           0
         )
         // quantity needed to complete a case
         const quantity = Math.abs((qty % pk) - pk)
-        const price = +(
-          quantity * parseFloat(item.product.u_price_cost)
-        ).toFixed(2)
+        const uPriceCost = isNaN(Number(item.product.u_price_cost))
+          ? 0
+          : Number(item.product.u_price_cost)
+        const price = +(quantity * uPriceCost).toFixed(2)
 
-        const total = price
-        item.line_items.push({
-          quantity,
-          price,
-          total,
-          kind: 'adjustment',
-          description: `add ${quantity} EA`
-        })
+        const total = isNaN(Number(price)) ? 0 : Number(price)
+        if (calcAdjustments) {
+          item.line_items.push({
+            quantity,
+            price,
+            total,
+            kind: 'adjustment',
+            description: `add ${quantity} EA`
+          })
+        }
         // also add to the sums when creating this adjustment.
-        item.totalSum = item.totalSum + total
+        item.totalSum = toMoney(item.totalSum + total)
         item.qtySum = Math.round(item.qtySum + quantity / pk)
         item.qtyAdjustments = quantity
 
@@ -134,6 +166,19 @@ function WholesaleOrderLineItems(
           adjustmentTotal: prevData.adjustmentTotal + +total,
           orderTotal: prevData.orderTotal + total
         }))
+      } else if (item.line_items && item.product) {
+        // okay, so try to figure out if this is a manually added line item (i.e. no orderId)
+        const qtyAdjustments = item.line_items.reduce((acc, li) => {
+          if (!li.OrderId) {
+            const pk = item.product?.pk || 1
+            const qty = li.quantity || 1
+            acc += pk * qty
+          }
+          return acc
+        }, 0)
+        if (qtyAdjustments) {
+          item.qtyAdjustments = qtyAdjustments
+        }
       }
     })
 
@@ -144,63 +189,76 @@ function WholesaleOrderLineItems(
   }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(calc, [lineItems])
+  useEffect(calc, [lineItems, calcAdjustments])
 
-  function removeLineItem(item: GroupedItem) {
-    const ids = item.line_items.map((li) => li.id).filter((a) => a)
+  async function removeLineItem(item: GroupedItem) {
+    const ids = item.line_items.map((li) => Number(li.id)).filter((a) => a)
     if (ids && ids.length && window.confirm('are you sure?')) {
-      fetch(`${API_HOST}/wholesaleorder/removelineitem`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ ids })
-      })
-        .then((response) => response.json())
-        .then((response) => !response.error && props.setReload(true))
-        .catch((err) => console.warn('members removelineitem caught err', err))
+      const { error } = await updateOrderLineItems(
+        { WholesaleOrderId: null },
+        ids
+      )
+      if (error) {
+        console.warn('[removeLineItem] got error updating OLIs:', error)
+      }
+      props.setReload(true)
     }
   }
 
-  function issueOrderCredits(item: GroupedItem) {
-    const items = item.line_items
-      .map((li) =>
-        li.OrderId
-          ? {
-              OrderId: li.OrderId,
-              total: li.total,
-              description: item.description
-            }
-          : undefined
-      )
-      .filter((o) => o)
+  async function issueOrderCredits(item: GroupedItem) {
+    const items: OrderCreditItem[] = item.line_items
+      .filter((li) => !!li.OrderId)
+      .map((li) => ({
+        OrderId: Number(li.OrderId),
+        total: li.total || 0,
+        description: item.description
+      }))
+
+    if (!items || !items.length) {
+      return
+    }
 
     if (window.confirm('will issue order credits. are you sure?')) {
-      fetch(`${API_HOST}/wholesaleorder/issuecredits`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify(items)
-      })
-        .then((response) => response.json())
-        .then((response) => {
-          if (!response.error) {
-            setSnackMsg('Store credits created!')
-            setSnackOpen(true)
-          } else {
-            setSnackMsg('Unable to create credits!')
-            setSnackOpen(true)
-          }
-        })
-        .catch((err) => {
-          setSnackMsg(`onoz! error creating credits: ${err}`)
-          setSnackOpen(true)
-          console.warn('issueOrderCredits caught err', err)
-        })
+      try {
+        await createOrderCredits(items)
+        setSnackMsg('Store credits created!')
+        setSnackOpen(true)
+      } catch (e) {
+        console.warn('createOrderCredits caught error:', e)
+        setSnackMsg(`onoz! error creating credits: ${e}`)
+        setSnackOpen(true)
+      }
     }
+  }
+
+  async function handleQtyChange(
+    li: SupaOrderLineItem,
+    qtyString: string,
+    idx: number
+  ) {
+    setLoading(true)
+    const qty = isNaN(parseInt(qtyString)) ? 1 : parseInt(qtyString)
+
+    const quantity = qty > 0 ? qty : 1
+    const { error } = await updateOrderLineItems({ quantity }, [Number(li.id)])
+
+    if (error) {
+      setSnackMsg(`error updating line item: ${error.message}`)
+      setSnackOpen(true)
+    } else {
+      props.setReload(true)
+    }
+    // forgive me for my sinz, this is weird :/
+    setTimeout(() => setLoading(false), 2000)
+  }
+
+  function tryGetEaQty(li: SupaOrderLineItem): React.ReactNode {
+    if (li.data && li.data.product && li.selected_unit === 'EA') {
+      const qty = li.quantity || 1
+      const pk = li.data.product.pk || 1
+      return +(qty / pk).toFixed(2)
+    }
+    return null
   }
 
   return (
@@ -208,7 +266,7 @@ function WholesaleOrderLineItems(
       <TableHead>
         <TableRow>
           <TableCell className={classes.deleteBtn} />
-          <TableCell className={classes.unf}>unf</TableCell>
+          <TableCell className={classes.unf}>unf / upc / plu</TableCell>
           <TableCell>description</TableCell>
           <TableCell>price</TableCell>
           <TableCell>cost</TableCell>
@@ -229,7 +287,7 @@ function WholesaleOrderLineItems(
                       aria-label="remove line item"
                       onClick={() => removeLineItem(item)}
                     >
-                      <CloseIcon />
+                      <Icon>close</Icon>
                     </IconButton>
                   </Tooltip>
 
@@ -238,17 +296,25 @@ function WholesaleOrderLineItems(
                       aria-label="issue order credits for this item"
                       onClick={() => issueOrderCredits(item)}
                     >
-                      <CreditIcon />
+                      <Icon>local_atm</Icon>
                     </IconButton>
                   </Tooltip>
                 </TableCell>
                 <TableCell>
-                  {item.product &&
-                    `${
-                      item.product.unf
-                        ? item.product.unf
-                        : item.product.upc_code
-                    } `}
+                  {item.product && item.product.unf && item.product.unf}
+
+                  {item.product && item.product.upc_code && (
+                    <div>
+                      <br />
+                      {`  ${item.product.upc_code}`}
+                    </div>
+                  )}
+                  {item.product && item.product.plu && (
+                    <div>
+                      <br />
+                      {`  ${item.product.plu}`}
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell>
                   {item.product &&
@@ -256,7 +322,7 @@ function WholesaleOrderLineItems(
                   {item.product && (
                     <>
                       <br />
-                      {`${item.product.upc_code} ${item.product.category} > ${item.product.sub_category}`}{' '}
+                      {`${item.product.category} > ${item.product.sub_category}`}{' '}
                     </>
                   )}
                 </TableCell>
@@ -291,7 +357,7 @@ function WholesaleOrderLineItems(
                   {item.totalSum.toFixed(2)}
                 </TableCell>
               </TableRow>
-              {item.line_items.map((li) => (
+              {item.line_items.map((li, idx) => (
                 <TableRow key={`wsli${li.id}`}>
                   <TableCell colSpan={2} />
                   <TableCell>
@@ -299,31 +365,47 @@ function WholesaleOrderLineItems(
                     {li.data && li.data.product && li.data.product.import_tag
                       ? li.data.product.import_tag
                       : li.description}{' '}
-                    {li.OrderId && (
+                    {li.OrderId ? (
                       <Link
                         color="secondary"
                         href={`/orders/edit/${li.OrderId}`}
                         onClick={(e: any) => {
                           e.preventDefault()
-                          props.history.push(`/orders/edit/${li.OrderId}`)
+                          navigate(`/orders/edit/${li.OrderId}`)
                         }}
                       >
                         Order #{li.OrderId}
                       </Link>
+                    ) : (
+                      li.kind === 'product' && <i>(Manually Added Line Item)</i>
                     )}
                   </TableCell>
                   <TableCell />
                   <TableCell />
                   <TableCell>
-                    {li.kind === 'adjustment'
-                      ? `${li.quantity} EA`
-                      : `${li.quantity} ${li.selected_unit}`}
+                    {li.OrderId
+                      ? li.kind === 'adjustment'
+                        ? `${li.quantity} EA`
+                        : `${li.quantity} ${li.selected_unit}`
+                      : li.kind !== 'adjustment' && (
+                          <TextField
+                            className={classes.qtyinput}
+                            type="number"
+                            InputLabelProps={{
+                              shrink: true
+                            }}
+                            margin="dense"
+                            fullWidth
+                            value={li.quantity}
+                            onChange={async (event: any) =>
+                              await handleQtyChange(li, event.target.value, idx)
+                            }
+                            inputProps={{ min: '1', step: '1' }}
+                            disabled={loading}
+                          />
+                        )}
                   </TableCell>
-                  <TableCell align="center">
-                    {li.data && li.data.product && li.selected_unit === 'EA'
-                      ? +(li.quantity / li.data.product.pk).toFixed(2)
-                      : null}
-                  </TableCell>
+                  <TableCell align="center">{tryGetEaQty(li)}</TableCell>
                   <TableCell align="right">{li.total}</TableCell>
                 </TableRow>
               ))}
@@ -332,14 +414,14 @@ function WholesaleOrderLineItems(
         )}
 
         <TableRow>
-          <TableCell colSpan={2} align="center">
+          <TableCell colSpan={2} align="left">
             ITEM COUNT
           </TableCell>
           <TableCell colSpan={2} align="right">
             PRODUCT TOTAL
           </TableCell>
           <TableCell colSpan={2} align="right">
-            ADJUSTMENTS TOTAL
+            {calcAdjustments && 'ADJUSTMENTS TOTAL'}
           </TableCell>
           <TableCell
             colSpan={2}
@@ -350,14 +432,14 @@ function WholesaleOrderLineItems(
           </TableCell>
         </TableRow>
         <TableRow>
-          <TableCell colSpan={2} align="center">
+          <TableCell colSpan={2} align="left">
             {Object.keys(lineItemData.groupedLineItems).length}
           </TableCell>
           <TableCell colSpan={2} align="right">
             {lineItemData.productTotal.toFixed(2)}
           </TableCell>
           <TableCell colSpan={2} align="right">
-            {lineItemData.adjustmentTotal.toFixed(2)}
+            {calcAdjustments && lineItemData.adjustmentTotal.toFixed(2)}
           </TableCell>
           <TableCell
             colSpan={2}
@@ -371,5 +453,3 @@ function WholesaleOrderLineItems(
     </Table>
   )
 }
-
-export default withRouter(WholesaleOrderLineItems)

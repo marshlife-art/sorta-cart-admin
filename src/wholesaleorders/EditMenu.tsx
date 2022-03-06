@@ -6,11 +6,9 @@ import Menu, { MenuProps } from '@material-ui/core/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
 import ListItemText from '@material-ui/core/ListItemText'
 import ListItemIcon from '@material-ui/core/ListItemIcon'
-import DeleteIcon from '@material-ui/icons/Delete'
-import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
-import FileIcon from '@material-ui/icons/FileCopy'
+import { Icon } from '@material-ui/core'
 
-import { WholesaleOrder } from '../types/WholesaleOrder'
+import { SupaWholesaleOrder as WholesaleOrder } from '../types/SupaTypes'
 
 const StyledMenu = (props: MenuProps) => (
   <Menu
@@ -44,6 +42,7 @@ interface EditWholesaleOrderMenuProps {
   onSaveBtnClick: () => void
   onDeleteBtnClick: () => void
   onProductsExportToCsv: () => void
+  onImportToSquare: () => void
 }
 
 export default function EditMenu(props: EditWholesaleOrderMenuProps) {
@@ -79,7 +78,7 @@ export default function EditMenu(props: EditWholesaleOrderMenuProps) {
           size="small"
           onClick={handleClick}
         >
-          <ArrowDropDownIcon />
+          <Icon>arrow_drop_down</Icon>
         </Button>
       </ButtonGroup>
 
@@ -97,10 +96,14 @@ export default function EditMenu(props: EditWholesaleOrderMenuProps) {
             }
             handleClose()
           }}
-          disabled={!props.wholesaleOrder.id}
+          disabled={
+            !props.wholesaleOrder.id ||
+            props.wholesaleOrder.status === 'pending' ||
+            props.wholesaleOrder.square_status === 'ready_to_import'
+          }
         >
           <ListItemIcon>
-            <DeleteIcon fontSize="small" />
+            <Icon>delete</Icon>
           </ListItemIcon>
           <ListItemText primary="delete wholesale order" />
         </StyledMenuItem>
@@ -113,9 +116,26 @@ export default function EditMenu(props: EditWholesaleOrderMenuProps) {
           disabled={!props.wholesaleOrder.id}
         >
           <ListItemIcon>
-            <FileIcon />
+            <Icon>file_copy</Icon>
           </ListItemIcon>
           <ListItemText primary="export products to .csv" />
+        </StyledMenuItem>
+
+        <StyledMenuItem
+          onClick={() => {
+            props.onImportToSquare()
+            handleClose()
+          }}
+          disabled={
+            !!props.wholesaleOrder.square_loaded_at ||
+            props.wholesaleOrder.square_status === 'ready_to_import' ||
+            props.wholesaleOrder.square_status === 'complete'
+          }
+        >
+          <ListItemIcon>
+            <Icon>crop_square</Icon>
+          </ListItemIcon>
+          <ListItemText primary="import to Square catalog" />
         </StyledMenuItem>
       </StyledMenu>
     </>
