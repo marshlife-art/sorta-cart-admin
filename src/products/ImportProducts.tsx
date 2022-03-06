@@ -1,28 +1,28 @@
+import { Icon, Theme, createStyles, makeStyles } from '@material-ui/core'
 import React, { useState } from 'react'
-import { makeStyles, Theme, createStyles, Icon } from '@material-ui/core'
-import Paper from '@material-ui/core/Paper'
-import Grid from '@material-ui/core/Grid'
-import TextField from '@material-ui/core/TextField'
-import InputLabel from '@material-ui/core/InputLabel'
-import MenuItem from '@material-ui/core/MenuItem'
-import FormControl from '@material-ui/core/FormControl'
-import FormHelperText from '@material-ui/core/FormHelperText'
-import FormControlLabel from '@material-ui/core/FormControlLabel'
-import Checkbox from '@material-ui/core/Checkbox'
-import Select from '@material-ui/core/Select'
-import Button from '@material-ui/core/Button'
-import Menu from '@material-ui/core/Menu'
-import Typography from '@material-ui/core/Typography'
-
-import Loading from '../Loading'
-import parseProductsCSV from '../lib/parseProductsCSV'
-import { SupaProduct } from '../types/SupaTypes'
-import CatMapDialog from './CatMapDialog'
+import { updateNoBackorder, upsertProducts } from '../services/mutations'
 import {
   useDistinctProductImportTags,
   useDistinctProductVendors
 } from '../services/hooks/products'
-import { updateNoBackorder, upsertProducts } from '../services/mutations'
+
+import Button from '@material-ui/core/Button'
+import CatMapDialog from './CatMapDialog'
+import Checkbox from '@material-ui/core/Checkbox'
+import FormControl from '@material-ui/core/FormControl'
+import FormControlLabel from '@material-ui/core/FormControlLabel'
+import FormHelperText from '@material-ui/core/FormHelperText'
+import Grid from '@material-ui/core/Grid'
+import InputLabel from '@material-ui/core/InputLabel'
+import Loading from '../Loading'
+import Menu from '@material-ui/core/Menu'
+import MenuItem from '@material-ui/core/MenuItem'
+import Paper from '@material-ui/core/Paper'
+import Select from '@material-ui/core/Select'
+import { SupaProduct } from '../types/SupaTypes'
+import TextField from '@material-ui/core/TextField'
+import Typography from '@material-ui/core/Typography'
+import parseProductsCSV from '../lib/parseProductsCSV'
 import { useCatmap } from '../services/hooks/catmap'
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -167,12 +167,9 @@ export default function ImportProducts() {
 
       const [twentyErrors, restOfTheErrors] = chunkUpsertErrors
       setError(
-        `${
-          upsertCount ? `Successfully imported ${upsertCount} products!\n` : ''
-        }There were ${
-          upsertErrors.length
-        } errors adding new products:\n${twentyErrors.join('\n ')} \n\n...and ${
-          restOfTheErrors.length
+        `${upsertCount ? `Successfully imported ${upsertCount} products!\n` : ''
+        }There were ${upsertErrors.length
+        } errors adding new products:\n${twentyErrors.join('\n ')} \n\n...and ${restOfTheErrors.length
         } more`
       )
     } else {
@@ -355,9 +352,8 @@ export default function ImportProducts() {
           {mapCatz && (
             <CatMapDialog
               file={file}
-              buttonText={`${
-                !file ? 'Upload .csv file to' : ''
-              } Set Category Mapping`}
+              buttonText={`${!file ? 'Upload .csv file to' : ''
+                } Set Category Mapping`}
             />
           )}
 
@@ -393,18 +389,27 @@ export default function ImportProducts() {
                   value="dry_run"
                 />
               }
-              label="Dry Run (will not import products to DB)"
+              label="Dry Run"
             />
+            <FormHelperText>
+              <i>note:</i> when <b>Dry Run</b> is checked no products in the database will be modified (useful for debugging .csv files).
+            </FormHelperText>
           </FormControl>
 
-          <input
-            id="csvFileInput"
-            type="file"
-            accept=".csv"
-            onChange={handleFileChange}
-            disabled={loading}
-            className={classes.gridItem}
-          />
+          <FormControl fullWidth className={classes.gridItem}>
+            <input
+              id="csvFileInput"
+              type="file"
+              accept=".csv"
+              onChange={handleFileChange}
+              disabled={loading}
+              className={classes.gridItem}
+            />
+            <FormHelperText>
+              <i>note:</i> use .csv files (Comma Separated Values).
+            </FormHelperText>
+          </FormControl>
+
 
           <div className={classes.gridItem}>
             <Button
@@ -440,8 +445,6 @@ export default function ImportProducts() {
           </Typography>
           <Typography variant="body1" gutterBottom component="div">
             <dl className={classes.info}>
-              <dt>What kind of file should be uploaded?</dt>
-              <dd>Comma separated value files with the extension .csv</dd>
 
               <dt>Import Tag</dt>
               <dd>
